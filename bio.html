@@ -497,41 +497,6 @@
                 });
             });
         }
-
-        // ================= 页面初始化 =================
-        function showLoadError(message) {
-            document.getElementById('bioName').textContent = '资料加载失败';
-            document.getElementById('bioAka').textContent = '';
-            document.getElementById('bioOcc').textContent = '';
-            document.getElementById('bioMotto').textContent = '请稍后刷新页面重试';
-            document.getElementById('bioMeta').innerHTML = '';
-            document.getElementById('bioDoc').innerHTML = `
-                <div class="bio-section">
-                    <div class="bio-h2"><i class="fas fa-exclamation-triangle"></i> 暂时无法显示</div>
-                    <div class="bio-p">${escapeHtml(message)}</div>
-                </div>`;
-        }
-
-        async function loadBio() {
-            try {
-                const response = await fetch(BIO_API, { cache: 'no-store' });
-                if (!response.ok) throw new Error(`资料接口 HTTP ${response.status}`);
-                const result = await response.json();
-                bioData = result && result.data ? result.data : result;
-                if (!bioData || typeof bioData !== 'object') throw new Error('资料接口返回格式不正确');
-                renderBio();
-            } catch (error) {
-                console.error('作者资料加载失败：', error);
-                showLoadError(error.message || '网络请求失败');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof initNightModeLocal === 'function') initNightModeLocal();
-            if (typeof initBgLocal === 'function') initBgLocal();
-            loadBio();
-        });
     </script>
 </body>
 </html>
-
