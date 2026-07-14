@@ -269,32 +269,26 @@ function initSearchBindings() {
 }
 
 // ================= 天气系统 =================
+async function fetchJsonWithTimeout(url,timeout=8000){const c=new AbortController(),t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);return await r.json();}finally{clearTimeout(t);}}
+function getBrowserPosition(timeout=5000){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('浏览器不支持定位'));navigator.geolocation.getCurrentPosition(p=>resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,city:'当前位置'}),e=>reject(new Error(e.message||'定位未授权')),{timeout,maximumAge:1800000});});}
 async function loadWeather() {
     const widget=document.getElementById('weather-widget'); if(!widget)return;
     try{
-        const ipResp=await fetch('https://v.api.aa1.cn/api/myip/index.php?aa1=text');
-        const ipText=(await ipResp.text()).trim();
-        printLog('IP获取响应',ipText,false,'weather');
-        const cityResp=await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${ipText}`);
-        const cityData=await cityResp.json();
-        printLog('城市信息响应',cityData,false,'weather');
-        if(cityData.code!=='0'||!cityData.data) throw new Error('获取城市信息失败');
-        const cityName=cityData.data.CITY_CN||'北京';
-        const wUrl=`https://api.xunjinlu.fun/api/weather/v2.php?city=${encodeURIComponent(cityName)}`;
-        const proxyUrl=`https://cros.xiongdaa.me/?url=${encodeURIComponent(wUrl)}`;
-        const wResp=await fetch(proxyUrl); const wData=await wResp.json();
-        printLog('天气数据响应',wData,false,'weather');
-        if(wData.code!==200||!wData.data) throw new Error('获取天气数据失败');
-        const cur=wData.data.current, fc=wData.data.forecast?.[0];
-        const temp=cur.temperature||'25', desc=fc?fc.type:(cur.quality||'未知');
-        const tempRange=fc?` / 高温${fc.high.replace('高温 ','')} 低温${fc.low.replace('低温 ','')}`:'';
-        const cityDisplay=wData.data.city_info?wData.data.city_info.city:cityName;
-        const updateInfo=wData.data.update_time?` 更新于${wData.data.update_time.split(' ')[1]}`:'';
-        const wMap={'晴':'fa-sun','多云':'fa-cloud-sun','阴':'fa-cloud','小雨':'fa-cloud-showers-heavy','中雨':'fa-umbrella','大雨':'fa-umbrella','暴雨':'fa-umbrella','雪':'fa-snowflake','雾':'fa-smog','霾':'fa-smog'};
-        let icon='fa-cloud'; for(const[k,v]of Object.entries(wMap)){if(desc.includes(k)){icon=v;break;}}
-        widget.innerHTML=`<div class="weather-icon"><i class="fas ${icon}"></i></div><div class="weather-info"><div class="weather-temp">${temp}°C${tempRange}</div><div class="weather-desc">${desc}${updateInfo}</div><div class="weather-city"><i class="fas fa-map-marker-alt"></i> ${cityDisplay}</div></div>`;
+        let pos;
+        try{const ip=await fetchJsonWithTimeout('https://ipwho.is/?fields=success,city,region,country,latitude,longitude',6000);if(!ip.success||!Number.isFinite(ip.latitude)||!Number.isFinite(ip.longitude))throw new Error('IP定位返回异常');pos={latitude:ip.latitude,longitude:ip.longitude,city:ip.city||ip.region||ip.country||'当前位置'};}
+        catch(ipError){printLog('IP定位失败，尝试浏览器定位',ipError.message,false,'weather');try{pos=await getBrowserPosition();}catch(locationError){printLog('浏览器定位失败，使用默认城市',locationError.message,false,'weather');pos={latitude:39.9042,longitude:116.4074,city:'北京'};}}
+        const url='https://api.open-meteo.com/v1/forecast?'+new URLSearchParams({latitude:pos.latitude,longitude:pos.longitude,current:'temperature_2m,weather_code',daily:'temperature_2m_max,temperature_2m_min',timezone:'auto',forecast_days:'1'});
+        const data=await fetchJsonWithTimeout(url);if(!data.current||!data.daily)throw new Error('天气数据格式异常');
+        const code=Number(data.current.weather_code),map={0:['晴','fa-sun'],1:['晴间多云','fa-cloud-sun'],2:['多云','fa-cloud-sun'],3:['阴','fa-cloud'],45:['雾','fa-smog'],48:['雾凇','fa-smog'],51:['小雨','fa-cloud-rain'],53:['小雨','fa-cloud-rain'],55:['中雨','fa-umbrella'],61:['小雨','fa-cloud-showers-heavy'],63:['中雨','fa-umbrella'],65:['大雨','fa-umbrella'],71:['小雪','fa-snowflake'],73:['中雪','fa-snowflake'],75:['大雪','fa-snowflake'],80:['阵雨','fa-cloud-showers-heavy'],81:['阵雨','fa-cloud-showers-heavy'],82:['强阵雨','fa-umbrella'],95:['雷雨','fa-bolt'],96:['雷雨伴冰雹','fa-bolt'],99:['强雷雨伴冰雹','fa-bolt']},weather=map[code]||['未知','fa-cloud'];
+        const temp=Math.round(data.current.temperature_2m),high=Math.round(data.daily.temperature_2m_max[0]),low=Math.round(data.daily.temperature_2m_min[0]);
+        widget.innerHTML=`<div class="weather-icon"><i class="fas ${weather[1]}"></i></div><div class="weather-info"><div class="weather-temp">${temp}°C / 高温${high}° 低温${low}°</div><div class="weather-desc">${weather[0]}</div><div class="weather-city"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(pos.city)}</div></div>`;
+        printLog('天气加载成功',{city:pos.city,temperature:temp,code},false,'weather');
     }catch(e){printLog('天气获取失败',e.message,true,'weather');widget.innerHTML='<div class="weather-loading"><i class="fas fa-cloud"></i> 天气加载失败</div>';}
 }
+
+// ================= 访客统计 =================
+function useLocalVisitorFallback(){let views=1;try{views=(parseInt(localStorage.getItem('xiongda_local_views'),10)||0)+1;localStorage.setItem('xiongda_local_views',String(views));}catch(e){}const uv=document.getElementById('busuanzi_value_site_uv'),pv=document.getElementById('busuanzi_value_site_pv');if(uv&&(!uv.textContent.trim()||/^(--|无法显示|加载)/.test(uv.textContent.trim())))uv.textContent='1';if(pv&&(!pv.textContent.trim()||/^(--|无法显示|加载)/.test(pv.textContent.trim())))pv.textContent=String(views);printLog('访客统计','远程统计不可用，已启用当前浏览器本地统计',false,'system');}
+function loadVisitorStats(){if(!document.getElementById('busuanzi_value_site_uv')&&!document.getElementById('busuanzi_value_site_pv'))return;if(!document.querySelector('script[data-xiongda-busuanzi]')){const s=document.createElement('script');s.async=true;s.dataset.xiongdaBusuanzi='1';s.src='https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';s.onerror=useLocalVisitorFallback;document.head.appendChild(s);}setTimeout(()=>{const values=['busuanzi_value_site_uv','busuanzi_value_site_pv'].map(id=>document.getElementById(id)?.textContent.trim());if(values.every(v=>!v||/^(--|无法显示|加载)/.test(v)))useLocalVisitorFallback();},5000);}
 
 // ================= 点击特效 =================
 function createClickEffect(e) {
@@ -503,6 +497,7 @@ function initIndexPage(themeId) {
     initNightModeLocal();
     initBgLocal();
     loadWeather();
+    loadVisitorStats();
     loadPlayHistory();
     initSearchBindings();
     initLyricScroll();
