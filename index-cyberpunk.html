@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>xiong da // CYBERPUNK</title>
+    <title>Lang Nie // CYBERPUNK</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="tools/common.css">
@@ -75,7 +75,7 @@
         }
         .cyber-avatar {
             width:80px; height:80px; border-radius:4px; margin:0 auto 15px;
-            background:url('https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640') center/cover;
+            background:url('https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg') center/cover;
             border:2px solid var(--cp-pink); box-shadow:0 0 20px rgba(255,45,123,0.4);
         }
         .cyber-name { font-family:'Orbitron',monospace; font-size:1.2rem; letter-spacing:3px; color:var(--cp-cyan); margin-bottom:10px; }
@@ -399,9 +399,9 @@
                 <div class="cyber-name">XIONG DA</div>
                 <div class="cyber-hitokoto"><span id="typed-text"></span><span class="cursor" style="display:inline-block;width:2px;height:1em;background:var(--cp-cyan);animation:blink 1s step-end infinite;margin-left:2px;vertical-align:-0.15em;"></span></div>
                 <div class="cyber-links">
-                    <a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="cyber-link"><i class="fab fa-github"></i> GitHub</a>
-                    <div class="cyber-link" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ 交流</div>
-                    <div class="cyber-link" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信联系</div>
+                    <a href="https://github.com/XiaoLnn/YOUR_GITHUB_USERNAME" target="_blank" class="cyber-link"><i class="fab fa-github"></i> GitHub</a>
+                    <div class="cyber-link" onclick="openApp('qq','1652939626')"><i class="fab fa-qq"></i> QQ 交流</div>
+                    <div class="cyber-link" onclick="openApp('wechat','np85160')"><i class="fab fa-weixin"></i> 微信联系</div>
                     <a href="mailto:your_email@example.com" class="cyber-link"><i class="fas fa-envelope"></i> 发送邮件</a>
                     <a href="bio.html" class="cyber-link"><i class="fas fa-id-card"></i> 作者生平</a>
                 </div>
@@ -432,7 +432,7 @@
                 <!-- 播放器 -->
                 <div class="cyber-player">
                     <div class="cyber-player-top">
-                        <div class="cyber-vinyl" id="vinyl-record"><img src="https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640" id="player-cover" alt="cover"></div>
+                        <div class="cyber-vinyl" id="vinyl-record"><img src="https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg" id="player-cover" alt="cover"></div>
                         <div class="cyber-player-info">
                             <div class="cyber-player-title" id="player-title">等待播放</div>
                             <div class="cyber-player-artist" id="player-artist">CYBER PLAYER</div>
@@ -492,7 +492,35 @@
     <script src="common-index.js"></script>
     <script>initIndexPage('cyberpunk');</script>
 
-    <div class="author-credit"><p>© 2026 xiong da. All rights reserved.</p><p><a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
+    <div class="author-credit"><p>© 2026 Lang Nie. All rights reserved.</p><p><a href="https://github.com/XiaoLnn/YOUR_GITHUB_USERNAME/Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script>
+/* Lang Nie 定制：音乐封面自动同步 */
+(function(){
+    const defaultCover = "https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg";
+
+    window.updateSongCover = function(song){
+        const cover =
+            song?.cover ||
+            song?.pic ||
+            song?.picUrl ||
+            song?.album?.picUrl ||
+            song?.album?.cover ||
+            defaultCover;
+
+        document.querySelectorAll(
+            ".album-cover,.player-cover,.music-cover"
+        ).forEach(function(img){
+            img.src = cover;
+        });
+    };
+
+    document.addEventListener("musicChanged", function(e){
+        updateSongCover(e.detail);
+    });
+})();
+</script>
+
 </body>
 </html>
