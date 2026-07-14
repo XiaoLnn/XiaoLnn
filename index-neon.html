@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="neon">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<title>xiong da // NEON</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="tools/common.css">
+<style>
+:root{--nn-bg:#050008;--nn-surface:rgba(10,0,20,0.7);--nn-border:rgba(255,45,123,0.3);--nn-text:#fff0f5;--nn-muted:rgba(200,180,220,0.5);--nn-accent:#ff2d7b;--nn-accent2:#00f0ff;--nn-glow:rgba(255,45,123,0.3);--glass-bg:var(--nn-surface);--glass-border:var(--nn-border);--text-main:var(--nn-text);--text-muted:var(--nn-muted);--theme-accent:var(--nn-accent);--theme-accent2:var(--nn-accent2);}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC','Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;display:block;background:var(--nn-bg);color:var(--nn-text);overflow-x:hidden;padding:0;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,45,123,0.02) 3px,rgba(255,45,123,0.02) 6px);}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,rgba(255,45,123,0.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(0,240,255,0.04) 0%,transparent 50%);}
+#skeleton-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:var(--nn-bg);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.7s;}
+#skeleton-overlay.fade-out{opacity:0;pointer-events:none;}
+.skeleton-spinner{width:48px;height:48px;border:3px solid rgba(255,45,123,0.15);border-top-color:var(--nn-accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.skeleton-text{color:var(--nn-accent2);margin-top:16px;font-size:0.85rem;letter-spacing:4px;}
+
+/* 城市天际线 */
+.nn-skyline{position:fixed;bottom:0;left:0;width:100%;height:120px;z-index:2;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;gap:4px;}
+.nn-building{width:var(--bw);height:var(--bh);background:linear-gradient(180deg,rgba(255,45,123,0.08),rgba(0,240,255,0.03));border-top:1px solid rgba(255,45,123,0.1);border-left:1px solid rgba(255,45,123,0.05);border-right:1px solid rgba(255,45,123,0.05);}
+
+/* 主容器 */
+.nn-wrap{position:relative;z-index:10;width:100%;max-width:1000px;margin:0 auto;padding:20px 20px 140px;}
+
+/* 霓虹卡片 - 不同位置偏移 */
+.nn-card{background:var(--nn-surface);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border:1px solid var(--nn-border);border-radius:var(--br,16px);padding:22px;transition:all 0.4s;position:relative;}
+.nn-card:hover{box-shadow:0 0 30px var(--nn-glow),0 0 60px rgba(255,45,123,0.1);border-color:var(--nn-accent);}
+
+/* 定位网格 - 非对称 */
+.nn-grid{display:grid;grid-template-columns:1fr 1.2fr 0.8fr;grid-template-rows:auto auto auto;gap:16px;}
+
+/* 时钟卡 - 左上 */
+.nn-clock{z-index:2;grid-column:1/2;grid-row:1/2;transform:rotate(-1deg);--br:20px;text-align:center;padding:28px 20px;}
+.nn-clock:hover{transform:rotate(-1deg) scale(1.02);}
+#clock-time{font-size:2.6rem;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--nn-accent),var(--nn-accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+#clock-date{font-size:0.78rem;color:var(--nn-muted);margin-top:4px;letter-spacing:2px;}
+#weather-widget{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--nn-border);}
+#weather-widget .weather-icon{color:var(--nn-accent2);font-size:1.4rem;text-shadow:0 0 10px rgba(0,240,255,0.5);}
+#weather-widget .weather-temp{font-size:1.1rem;font-weight:700;color:var(--nn-text);}
+#weather-widget .weather-desc,#weather-widget .weather-city{font-size:0.68rem;color:var(--nn-muted);}
+.weather-loading{color:var(--nn-muted);font-size:0.82rem;}
+
+/* 天气卡 - 右上小卡 */
+.nn-weather-mini{z-index:3;grid-column:3/4;grid-row:1/2;transform:rotate(2deg) translateY(10px);--br:12px;padding:18px;text-align:center;}
+.nn-weather-mini .weather-icon{font-size:2rem;color:var(--nn-accent2);text-shadow:0 0 20px rgba(0,240,255,0.4);}
+.nn-weather-mini .weather-temp{font-size:1.4rem;font-weight:700;color:var(--nn-text);display:block;margin:6px 0;}
+.nn-weather-mini .weather-city{font-size:0.7rem;color:var(--nn-muted);}
+
+/* 个人卡 - 中间偏左 */
+.nn-profile{z-index:4;grid-column:1/3;grid-row:2/3;transform:rotate(0.5deg);--br:24px;text-align:center;padding:30px 24px;}
+.nn-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 14px;background:url('https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640') center/cover;border:2px solid var(--nn-accent);box-shadow:0 0 25px rgba(255,45,123,0.3);}
+.nn-name{font-size:1.4rem;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--nn-accent),var(--nn-accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+#typed-text{font-size:0.82rem;color:var(--nn-muted);line-height:1.7;min-height:36px;margin-bottom:14px;}
+.nn-links{display:flex;flex-direction:column;gap:6px;}
+.nn-link{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(255,45,123,0.04);border:1px solid rgba(255,45,123,0.12);color:var(--nn-text);text-decoration:none;font-size:0.8rem;transition:all 0.3s;cursor:pointer;border-radius:10px;}
+.nn-link:hover{background:rgba(255,45,123,0.1);border-color:var(--nn-accent);box-shadow:0 0 20px rgba(255,45,123,0.15);transform:translateX(6px);}
+.nn-link i{width:18px;text-align:center;color:var(--nn-accent2);}
+.nn-stats{display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:0.72rem;color:var(--nn-muted);}
+.nn-stats .num{color:var(--nn-accent2);font-weight:700;}
+
+/* 工具卡 - 右下 */
+.nn-tools{z-index:3;grid-column:3/4;grid-row:2/4;transform:rotate(-1.5deg) translateY(-5px);--br:14px;}
+.nn-tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.nn-tool{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;background:rgba(0,240,255,0.03);border:1px solid rgba(0,240,255,0.08);text-decoration:none;color:var(--nn-text);font-size:0.68rem;transition:all 0.3s;cursor:pointer;border-radius:10px;}
+.nn-tool:hover{background:rgba(0,240,255,0.08);border-color:var(--nn-accent2);box-shadow:0 0 15px rgba(0,240,255,0.1);}
+.nn-tool i{font-size:1.2rem;color:var(--nn-accent2);text-shadow:0 0 8px rgba(0,240,255,0.3);}
+
+/* 播放器 - 右侧大卡 */
+.nn-player{z-index:5;grid-column:2/3;grid-row:3/4;transform:rotate(1deg) translateX(10px);--br:20px;}
+.nn-player-top{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+#vinyl-record{width:60px;height:60px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid var(--nn-accent);box-shadow:0 0 20px rgba(255,45,123,0.2);}
+#vinyl-record.playing{animation:vinylSpin 3s linear infinite;}
+@keyframes vinylSpin{to{transform:rotate(360deg);}}
+#vinyl-record img{width:100%;height:100%;object-fit:cover;}
+.nn-player-info{flex:1;min-width:0;}
+#player-title{font-size:0.9rem;color:var(--nn-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#player-artist{font-size:0.72rem;color:var(--nn-muted);margin-top:2px;}
+#player-source-tag{font-size:0.55rem;color:var(--nn-accent2);border:1px solid rgba(0,240,255,0.2);padding:1px 6px;border-radius:6px;}
+#progress-container{width:100%;height:4px;background:rgba(255,45,123,0.1);margin:10px 0;cursor:pointer;border-radius:2px;box-shadow:inset 0 0 6px rgba(255,45,123,0.05);}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--nn-accent),var(--nn-accent2));border-radius:2px;width:0%;box-shadow:0 0 10px rgba(0,240,255,0.3);}
+.nn-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nn-btn{background:rgba(255,45,123,0.06);border:1px solid rgba(255,45,123,0.15);color:var(--nn-text);padding:6px 11px;cursor:pointer;font-size:0.75rem;transition:all 0.3s;border-radius:8px;}
+.nn-btn:hover{background:rgba(255,45,123,0.12);border-color:var(--nn-accent);box-shadow:0 0 15px rgba(255,45,123,0.15);}
+.nn-btn.play-pause{background:linear-gradient(135deg,var(--nn-accent),var(--nn-accent2));border:none;color:#fff;padding:8px 15px;box-shadow:0 0 20px rgba(255,45,123,0.3);}
+.nn-search{display:flex;gap:4px;margin-top:8px;}
+.nn-search input{flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,45,123,0.1);color:var(--nn-text);padding:7px 10px;font-size:0.78rem;outline:none;border-radius:8px;}
+.nn-search input:focus{border-color:var(--nn-accent2);box-shadow:0 0 10px rgba(0,240,255,0.1);}
+.nn-search input::placeholder{color:var(--nn-muted);}
+
+/* 联系卡 - 左下 */
+.nn-contacts{z-index:3;grid-column:1/2;grid-row:3/4;transform:rotate(-0.5deg) translateY(5px);--br:16px;padding:18px;}
+.nn-contact-grid{display:flex;flex-direction:column;gap:6px;}
+.nn-contact{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,45,123,0.03);border:1px solid rgba(255,45,123,0.1);color:var(--nn-text);text-decoration:none;font-size:0.75rem;transition:all 0.3s;cursor:pointer;border-radius:8px;}
+.nn-contact:hover{background:rgba(255,45,123,0.08);border-color:var(--nn-accent);box-shadow:0 0 15px rgba(255,45,123,0.1);}
+.nn-contact i{width:16px;color:var(--nn-accent2);}
+
+/* 隐藏面板 */
+/* 面板 - 平滑展开 */
+#lyric-panel,#history-panel,#bg-settings-panel{max-height:0;opacity:0;overflow:hidden;margin-top:0;padding:0 12px;background:rgba(0,0,0,0.4);border:1px solid var(--nn-border);border-radius:10px;font-size:0.8rem;transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1),opacity 0.4s cubic-bezier(0.4,0,0.2,1),padding 0.4s cubic-bezier(0.4,0,0.2,1),margin-top 0.4s cubic-bezier(0.4,0,0.2,1);}
+#lyric-panel.show,#history-panel.show,#bg-settings-panel.show{max-height:280px;opacity:1;margin-top:10px;padding:12px;}
+.lyric-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.78rem;color:var(--nn-muted);}
+#lyric-content{position:relative;overflow-y:auto;max-height:200px;padding:4px 0;}
+..lyric-empty{text-align:center;color:var(--nn-muted);padding:16px;font-size:0.82rem;}
+#bg-options{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.bg-option{width:54px;height:44px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:0.6;transition:all 0.3s;}
+.bg-option.active,.bg-option:hover{border-color:var(--nn-accent2);opacity:1;}
+.bg-option img{width:100%;height:100%;object-fit:cover;}
+.bg-option-label{font-size:0.6rem;text-align:center;color:var(--nn-muted);margin-top:2px;}
+.bg-url-input{width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--nn-border);background:rgba(0,0,0,0.4);color:var(--nn-text);font-size:0.75rem;outline:none;margin-top:4px;}
+.bg-reset-btn,.bg-upload-btn{display:inline-block;padding:4px 10px;border:1px solid var(--nn-border);background:rgba(255,45,123,0.03);color:var(--nn-muted);cursor:pointer;font-size:0.7rem;margin-top:4px;border-radius:6px;}
+.video-scale-selector{display:flex;gap:4px;margin-top:4px;}
+.video-scale-btn{padding:3px 8px;border:1px solid var(--nn-border);background:rgba(255,45,123,0.02);color:var(--nn-muted);cursor:pointer;font-size:0.68rem;border-radius:4px;}
+.video-scale-btn.active{border-color:var(--nn-accent2);color:var(--nn-accent2);}
+.lyric-line{padding:6px 10px;cursor:pointer;font-size:0.82rem;color:var(--nn-muted);transition:all 0.3s;border-radius:8px;line-height:1.5;}
+.lyric-line:hover{background:rgba(255,45,123,0.06);}
+.lyric-line.active{color:var(--nn-accent);font-weight:600;font-size:0.95rem;text-shadow:0 0 10px rgba(255,45,123,0.4);}
+.lyric-line.past{opacity:0.35;}
+.music-list
+.music-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid rgba(255,45,123,0.03);cursor:pointer;transition:all 0.2s;border-radius:6px;}
+.music-item:hover,.music-item.active{background:rgba(255,45,123,0.04);}
+.music-item .music-name{font-size:0.78rem;}
+.music-item .music-artist{font-size:0.65rem;color:var(--nn-muted);}
+.status-msg{text-align:center;color:var(--nn-muted);padding:8px;font-size:0.82rem;}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:10000;background:rgba(5,0,8,0.95);border:1px solid var(--nn-border);border-radius:12px;padding:10px 20px;display:none;font-size:0.82rem;color:var(--nn-text);box-shadow:0 0 20px rgba(255,45,123,0.15);}
+#bio-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;display:none;}
+#bio-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:500;display:none;}
+#bio-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;max-height:80vh;background:rgba(5,0,8,0.97);border:1px solid var(--nn-border);border-radius:16px;padding:22px;z-index:501;display:none;overflow-y:auto;box-shadow:0 0 40px rgba(255,45,123,0.15);}
+.bio-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:0.85rem;}
+.bio-loading{text-align:center;color:var(--nn-muted);padding:30px;}
+.footer{text-align:center;padding:20px 0 10px;font-size:0.72rem;color:rgba(200,180,220,0.25);position:relative;z-index:3;}
+.footer a{color:var(--nn-accent2);text-decoration:none;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.3);}
+::-webkit-scrollbar-thumb{background:rgba(255,45,123,0.2);border-radius:2px;}
+@media(max-width:768px){.nn-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto auto;}.nn-clock{grid-column:1/3;grid-row:1/2;}.nn-profile{grid-column:1/3;grid-row:2/3;}.nn-player{grid-column:1/3;grid-row:3/4;}.nn-tools{grid-column:1/2;grid-row:4/5;}.nn-contacts{grid-column:2/3;grid-row:4/5;}.nn-weather-mini{display:none;}}
+</style>
+</head>
+<body>
+<div id="skeleton-overlay"><div class="skeleton-spinner"></div><div class="skeleton-text">// NEON CITY BOOTING</div></div>
+<video id="bg-video" autoplay muted loop playsinline></video><div id="bg-video-overlay"></div>
+<div id="toast"><i class="fas fa-bolt" style="color:var(--nn-accent2);"></i> <span id="toast-msg"></span></div>
+<div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="color:var(--nn-accent2);"></i> BIO</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">loading...</div></div></div></div>
+
+<!-- 城市天际线 -->
+<div class="nn-skyline">
+<div class="nn-building" style="--bw:18px;--bh:28px;"></div><div class="nn-building" style="--bw:12px;--bh:42px;"></div><div class="nn-building" style="--bw:24px;--bh:55px;"></div><div class="nn-building" style="--bw:16px;--bh:38px;"></div><div class="nn-building" style="--bw:30px;--bh:70px;"></div><div class="nn-building" style="--bw:14px;--bh:32px;"></div><div class="nn-building" style="--bw:20px;--bh:48px;"></div><div class="nn-building" style="--bw:28px;--bh:62px;"></div><div class="nn-building" style="--bw:15px;--bh:35px;"></div><div class="nn-building" style="--bw:22px;--bh:50px;"></div><div class="nn-building" style="--bw:18px;--bh:45px;"></div><div class="nn-building" style="--bw:26px;--bh:58px;"></div><div class="nn-building" style="--bw:13px;--bh:30px;"></div><div class="nn-building" style="--bw:20px;--bh:52px;"></div><div class="nn-building" style="--bw:16px;--bh:40px;"></div><div class="nn-building" style="--bw:32px;--bh:75px;"></div><div class="nn-building" style="--bw:14px;--bh:33px;"></div><div class="nn-building" style="--bw:18px;--bh:46px;"></div><div class="nn-building" style="--bw:22px;--bh:55px;"></div>
+</div>
+
+<div class="nn-wrap">
+<div class="nn-grid">
+
+<!-- 时钟卡 -->
+<div class="nn-card nn-clock">
+<div id="clock-time">00:00:00</div>
+<div id="clock-date">加载中...</div>
+<div id="weather-widget"><div class="weather-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+</div>
+
+<!-- 天气小卡 -->
+<div class="nn-card nn-weather-mini">
+<div id="weather-mini-widget"><div class="weather-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+</div>
+
+<!-- 个人卡 -->
+<div class="nn-card nn-profile">
+<div class="nn-avatar"></div>
+<div class="nn-name">xiong da</div>
+<div id="typed-text"></div>
+<div class="nn-links">
+<a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="nn-link"><i class="fab fa-github"></i> GitHub</a>
+<div class="nn-link" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ</div>
+<div class="nn-link" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信</div>
+<a href="mailto:your_email@example.com" class="nn-link"><i class="fas fa-envelope"></i> 邮件</a>
+<a href="bio.html" class="nn-link"><i class="fas fa-id-card"></i> 生平</a>
+</div>
+<div class="nn-stats"><span>访客 <span class="num" id="busuanzi_value_site_uv">--</span></span><span>访问 <span class="num" id="busuanzi_value_site_pv">--</span></span></div>
+</div>
+
+<!-- 工具卡 -->
+<div class="nn-card nn-tools">
+<div class="nn-tools-grid">
+<a href="tools/index.html" class="nn-tool"><i class="fas fa-wrench"></i><span>工具</span></a>
+<a href="games/index.html" class="nn-tool"><i class="fas fa-gamepad"></i><span>游戏</span></a>
+<a href="tools/today.html" class="nn-tool"><i class="fas fa-calendar-alt"></i><span>今天</span></a>
+<a href="tools/qrcode.html" class="nn-tool"><i class="fas fa-qrcode"></i><span>二维码</span></a>
+<a href="tools/json.html" class="nn-tool"><i class="fas fa-code"></i><span>JSON</span></a>
+<a href="tools/base64.html" class="nn-tool"><i class="fas fa-lock"></i><span>Base64</span></a>
+<a href="tools/calculator.html" class="nn-tool"><i class="fas fa-calculator"></i><span>计算</span></a>
+<a href="tools/todo.html" class="nn-tool"><i class="fas fa-tasks"></i><span>待办</span></a>
+</div>
+</div>
+
+<!-- 联系卡 -->
+<div class="nn-card nn-contacts">
+<div class="nn-contact-grid">
+<a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="nn-contact"><i class="fab fa-github"></i> GitHub</a>
+<div class="nn-contact" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ</div>
+<div class="nn-contact" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信</div>
+<a href="mailto:your_email@example.com" class="nn-contact"><i class="fas fa-envelope"></i> 邮件</a>
+<a href="bio.html" class="nn-contact"><i class="fas fa-id-card"></i> 生平</a>
+</div>
+</div>
+
+<!-- 播放器卡 -->
+<div class="nn-card nn-player">
+<div class="nn-player-top">
+<div id="vinyl-record"><img src="https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640" id="player-cover" alt="cover"></div>
+<div class="nn-player-info"><div id="player-title">等待播放</div><div id="player-artist">霓虹播放器</div></div>
+<span id="player-source-tag">OFFLINE</span>
+</div>
+<div id="progress-container" onclick="seekAudio(event)"><div id="progress-fill"></div></div>
+<div class="nn-controls">
+<button class="nn-btn" onclick="playPrev()"><i class="fas fa-step-backward"></i></button>
+<button class="nn-btn play-pause" onclick="togglePlay()"><i class="fas fa-play" id="play-pause-icon"></i></button>
+<button class="nn-btn" onclick="playNext()"><i class="fas fa-step-forward"></i></button>
+<button class="nn-btn" onclick="toggleLyricPanel()" id="lyric-trigger-btn"><i class="fas fa-microphone-alt"></i></button>
+<button class="nn-btn" onclick="toggleHistoryPanel()"><i class="fas fa-history"></i></button>
+<button class="nn-btn" onclick="toggleNightMode()" id="night-mode-btn"><i class="fas fa-moon"></i></button>
+<button class="nn-btn" onclick="openBgSettings()"><i class="fas fa-image"></i></button>
+</div>
+<div id="lyric-panel"><div class="lyric-header"><span><i class="fas fa-music"></i> LYRICS</span><span id="lyric-source-info"></span></div><div id="lyric-content"><div class="lyric-empty">NO LYRICS</div></div></div>
+<div id="history-panel"><div class="lyric-header"><span><i class="fas fa-history"></i> HISTORY</span><span id="history-count">0</span></div><div id="history-content"></div></div>
+<div id="bg-settings-panel"><div class="lyric-header"><span><i class="fas fa-image"></i> BG</span><span id="bg-status">DEFAULT</span></div><div id="bg-options"><div class="bg-option active" data-bg="default" onclick="selectBg('default')"><img src="https://img.8845.top/acg" alt="default"><div class="bg-option-label">DEFAULT</div></div><div class="bg-option" data-bg="bing" onclick="selectBingBg()"><img src="https://www.bing.com/th?id=OHR.DragonBoatFestivalY26_ZH-CN5532138555_1920x1080.jpg" alt="Bing"><div class="bg-option-label">BING</div></div></div><div id="bg-loading-msg" style="display:none;"></div><div style="padding:4px 0;"><label class="bg-upload-btn"><i class="fas fa-upload"></i> UPLOAD<input type="file" accept="image/*,video/*" onchange="uploadBgMedia(this)"></label><input type="text" class="bg-url-input" id="bg-url-input" placeholder="paste url..."><div style="margin-top:4px;"><button class="bg-reset-btn" onclick="resetBg()">RESET</button></div><div class="video-scale-selector" id="video-scale-selector" style="display:none;"><button class="video-scale-btn active" data-scale="cover" onclick="setVideoScale('cover')">COVER</button><button class="video-scale-btn" data-scale="contain" onclick="setVideoScale('contain')">CONTAIN</button></div></div></div>
+<div class="nn-search"><input type="text" id="musicKeyword" placeholder="search music..."><button class="nn-btn" id="searchQQBtn"><i class="fas fa-search"></i></button><button class="nn-btn" id="searchNeteaseBtn"><i class="fas fa-cloud"></i></button><button class="nn-btn" id="randomMusicBtn"><i class="fas fa-random"></i></button></div>
+<div class="music-list" id="musicListArea"><div class="status-msg"><i class="fas fa-headphones"></i> SEARCH TO PLAY</div></div>
+</div>
+
+</div>
+</div>
+
+<div class="footer">© 2026 xiong da · 霓虹 &nbsp;|&nbsp; <a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></div>
+<script src="common-index.js"></script>
+<script>initIndexPage('neon');</script>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</body>
+</html>

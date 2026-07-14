@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="grid">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<title>xiong da · 网格</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="tools/common.css">
+<style>
+:root{--gd-bg:#0d1f1c;--gd-surface:rgba(13,31,28,0.55);--gd-border:rgba(52,211,153,0.12);--gd-text:#e2e8f0;--gd-muted:rgba(148,163,184,0.6);--gd-accent:#34d399;--gd-accent2:#60a5fa;--gd-glow:rgba(52,211,153,0.15);--glass-bg:var(--gd-surface);--glass-border:var(--gd-border);--text-main:var(--gd-text);--text-muted:var(--gd-muted);--theme-accent:var(--gd-accent);--theme-accent2:var(--gd-accent2);}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC',sans-serif;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;display:block;background:var(--gd-bg);color:var(--gd-text);overflow-x:hidden;padding:0;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 40% 30%,rgba(52,211,153,0.05) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(96,165,250,0.04) 0%,transparent 50%);}
+#skeleton-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:var(--gd-bg);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.7s;}
+#skeleton-overlay.fade-out{opacity:0;pointer-events:none;}
+.skeleton-spinner{width:45px;height:45px;border:2px solid rgba(52,211,153,0.15);border-top-color:var(--gd-accent);border-radius:50%;animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.skeleton-text{color:var(--gd-accent);margin-top:16px;font-size:0.85rem;letter-spacing:3px;}
+
+/* 卡片网格 */
+.gd-wrap{position:relative;z-index:10;width:100%;max-width:1100px;margin:0 auto;padding:20px;animation:gdIn 0.8s ease forwards;}
+@keyframes gdIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.gd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.gd-card{background:var(--gd-surface);backdrop-filter:blur(24px) saturate(130%);-webkit-backdrop-filter:blur(24px) saturate(130%);border:1px solid var(--gd-border);border-radius:20px;padding:24px;transition:all 0.4s;}
+.gd-card:hover{border-color:rgba(52,211,153,0.25);box-shadow:0 8px 30px var(--gd-glow);}
+.gd-card-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--gd-muted);margin-bottom:14px;}
+
+/* Card 1: 时钟 */
+.gd-clock{grid-column:1;text-align:center;}
+#clock-time{font-size:2.8rem;font-weight:700;letter-spacing:2px;color:var(--gd-accent);line-height:1.2;}
+#clock-date{font-size:0.85rem;color:var(--gd-muted);margin-top:4px;}
+#weather-widget{margin-top:14px;padding-top:14px;border-top:1px solid var(--gd-border);display:flex;align-items:center;justify-content:center;gap:12px;}
+#weather-widget .weather-icon{color:var(--gd-accent);font-size:1.6rem;}
+#weather-widget .weather-temp{font-size:1.3rem;font-weight:600;color:var(--gd-text);}
+#weather-widget .weather-desc,#weather-widget .weather-city{font-size:0.75rem;color:var(--gd-muted);}
+.weather-loading{color:var(--gd-muted);font-size:0.85rem;}
+
+/* Card 2: 个人 */
+.gd-profile{grid-column:1;text-align:center;}
+.gd-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 14px;background:url('https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640') center/cover;border:2px solid rgba(52,211,153,0.3);box-shadow:0 6px 20px var(--gd-glow);}
+.gd-name{font-size:1.3rem;font-weight:700;color:var(--gd-accent);margin-bottom:8px;}
+#typed-text{font-size:0.85rem;color:var(--gd-muted);line-height:1.7;min-height:40px;margin-bottom:14px;}
+.gd-links{display:flex;flex-direction:column;gap:7px;}
+.gd-link{display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.1);border-radius:12px;color:var(--gd-text);text-decoration:none;font-size:0.82rem;transition:all 0.3s;cursor:pointer;}
+.gd-link:hover{background:rgba(52,211,153,0.12);border-color:var(--gd-accent);transform:translateX(4px);}
+.gd-link i{width:18px;text-align:center;color:var(--gd-accent);}
+.gd-stats{display:flex;justify-content:center;gap:20px;margin-top:14px;font-size:0.75rem;color:var(--gd-muted);}
+.gd-stats .num{color:var(--gd-accent);font-weight:600;}
+
+/* Card 3: 工具 */
+.gd-tools{grid-column:2;}
+.gd-tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.gd-tool{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.08);border-radius:14px;text-decoration:none;color:var(--gd-text);transition:all 0.3s;cursor:pointer;}
+.gd-tool:hover{background:rgba(52,211,153,0.1);border-color:var(--gd-accent);transform:translateY(-2px);}
+.gd-tool i{font-size:1.4rem;color:var(--gd-accent);}
+.gd-tool span{font-size:0.68rem;color:var(--gd-muted);}
+
+/* Card 4: 联系 */
+.gd-contacts{grid-column:2;}
+.gd-contact-list{display:flex;flex-direction:column;gap:7px;}
+.gd-contact{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(96,165,250,0.04);border:1px solid rgba(96,165,250,0.1);text-decoration:none;color:var(--gd-text);font-size:0.82rem;transition:all 0.3s;cursor:pointer;}
+.gd-contact:hover{background:rgba(96,165,250,0.1);border-color:var(--gd-accent2);}
+.gd-contact i{width:18px;text-align:center;color:var(--gd-accent2);}
+.gd-contacts .gd-stats{margin-top:12px;}
+
+/* Card 5: 播放器 (占2列) */
+.gd-player{grid-column:2/4;}
+.gd-player-top{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+#vinyl-record{width:64px;height:64px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid rgba(52,211,153,0.2);}
+#vinyl-record.playing{animation:vinylSpin 3.5s linear infinite;}
+@keyframes vinylSpin{to{transform:rotate(360deg);}}
+#vinyl-record img{width:100%;height:100%;object-fit:cover;}
+.gd-player-info{flex:1;min-width:0;}
+#player-title{font-size:0.95rem;color:var(--gd-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#player-artist{font-size:0.75rem;color:var(--gd-muted);margin-top:2px;}
+#player-source-tag{font-size:0.58rem;color:var(--gd-muted);border:1px solid var(--gd-border);padding:2px 6px;border-radius:8px;}
+#progress-container{width:100%;height:4px;background:rgba(52,211,153,0.1);border-radius:2px;margin:10px 0;cursor:pointer;}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--gd-accent),var(--gd-accent2));border-radius:2px;width:0%;}
+.gd-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.gd-btn{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.12);color:var(--gd-text);padding:7px 12px;border-radius:10px;cursor:pointer;font-size:0.78rem;transition:all 0.3s;}
+.gd-btn:hover{background:rgba(52,211,153,0.18);border-color:var(--gd-accent);}
+.gd-btn.play-pause{background:linear-gradient(135deg,var(--gd-accent),var(--gd-accent2));color:#fff;border:none;padding:9px 16px;}
+.gd-search{display:flex;gap:6px;margin-top:8px;}
+.gd-search input{flex:1;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1);color:var(--gd-text);padding:8px 12px;border-radius:10px;font-size:0.82rem;outline:none;}
+.gd-search input:focus{border-color:var(--gd-accent);}
+.gd-search input::placeholder{color:var(--gd-muted);}
+
+/* Card 6: 设置 */
+.gd-settings{grid-column:3;}
+.gd-setting-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:8px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.08);border-radius:12px;color:var(--gd-text);cursor:pointer;font-size:0.82rem;transition:all 0.3s;width:100%;}
+.gd-setting-btn:hover{background:rgba(52,211,153,0.1);border-color:var(--gd-accent);}
+.gd-setting-btn i{width:18px;color:var(--gd-accent);}
+
+/* 隐藏面板 */
+/* 隐藏面板 - 平滑展开 */
+#lyric-panel,#history-panel,#bg-settings-panel{max-height:0;opacity:0;overflow:hidden;margin-top:0;padding:0 14px;background:rgba(13,31,28,0.4);border:1px solid var(--gd-border);border-radius:12px;font-size:0.82rem;transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1),opacity 0.4s cubic-bezier(0.4,0,0.2,1),padding 0.4s cubic-bezier(0.4,0,0.2,1),margin-top 0.4s cubic-bezier(0.4,0,0.2,1);}
+#lyric-panel.show,#history-panel.show,#bg-settings-panel.show{max-height:300px;opacity:1;margin-top:10px;padding:14px;}
+.lyric-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.8rem;color:var(--gd-muted);}
+#lyric-content{position:relative;overflow-y:auto;max-height:220px;padding:4px 0;}
+..lyric-empty{text-align:center;color:var(--gd-muted);padding:20px;font-size:0.85rem;}
+#bg-options{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.bg-option{width:60px;height:50px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:0.6;transition:all 0.3s;}
+.bg-option.active,.bg-option:hover{border-color:var(--gd-accent);opacity:1;}
+.bg-option img{width:100%;height:100%;object-fit:cover;}
+.bg-option-label{font-size:0.65rem;text-align:center;color:var(--gd-muted);margin-top:2px;}
+.bg-url-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--gd-border);background:rgba(13,31,28,0.4);color:var(--gd-text);font-size:0.78rem;outline:none;margin-top:6px;}
+.bg-reset-btn,.bg-upload-btn{display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid var(--gd-border);background:rgba(52,211,153,0.06);color:var(--gd-muted);cursor:pointer;font-size:0.75rem;margin-top:4px;}
+.video-scale-selector{display:flex;gap:6px;margin-top:6px;}
+.video-scale-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--gd-border);background:rgba(52,211,153,0.04);color:var(--gd-muted);cursor:pointer;font-size:0.72rem;}
+.video-scale-btn.active{border-color:var(--gd-accent);color:var(--gd-accent);}
+.lyric-line{padding:6px 10px;cursor:pointer;font-size:0.82rem;color:var(--gd-muted);transition:all 0.3s;border-radius:8px;line-height:1.5;}
+.lyric-line:hover{background:rgba(52,211,153,0.06);}
+.lyric-line.active{color:var(--gd-accent);font-weight:600;font-size:0.95rem;text-shadow:0 0 10px rgba(52,211,153,0.4);}
+.lyric-line.past{opacity:0.35;}
+.music-list
+.music-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid rgba(52,211,153,0.05);cursor:pointer;transition:all 0.2s;border-radius:8px;}
+.music-item:hover,.music-item.active{background:rgba(52,211,153,0.06);}
+.music-item .music-name{font-size:0.82rem;}
+.music-item .music-artist{font-size:0.7rem;color:var(--gd-muted);}
+.status-msg{text-align:center;color:var(--gd-muted);padding:10px;font-size:0.85rem;}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:10000;background:rgba(13,31,28,0.9);backdrop-filter:blur(16px);border:1px solid var(--gd-border);border-radius:12px;padding:10px 20px;display:none;font-size:0.85rem;color:var(--gd-text);}
+#bio-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;display:none;}
+#bio-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:500;display:none;}
+#bio-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;max-height:80vh;background:rgba(13,31,28,0.95);backdrop-filter:blur(20px);border:1px solid var(--gd-border);border-radius:16px;padding:24px;z-index:501;display:none;overflow-y:auto;}
+.bio-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:0.9rem;}
+.bio-loading{text-align:center;color:var(--gd-muted);padding:30px;}
+.footer{text-align:center;padding:30px 0 20px;font-size:0.78rem;color:rgba(148,163,184,0.4);}
+.footer a{color:var(--gd-accent);text-decoration:none;}
+@media(max-width:900px){.gd-grid{grid-template-columns:repeat(2,1fr);}.gd-clock,.gd-profile{grid-column:1;}.gd-tools,.gd-contacts{grid-column:2;}.gd-player{grid-column:1/3;}.gd-settings{grid-column:1/3;}}
+@media(max-width:600px){.gd-grid{grid-template-columns:1fr;gap:14px;}.gd-clock,.gd-profile,.gd-tools,.gd-contacts,.gd-player,.gd-settings{grid-column:1;}#clock-time{font-size:2.2rem;}}
+</style>
+</head>
+<body>
+<div id="skeleton-overlay"><div class="skeleton-spinner"></div><div class="skeleton-text">✦ GRID LOADING</div></div>
+<video id="bg-video" autoplay muted loop playsinline></video><div id="bg-video-overlay"></div>
+<div id="toast"><i class="fas fa-info-circle" style="color:var(--gd-accent);"></i> <span id="toast-msg"></span></div>
+<div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--gd-accent);"></i> 作者生平</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">加载中...</div></div></div></div>
+
+<div class="gd-wrap">
+<div class="gd-grid">
+
+<!-- Card 1: 时钟天气 -->
+<div class="gd-card gd-clock">
+<div class="gd-card-title">⏱ 时间 · 天气</div>
+<div id="clock-time">00:00:00</div>
+<div id="clock-date">加载中...</div>
+<div id="weather-widget"><div class="weather-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+</div>
+
+<!-- Card 2: 个人资料 -->
+<div class="gd-card gd-profile">
+<div class="gd-avatar"></div>
+<div class="gd-name">xiong da</div>
+<div id="typed-text"></div>
+<div class="gd-links">
+<a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="gd-link"><i class="fab fa-github"></i> 代码仓库</a>
+<div class="gd-link" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ 交流</div>
+<div class="gd-link" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信联系</div>
+<a href="mailto:your_email@example.com" class="gd-link"><i class="fas fa-envelope"></i> 发送邮件</a>
+<a href="bio.html" class="gd-link"><i class="fas fa-id-card"></i> 作者生平</a>
+</div>
+<div class="gd-stats"><span>访客 <span class="num" id="busuanzi_value_site_uv">--</span></span><span>访问 <span class="num" id="busuanzi_value_site_pv">--</span></span></div>
+</div>
+
+<!-- Card 3: 快捷工具 -->
+<div class="gd-card gd-tools">
+<div class="gd-card-title">🛠 快捷工具</div>
+<div class="gd-tools-grid">
+<a href="tools/index.html" class="gd-tool"><i class="fas fa-wrench"></i><span>全部工具</span></a>
+<a href="games/index.html" class="gd-tool"><i class="fas fa-gamepad"></i><span>游戏大厅</span></a>
+<a href="tools/today.html" class="gd-tool"><i class="fas fa-calendar-alt"></i><span>历史上的今天</span></a>
+<a href="tools/qrcode.html" class="gd-tool"><i class="fas fa-qrcode"></i><span>二维码</span></a>
+<a href="tools/json.html" class="gd-tool"><i class="fas fa-code"></i><span>JSON</span></a>
+<a href="tools/base64.html" class="gd-tool"><i class="fas fa-lock"></i><span>Base64</span></a>
+<a href="tools/regex.html" class="gd-tool"><i class="fas fa-asterisk"></i><span>正则</span></a>
+<a href="tools/calculator.html" class="gd-tool"><i class="fas fa-calculator"></i><span>计算器</span></a>
+<a href="tools/timer.html" class="gd-tool"><i class="fas fa-stopwatch"></i><span>计时器</span></a>
+<a href="tools/todo.html" class="gd-tool"><i class="fas fa-tasks"></i><span>待办</span></a>
+<a href="tools/notes.html" class="gd-tool"><i class="fas fa-sticky-note"></i><span>便签</span></a>
+<a href="tools/color.html" class="gd-tool"><i class="fas fa-palette"></i><span>颜色</span></a>
+</div>
+</div>
+
+<!-- Card 4: 联系方式 -->
+<div class="gd-card gd-contacts">
+<div class="gd-card-title">📫 联系方式</div>
+<div class="gd-contact-list">
+<a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="gd-contact"><i class="fab fa-github"></i> GitHub</a>
+<div class="gd-contact" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ 交流</div>
+<div class="gd-contact" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信联系</div>
+<a href="mailto:your_email@example.com" class="gd-contact"><i class="fas fa-envelope"></i> 发送邮件</a>
+<a href="bio.html" class="gd-contact"><i class="fas fa-id-card"></i> 作者生平</a>
+</div>
+<div class="gd-stats"><span>访客 <span class="num">--</span></span><span>访问 <span class="num">--</span></span></div>
+</div>
+
+<!-- Card 5: 音乐播放器 (占2列) -->
+<div class="gd-card gd-player">
+<div class="gd-card-title">🎵 音乐播放器</div>
+<div class="gd-player-top">
+<div class="gd-vinyl" id="vinyl-record"><img src="https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640" id="player-cover" alt="cover"></div>
+<div class="gd-player-info"><div id="player-title">等待播放</div><div id="player-artist">网格播放器</div></div>
+<span id="player-source-tag">待机</span>
+</div>
+<div id="progress-container" onclick="seekAudio(event)"><div id="progress-fill"></div></div>
+<div class="gd-controls">
+<button class="gd-btn" onclick="playPrev()"><i class="fas fa-step-backward"></i></button>
+<button class="gd-btn play-pause" onclick="togglePlay()"><i class="fas fa-play" id="play-pause-icon"></i></button>
+<button class="gd-btn" onclick="playNext()"><i class="fas fa-step-forward"></i></button>
+<button class="gd-btn" onclick="toggleLyricPanel()" id="lyric-trigger-btn"><i class="fas fa-microphone-alt"></i></button>
+<button class="gd-btn" onclick="toggleHistoryPanel()"><i class="fas fa-history"></i></button>
+<button class="gd-btn" onclick="toggleNightMode()" id="night-mode-btn"><i class="fas fa-moon"></i></button>
+<button class="gd-btn" onclick="openBgSettings()"><i class="fas fa-image"></i></button>
+</div>
+<div id="lyric-panel"><div class="lyric-header"><span><i class="fas fa-music"></i> 歌词</span><span id="lyric-source-info"></span></div><div id="lyric-content"><div class="lyric-empty">暂无歌词</div></div></div>
+<div id="history-panel"><div class="lyric-header"><span><i class="fas fa-history"></i> 播放历史</span><span id="history-count">0</span></div><div id="history-content"></div></div>
+<div id="bg-settings-panel"><div class="lyric-header"><span><i class="fas fa-image"></i> 背景设置</span><span id="bg-status">默认</span></div><div id="bg-options"><div class="bg-option active" data-bg="default" onclick="selectBg('default')"><img src="https://img.8845.top/acg" alt="默认"><div class="bg-option-label">默认</div></div><div class="bg-option" data-bg="bing" onclick="selectBingBg()"><img src="https://www.bing.com/th?id=OHR.DragonBoatFestivalY26_ZH-CN5532138555_1920x1080.jpg" alt="Bing"><div class="bg-option-label">Bing</div></div></div><div id="bg-loading-msg" style="display:none;"></div><div style="padding:4px 0;"><label class="bg-upload-btn"><i class="fas fa-upload"></i> 上传<input type="file" accept="image/*,video/*" onchange="uploadBgMedia(this)"></label><input type="text" class="bg-url-input" id="bg-url-input" placeholder="粘贴链接..."><div style="margin-top:4px;"><button class="bg-reset-btn" onclick="resetBg()">恢复默认</button></div><div class="video-scale-selector" id="video-scale-selector" style="display:none;"><button class="video-scale-btn active" data-scale="cover" onclick="setVideoScale('cover')">全屏</button><button class="video-scale-btn" data-scale="contain" onclick="setVideoScale('contain')">等比</button></div></div></div>
+<div class="gd-search"><input type="text" id="musicKeyword" placeholder="搜索音乐..."><button class="gd-btn" id="searchQQBtn"><i class="fas fa-search"></i></button><button class="gd-btn" id="searchNeteaseBtn"><i class="fas fa-cloud"></i></button><button class="gd-btn" id="randomMusicBtn"><i class="fas fa-random"></i></button></div>
+<div class="music-list" id="musicListArea"><div class="status-msg"><i class="fas fa-headphones"></i> 搜索你想听的音乐吧</div></div>
+</div>
+
+<!-- Card 6: 设置 -->
+<div class="gd-card gd-settings">
+<div class="gd-card-title">⚙️ 设置</div>
+<button class="gd-setting-btn" onclick="toggleNightMode()"><i class="fas fa-moon"></i> 夜间模式</button>
+<button class="gd-setting-btn" onclick="openBgSettings()"><i class="fas fa-image"></i> 背景设置</button>
+<button class="gd-setting-btn" onclick="document.querySelector('#lyric-panel')?.classList.toggle('show')"><i class="fas fa-microphone-alt"></i> 歌词面板</button>
+<button class="gd-setting-btn" onclick="document.querySelector('#history-panel')?.classList.toggle('show')"><i class="fas fa-history"></i> 播放历史</button>
+</div>
+
+</div>
+</div>
+
+<div class="footer">© 2026 xiong da · 网格 &nbsp;|&nbsp; <a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></div>
+<script src="common-index.js"></script>
+<script>initIndexPage('grid');</script>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</body>
+</html>

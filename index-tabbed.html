@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="tabbed">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<title>xiong da · 标签</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="tools/common.css">
+<style>
+:root{--tb-bg:#1a0a2e;--tb-surface:rgba(26,10,46,0.65);--tb-border:rgba(251,146,60,0.15);--tb-text:#f8f0e6;--tb-muted:rgba(200,180,200,0.6);--tb-accent:#f97316;--tb-accent2:#e11d48;--tb-glow:rgba(251,146,60,0.2);--glass-bg:var(--tb-surface);--glass-border:var(--tb-border);--text-main:var(--tb-text);--text-muted:var(--tb-muted);--theme-accent:var(--tb-accent);--theme-accent2:var(--tb-accent2);}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC',sans-serif;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;display:block;background:var(--tb-bg);color:var(--tb-text);overflow-x:hidden;padding:0;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,rgba(251,146,60,0.05) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(225,29,72,0.04) 0%,transparent 50%);}
+#skeleton-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:var(--tb-bg);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.7s;}
+#skeleton-overlay.fade-out{opacity:0;pointer-events:none;}
+.skeleton-spinner{width:45px;height:45px;border:2px solid rgba(251,146,60,0.15);border-top-color:var(--tb-accent);border-radius:50%;animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.skeleton-text{color:var(--tb-accent);margin-top:16px;font-size:0.85rem;letter-spacing:3px;}
+
+/* 标签页布局 */
+.tb-wrap{position:relative;z-index:10;width:100%;max-width:700px;margin:0 auto;padding:20px;}
+
+/* 标签栏 */
+.tb-tabs{display:flex;gap:8px;margin-bottom:24px;padding:8px;background:rgba(26,10,46,0.7);backdrop-filter:blur(20px);border:1px solid var(--tb-border);border-radius:20px;position:sticky;top:16px;z-index:100;}
+.tb-tab{flex:1;padding:12px 8px;border-radius:14px;border:none;background:transparent;color:var(--tb-muted);font-size:0.85rem;cursor:pointer;transition:all 0.3s;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
+.tb-tab:hover{color:var(--tb-text);background:rgba(251,146,60,0.08);}
+.tb-tab.active{background:linear-gradient(135deg,var(--tb-accent),var(--tb-accent2));color:#fff;box-shadow:0 4px 16px rgba(251,146,60,0.3);}
+
+/* 内容容器 */
+.tb-content{position:relative;min-height:400px;}
+.tb-section{position:absolute;top:0;left:0;width:100%;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px);transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1),transform 0.45s cubic-bezier(0.4,0,0.2,1),visibility 0s 0.45s;}
+.tb-section.active{position:relative;opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1),transform 0.45s cubic-bezier(0.4,0,0.2,1),visibility 0s 0s;}
+
+/* 卡片 */
+.tb-card{background:var(--tb-surface);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border:1px solid var(--tb-border);border-radius:20px;padding:30px;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
+
+/* Tab 1 - 时钟 */
+.tb-clock-section{text-align:center;padding:40px 30px;}
+#clock-time{font-size:3.2rem;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,var(--tb-accent),var(--tb-accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:6px;}
+#clock-date{font-size:0.9rem;color:var(--tb-muted);letter-spacing:2px;margin-bottom:24px;}
+#weather-widget{display:flex;align-items:center;justify-content:center;gap:16px;padding-top:20px;border-top:1px solid var(--tb-border);}
+#weather-widget .weather-icon{color:var(--tb-accent);font-size:2.2rem;}
+#weather-widget .weather-temp{font-size:1.6rem;font-weight:600;}
+#weather-widget .weather-desc,#weather-widget .weather-city{font-size:0.8rem;color:var(--tb-muted);}
+.weather-loading{color:var(--tb-muted);font-size:0.85rem;}
+
+/* Tab 2 - 个人 */
+.tb-profile-section{text-align:center;}
+.tb-avatar{width:100px;height:100px;border-radius:50%;margin:0 auto 18px;background:url('https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640') center/cover;border:3px solid rgba(251,146,60,0.3);box-shadow:0 8px 25px rgba(251,146,60,0.15);}
+.tb-name{font-size:1.6rem;font-weight:700;color:var(--tb-accent);margin-bottom:12px;}
+#typed-text{font-size:0.88rem;color:var(--tb-muted);line-height:1.8;min-height:50px;margin-bottom:20px;}
+.tb-links{display:flex;flex-direction:column;gap:8px;}
+.tb-link{display:flex;align-items:center;gap:12px;padding:11px 16px;background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.1);border-radius:14px;color:var(--tb-text);text-decoration:none;font-size:0.85rem;transition:all 0.3s;cursor:pointer;}
+.tb-link:hover{background:rgba(251,146,60,0.12);border-color:var(--tb-accent);transform:translateX(5px);}
+.tb-link i{width:20px;text-align:center;color:var(--tb-accent);}
+.tb-stats{display:flex;justify-content:center;gap:25px;margin-top:18px;font-size:0.78rem;color:var(--tb-muted);}
+.tb-stats .num{color:var(--tb-accent);font-weight:700;}
+
+/* Tab 3 - 工具 */
+.tb-tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.tb-tool{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;background:rgba(251,146,60,0.03);border:1px solid rgba(251,146,60,0.08);border-radius:16px;text-decoration:none;color:var(--tb-text);transition:all 0.3s;cursor:pointer;}
+.tb-tool:hover{background:rgba(251,146,60,0.08);border-color:var(--tb-accent);transform:translateY(-3px);}
+.tb-tool i{font-size:1.5rem;color:var(--tb-accent);}
+.tb-tool span{font-size:0.72rem;color:var(--tb-muted);}
+
+/* Tab 4 - 音乐 */
+.tb-player-section{padding:25px;}
+.tb-player-top{display:flex;align-items:center;gap:16px;margin-bottom:12px;}
+#vinyl-record{width:70px;height:70px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid rgba(251,146,60,0.2);}
+#vinyl-record.playing{animation:vinylSpin 3.5s linear infinite;}
+@keyframes vinylSpin{to{transform:rotate(360deg);}}
+#vinyl-record img{width:100%;height:100%;object-fit:cover;}
+.tb-player-info{flex:1;min-width:0;}
+#player-title{font-size:1rem;color:var(--tb-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#player-artist{font-size:0.78rem;color:var(--tb-muted);margin-top:3px;}
+#player-source-tag{font-size:0.58rem;color:var(--tb-muted);border:1px solid var(--tb-border);padding:2px 6px;border-radius:8px;}
+#progress-container{width:100%;height:4px;background:rgba(251,146,60,0.1);border-radius:2px;margin:12px 0;cursor:pointer;}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--tb-accent),var(--tb-accent2));border-radius:2px;width:0%;}
+.tb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tb-btn{background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.12);color:var(--tb-text);padding:8px 14px;border-radius:12px;cursor:pointer;font-size:0.8rem;transition:all 0.3s;}
+.tb-btn:hover{background:rgba(251,146,60,0.14);border-color:var(--tb-accent);}
+.tb-btn.play-pause{background:linear-gradient(135deg,var(--tb-accent),var(--tb-accent2));color:#fff;border:none;padding:10px 18px;}
+.tb-search{display:flex;gap:8px;margin-top:10px;}
+.tb-search input{flex:1;background:rgba(251,146,60,0.03);border:1px solid rgba(251,146,60,0.1);color:var(--tb-text);padding:9px 14px;border-radius:12px;font-size:0.85rem;outline:none;}
+.tb-search input:focus{border-color:var(--tb-accent);}
+.tb-search input::placeholder{color:var(--tb-muted);}
+/* 隐藏面板 - 平滑展开 */
+#lyric-panel,#history-panel,#bg-settings-panel{max-height:0;opacity:0;overflow:hidden;margin-top:0;padding:0 14px;background:rgba(26,10,46,0.4);border:1px solid var(--tb-border);border-radius:12px;font-size:0.82rem;transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1),opacity 0.4s cubic-bezier(0.4,0,0.2,1),padding 0.4s cubic-bezier(0.4,0,0.2,1),margin-top 0.4s cubic-bezier(0.4,0,0.2,1);}
+#lyric-panel.show,#history-panel.show,#bg-settings-panel.show{max-height:300px;opacity:1;margin-top:10px;padding:14px;}
+.lyric-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.8rem;color:var(--tb-muted);}
+#lyric-content{position:relative;overflow-y:auto;max-height:220px;padding:4px 0;}
+..lyric-empty{text-align:center;color:var(--tb-muted);padding:20px;font-size:0.85rem;}
+#bg-options{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.bg-option{width:60px;height:50px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:0.6;transition:all 0.3s;}
+.bg-option.active,.bg-option:hover{border-color:var(--tb-accent);opacity:1;}
+.bg-option img{width:100%;height:100%;object-fit:cover;}
+.bg-option-label{font-size:0.65rem;text-align:center;color:var(--tb-muted);margin-top:2px;}
+.bg-url-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--tb-border);background:rgba(26,10,46,0.4);color:var(--tb-text);font-size:0.78rem;outline:none;margin-top:6px;}
+.bg-reset-btn,.bg-upload-btn{display:inline-block;padding:6px 12px;border-radius:6px;border:1px solid var(--tb-border);background:rgba(251,146,60,0.04);color:var(--tb-muted);cursor:pointer;font-size:0.75rem;margin-top:4px;}
+.video-scale-selector{display:flex;gap:6px;margin-top:6px;}
+.video-scale-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--tb-border);background:rgba(251,146,60,0.03);color:var(--tb-muted);cursor:pointer;font-size:0.72rem;}
+.video-scale-btn.active{border-color:var(--tb-accent);color:var(--tb-accent);}
+.lyric-line{padding:6px 10px;cursor:pointer;font-size:0.82rem;color:var(--tb-muted);transition:all 0.3s;border-radius:8px;line-height:1.5;}
+.lyric-line:hover{background:rgba(251,146,60,0.06);}
+.lyric-line.active{color:var(--tb-accent);font-weight:600;font-size:0.95rem;text-shadow:0 0 10px rgba(251,146,60,0.4);}
+.lyric-line.past{opacity:0.35;}
+.music-list
+.music-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(251,146,60,0.04);cursor:pointer;transition:all 0.2s;border-radius:10px;}
+.music-item:hover,.music-item.active{background:rgba(251,146,60,0.05);}
+.music-item .music-name{font-size:0.85rem;}
+.music-item .music-artist{font-size:0.72rem;color:var(--tb-muted);}
+.status-msg{text-align:center;color:var(--tb-muted);padding:10px;font-size:0.85rem;}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:10000;background:rgba(26,10,46,0.9);backdrop-filter:blur(16px);border:1px solid var(--tb-border);border-radius:12px;padding:10px 20px;display:none;font-size:0.85rem;color:var(--tb-text);}
+#bio-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;display:none;}
+#bio-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:500;display:none;}
+#bio-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;max-height:80vh;background:rgba(26,10,46,0.95);backdrop-filter:blur(20px);border:1px solid var(--tb-border);border-radius:16px;padding:24px;z-index:501;display:none;overflow-y:auto;}
+.bio-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:0.9rem;}
+.bio-body .bio-loading{text-align:center;color:var(--tb-muted);padding:30px;}
+.footer{text-align:center;padding:30px 0 20px;font-size:0.78rem;color:rgba(200,180,200,0.35);}
+.footer a{color:var(--tb-accent);text-decoration:none;}
+@media(max-width:600px){.tb-tab{font-size:0.72rem;padding:10px 4px;}#clock-time{font-size:2.4rem;}.tb-tools-grid{grid-template-columns:repeat(2,1fr);}.tb-wrap{padding:12px;}}
+</style>
+</head>
+<body>
+<div id="skeleton-overlay"><div class="skeleton-spinner"></div><div class="skeleton-text">✦ TABBED LOADING</div></div>
+<video id="bg-video" autoplay muted loop playsinline></video><div id="bg-video-overlay"></div>
+<div id="toast"><i class="fas fa-info-circle" style="color:var(--tb-accent);"></i> <span id="toast-msg"></span></div>
+<div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--tb-accent);"></i> 作者生平</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">加载中...</div></div></div></div>
+
+<script>
+// 标签切换
+function switchTab(tabId){
+document.querySelectorAll('.tb-tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.tb-section').forEach(s=>s.classList.remove('active'));
+document.querySelector(`.tb-tab[data-tab="${tabId}"]`).classList.add('active');
+document.getElementById(`section-${tabId}`).classList.add('active');
+// 切回播放器标签时重新同步歌词滚动
+if(tabId==='player' && typeof updateLyricSync==='function'){setTimeout(updateLyricSync,100);}
+}
+</script>
+
+<div class="tb-wrap">
+<div class="tb-tabs">
+<button class="tb-tab active" data-tab="clock" onclick="switchTab('clock')"><i class="fas fa-clock"></i> 时钟</button>
+<button class="tb-tab" data-tab="profile" onclick="switchTab('profile')"><i class="fas fa-user"></i> 个人</button>
+<button class="tb-tab" data-tab="tools" onclick="switchTab('tools')"><i class="fas fa-wrench"></i> 工具</button>
+<button class="tb-tab" data-tab="player" onclick="switchTab('player')"><i class="fas fa-music"></i> 音乐</button>
+</div>
+
+<div class="tb-content">
+
+<!-- 时钟标签页 -->
+<div class="tb-section active" id="section-clock">
+<div class="tb-card tb-clock-section">
+<div id="clock-time">00:00:00</div>
+<div id="clock-date">加载中...</div>
+<div id="weather-widget"><div class="weather-loading"><i class="fas fa-spinner fa-spin"></i> 获取天气...</div></div>
+</div>
+</div>
+
+<!-- 个人标签页 -->
+<div class="tb-section" id="section-profile">
+<div class="tb-card tb-profile-section">
+<div class="tb-avatar"></div>
+<div class="tb-name">xiong da</div>
+<div id="typed-text"></div>
+<div class="tb-links">
+<a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="tb-link"><i class="fab fa-github"></i> 代码仓库</a>
+<div class="tb-link" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ 交流</div>
+<div class="tb-link" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信联系</div>
+<a href="mailto:your_email@example.com" class="tb-link"><i class="fas fa-envelope"></i> 发送邮件</a>
+<a href="bio.html" class="tb-link"><i class="fas fa-id-card"></i> 作者生平</a>
+</div>
+<div class="tb-stats"><span>访客 <span class="num" id="busuanzi_value_site_uv">--</span></span><span>访问 <span class="num" id="busuanzi_value_site_pv">--</span></span></div>
+</div>
+</div>
+
+<!-- 工具标签页 -->
+<div class="tb-section" id="section-tools">
+<div class="tb-card">
+<div class="tb-tools-grid">
+<a href="tools/index.html" class="tb-tool"><i class="fas fa-wrench"></i><span>全部工具</span></a>
+<a href="games/index.html" class="tb-tool"><i class="fas fa-gamepad"></i><span>游戏大厅</span></a>
+<a href="tools/today.html" class="tb-tool"><i class="fas fa-calendar-alt"></i><span>历史上的今天</span></a>
+<a href="tools/qrcode.html" class="tb-tool"><i class="fas fa-qrcode"></i><span>二维码</span></a>
+<a href="tools/json.html" class="tb-tool"><i class="fas fa-code"></i><span>JSON</span></a>
+<a href="tools/base64.html" class="tb-tool"><i class="fas fa-lock"></i><span>Base64</span></a>
+<a href="tools/regex.html" class="tb-tool"><i class="fas fa-asterisk"></i><span>正则</span></a>
+<a href="tools/calculator.html" class="tb-tool"><i class="fas fa-calculator"></i><span>计算器</span></a>
+<a href="tools/timer.html" class="tb-tool"><i class="fas fa-stopwatch"></i><span>计时器</span></a>
+<a href="tools/todo.html" class="tb-tool"><i class="fas fa-tasks"></i><span>待办</span></a>
+<a href="tools/notes.html" class="tb-tool"><i class="fas fa-sticky-note"></i><span>便签</span></a>
+<a href="tools/color.html" class="tb-tool"><i class="fas fa-palette"></i><span>颜色</span></a>
+</div>
+</div>
+</div>
+
+<!-- 音乐标签页 -->
+<div class="tb-section" id="section-player">
+<div class="tb-card tb-player-section">
+<div class="tb-player-top">
+<div id="vinyl-record"><img src="https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640" id="player-cover" alt="cover"></div>
+<div class="tb-player-info"><div id="player-title">等待播放</div><div id="player-artist">标签播放器</div></div>
+<span id="player-source-tag">待机</span>
+</div>
+<div id="progress-container" onclick="seekAudio(event)"><div id="progress-fill"></div></div>
+<div class="tb-controls">
+<button class="tb-btn" onclick="playPrev()"><i class="fas fa-step-backward"></i></button>
+<button class="tb-btn play-pause" onclick="togglePlay()"><i class="fas fa-play" id="play-pause-icon"></i></button>
+<button class="tb-btn" onclick="playNext()"><i class="fas fa-step-forward"></i></button>
+<button class="tb-btn" onclick="toggleLyricPanel()" id="lyric-trigger-btn"><i class="fas fa-microphone-alt"></i></button>
+<button class="tb-btn" onclick="toggleHistoryPanel()"><i class="fas fa-history"></i></button>
+<button class="tb-btn" onclick="toggleNightMode()" id="night-mode-btn"><i class="fas fa-moon"></i></button>
+<button class="tb-btn" onclick="openBgSettings()"><i class="fas fa-image"></i></button>
+</div>
+<div id="lyric-panel"><div class="lyric-header"><span><i class="fas fa-music"></i> 歌词</span><span id="lyric-source-info"></span></div><div id="lyric-content"><div class="lyric-empty">暂无歌词</div></div></div>
+<div id="history-panel"><div class="lyric-header"><span><i class="fas fa-history"></i> 播放历史</span><span id="history-count">0</span></div><div id="history-content"></div></div>
+<div id="bg-settings-panel"><div class="lyric-header"><span><i class="fas fa-image"></i> 背景设置</span><span id="bg-status">默认</span></div><div id="bg-options"><div class="bg-option active" data-bg="default" onclick="selectBg('default')"><img src="https://img.8845.top/acg" alt="默认"><div class="bg-option-label">默认</div></div><div class="bg-option" data-bg="bing" onclick="selectBingBg()"><img src="https://www.bing.com/th?id=OHR.DragonBoatFestivalY26_ZH-CN5532138555_1920x1080.jpg" alt="Bing"><div class="bg-option-label">Bing</div></div></div><div id="bg-loading-msg" style="display:none;"></div><div style="padding:4px 0;"><label class="bg-upload-btn"><i class="fas fa-upload"></i> 上传<input type="file" accept="image/*,video/*" onchange="uploadBgMedia(this)"></label><input type="text" class="bg-url-input" id="bg-url-input" placeholder="粘贴链接..."><div style="margin-top:4px;"><button class="bg-reset-btn" onclick="resetBg()">恢复默认</button></div><div class="video-scale-selector" id="video-scale-selector" style="display:none;"><button class="video-scale-btn active" data-scale="cover" onclick="setVideoScale('cover')">全屏</button><button class="video-scale-btn" data-scale="contain" onclick="setVideoScale('contain')">等比</button></div></div></div>
+<div class="tb-search"><input type="text" id="musicKeyword" placeholder="搜索音乐..."><button class="tb-btn" id="searchQQBtn"><i class="fas fa-search"></i></button><button class="tb-btn" id="searchNeteaseBtn"><i class="fas fa-cloud"></i></button><button class="tb-btn" id="randomMusicBtn"><i class="fas fa-random"></i></button></div>
+<div class="music-list" id="musicListArea"><div class="status-msg"><i class="fas fa-headphones"></i> 搜索你想听的音乐吧</div></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="footer">© 2026 xiong da · 标签 &nbsp;|&nbsp; <a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></div>
+<script src="common-index.js"></script>
+<script>initIndexPage('tabbed');</script>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</body>
+</html>
