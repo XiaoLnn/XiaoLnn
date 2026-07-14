@@ -269,31 +269,47 @@ function initSearchBindings() {
 }
 
 // ================= 天气系统 =================
+function getBrowserLocation(timeout=6000) {
+    return new Promise((resolve,reject)=>{
+        if(!navigator.geolocation) return reject(new Error('浏览器不支持定位'));
+        navigator.geolocation.getCurrentPosition(
+            p=>resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,city:'当前位置'}),
+            e=>reject(new Error(e.message||'定位未授权')),
+            {enableHighAccuracy:false,timeout,maximumAge:30*60*1000}
+        );
+    });
+}
 async function loadWeather() {
     const widget=document.getElementById('weather-widget'); if(!widget)return;
     try{
-        const ipResp=await fetch('https://v.api.aa1.cn/api/myip/index.php?aa1=text');
-        const ipText=(await ipResp.text()).trim();
-        printLog('IP获取响应',ipText,false,'weather');
-        const cityResp=await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${ipText}`);
-        const cityData=await cityResp.json();
-        printLog('城市信息响应',cityData,false,'weather');
-        if(cityData.code!=='0'||!cityData.data) throw new Error('获取城市信息失败');
-        const cityName=cityData.data.CITY_CN||'北京';
-        const wUrl=`https://api.xunjinlu.fun/api/weather/v2.php?city=${encodeURIComponent(cityName)}`;
-        const proxyUrl=`https://cros.xiongdaa.me/?url=${encodeURIComponent(wUrl)}`;
-        const wResp=await fetch(proxyUrl); const wData=await wResp.json();
+        let loc;
+        try{loc=await getBrowserLocation();}
+        catch(e){loc={latitude:39.9042,longitude:116.4074,city:'北京（默认）'};printLog('定位不可用，使用默认城市',e.message,false,'weather');}
+        const params=new URLSearchParams({latitude:String(loc.latitude),longitude:String(loc.longitude),current:'temperature_2m,weather_code',daily:'temperature_2m_max,temperature_2m_min',timezone:'auto',forecast_days:'1'});
+        const wResp=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+        if(!wResp.ok)throw new Error(`天气服务 HTTP ${wResp.status}`);
+        const wData=await wResp.json();
         printLog('天气数据响应',wData,false,'weather');
-        if(wData.code!==200||!wData.data) throw new Error('获取天气数据失败');
-        const cur=wData.data.current, fc=wData.data.forecast?.[0];
-        const temp=cur.temperature||'25', desc=fc?fc.type:(cur.quality||'未知');
-        const tempRange=fc?` / 高温${fc.high.replace('高温 ','')} 低温${fc.low.replace('低温 ','')}`:'';
-        const cityDisplay=wData.data.city_info?wData.data.city_info.city:cityName;
-        const updateInfo=wData.data.update_time?` 更新于${wData.data.update_time.split(' ')[1]}`:'';
-        const wMap={'晴':'fa-sun','多云':'fa-cloud-sun','阴':'fa-cloud','小雨':'fa-cloud-showers-heavy','中雨':'fa-umbrella','大雨':'fa-umbrella','暴雨':'fa-umbrella','雪':'fa-snowflake','雾':'fa-smog','霾':'fa-smog'};
-        let icon='fa-cloud'; for(const[k,v]of Object.entries(wMap)){if(desc.includes(k)){icon=v;break;}}
-        widget.innerHTML=`<div class="weather-icon"><i class="fas ${icon}"></i></div><div class="weather-info"><div class="weather-temp">${temp}°C${tempRange}</div><div class="weather-desc">${desc}${updateInfo}</div><div class="weather-city"><i class="fas fa-map-marker-alt"></i> ${cityDisplay}</div></div>`;
-    }catch(e){printLog('天气获取失败',e.message,true,'weather');widget.innerHTML='<div class="weather-loading"><i class="fas fa-cloud"></i> 天气加载失败</div>';}
+        if(!wData.current)throw new Error('天气服务返回数据不完整');
+        const code=Number(wData.current.weather_code),temp=Math.round(wData.current.temperature_2m);
+        const codes={0:['晴','fa-sun'],1:['大致晴朗','fa-sun'],2:['局部多云','fa-cloud-sun'],3:['阴','fa-cloud'],45:['雾','fa-smog'],48:['雾凇','fa-smog'],51:['小毛毛雨','fa-cloud-rain'],53:['毛毛雨','fa-cloud-rain'],55:['强毛毛雨','fa-cloud-showers-heavy'],61:['小雨','fa-cloud-rain'],63:['中雨','fa-cloud-showers-heavy'],65:['大雨','fa-umbrella'],71:['小雪','fa-snowflake'],73:['中雪','fa-snowflake'],75:['大雪','fa-snowflake'],80:['阵雨','fa-cloud-showers-heavy'],81:['中等阵雨','fa-cloud-showers-heavy'],82:['强阵雨','fa-umbrella'],95:['雷暴','fa-bolt'],96:['雷暴伴冰雹','fa-bolt'],99:['强雷暴伴冰雹','fa-bolt']};
+        const [desc,icon]=codes[code]||['未知天气','fa-cloud'];
+        const high=Math.round(wData.daily?.temperature_2m_max?.[0]),low=Math.round(wData.daily?.temperature_2m_min?.[0]);
+        const tempRange=Number.isFinite(high)&&Number.isFinite(low)?` / ${low}~${high}°C`:'';
+        const updateInfo=wData.current.time?` · ${wData.current.time.slice(11)} 更新`:'';
+        widget.innerHTML=`<div class="weather-icon"><i class="fas ${icon}"></i></div><div class="weather-info"><div class="weather-temp">${temp}°C${tempRange}</div><div class="weather-desc">${desc}${updateInfo}</div><div class="weather-city"><i class="fas fa-map-marker-alt"></i> ${loc.city}</div></div>`;
+    }catch(e){printLog('天气获取失败',e.message,true,'weather');widget.innerHTML='<div class="weather-loading"><i class="fas fa-cloud"></i> 天气加载失败，请稍后重试</div>';}
+}
+
+// ================= 网站计数器 =================
+function initSiteCounter() {
+    const pv=document.getElementById('busuanzi_value_site_pv'),uv=document.getElementById('busuanzi_value_site_uv');
+    if(!pv&&!uv)return;
+    const script=document.createElement('script');
+    script.defer=true;script.src='https://events.vercount.one/js';
+    script.onerror=()=>{if(pv)pv.textContent='暂不可用';if(uv)uv.textContent='暂不可用';printLog('网站计数器加载失败','Vercount 脚本加载失败',true,'api');};
+    document.head.appendChild(script);
+    setTimeout(()=>{if(pv&&(!pv.textContent.trim()||pv.textContent.trim()==='--'))pv.textContent='暂不可用';if(uv&&(!uv.textContent.trim()||uv.textContent.trim()==='--'))uv.textContent='暂不可用';},8000);
 }
 
 // ================= 点击特效 =================
@@ -503,6 +519,7 @@ function initIndexPage(themeId) {
     initNightModeLocal();
     initBgLocal();
     loadWeather();
+    initSiteCounter();
     loadPlayHistory();
     initSearchBindings();
     initLyricScroll();
