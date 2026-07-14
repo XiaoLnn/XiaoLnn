@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>xiong da · 水墨</title>
+    <title>Lang Nie · 水墨</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="tools/common.css">
@@ -62,7 +62,7 @@
         .ink-profile { text-align:center; padding:40px 30px 35px; }
         .ink-avatar {
             width:90px; height:90px; border-radius:50%; margin:0 auto 20px;
-            background:url('https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640') center/cover;
+            background:url('https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg') center/cover;
             border:2px solid rgba(212,165,116,0.3); box-shadow:0 8px 25px rgba(0,0,0,0.3);
         }
         .ink-name { font-family:'ZCOOL XiaoWei','Noto Serif SC',serif; font-size:1.8rem; letter-spacing:8px; color:var(--ink-accent); margin-bottom:12px; }
@@ -318,7 +318,7 @@
         <!-- 个人资料 -->
         <div class="ink-card ink-profile">
             <div class="ink-avatar"></div>
-            <div class="ink-name">xiong da</div>
+            <div class="ink-name">Lang Nie</div>
             <div class="ink-hitokoto"><span id="typed-text"></span><span class="ink-cursor"></span></div>
         </div>
 
@@ -336,7 +336,7 @@
         <!-- 音乐播放 -->
         <div class="ink-card ink-player-wrap">
             <div class="ink-player-header">
-                <div class="ink-vinyl" id="vinyl-record"><img src="https://q1.qlogo.cn/g?b=qq&nk=YOUR_QQ_HERE&s=640" id="player-cover" alt="cover"></div>
+                <div class="ink-vinyl" id="vinyl-record"><img src="https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg" id="player-cover" alt="cover"></div>
                 <div class="ink-player-info">
                     <div class="ink-player-title" id="player-title">等待播放</div>
                     <div class="ink-player-artist" id="player-artist">水墨播放器</div>
@@ -396,10 +396,10 @@
         <!-- 联系方式 -->
         <div class="ink-card" style="padding:20px;">
             <div class="ink-contacts">
-                <a href="https://github.com/YOUR_GITHUB_USERNAME" target="_blank" class="ink-contact"><i class="fab fa-github"></i> 代码仓库</a>
-                <div class="ink-contact" onclick="openApp('qq','YOUR_QQ_HERE')"><i class="fab fa-qq"></i> QQ 交流</div>
-                <div class="ink-contact" onclick="openApp('wechat','YOUR_WECHAT_HERE')"><i class="fab fa-weixin"></i> 微信联系</div>
-                <a href="mailto:your_email@example.com" class="ink-contact"><i class="fas fa-envelope"></i> 发送邮件</a>
+                <a href="https://github.com/XiaoLnn/" target="_blank" class="ink-contact"><i class="fab fa-github"></i> 代码仓库</a>
+                <div class="ink-contact" onclick="openApp('qq','1652939626')"><i class="fab fa-qq"></i> QQ 交流</div>
+                <div class="ink-contact" onclick="openApp('wechat','np85160')"><i class="fab fa-weixin"></i> 微信联系</div>
+                <a href="mailto:1652939626@qq.com" class="ink-contact"><i class="fas fa-envelope"></i> 发送邮件</a>
                 <a href="bio.html" class="ink-contact"><i class="fas fa-id-card"></i> 作者生平</a>
             </div>
             <div class="ink-stats"><span>访客 <span class="num" id="busuanzi_value_site_uv">--</span></span><span>访问 <span class="num" id="busuanzi_value_site_pv">--</span></span></div>
@@ -412,7 +412,25 @@
     <script src="common-index.js"></script>
     <script>initIndexPage('ink');</script>
 
-    <div class="author-credit"><p>© 2026 xiong da · 水墨</p><p><a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
+    <div class="author-credit"><p>© 2026 Lang Nie · 水墨</p><p><a href="https://github.com/XiaoLnn//Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script>
+/* Lang Nie custom cover sync */
+(function(){
+ const fallback="https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg";
+ window.updateSongCover=function(song){
+   if(!song)return;
+   const cover=song.cover||song.pic||song.picUrl||
+     (song.album&&(song.album.picUrl||song.album.cover))||fallback;
+   document.querySelectorAll("#player-cover,.ink-vinyl img,.nn-player img,.music-cover")
+   .forEach(function(i){i.src=cover;});
+ };
+ document.addEventListener("musicChanged",function(e){
+   updateSongCover(e.detail);
+ });
+})();
+</script>
+
 </body>
 </html>
