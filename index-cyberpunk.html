@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Lang Nie // CYBERPUNK</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="tools/common.css">
     <style>
         /* ===== 赛博朋克主题 CSS ===== */
@@ -489,11 +489,18 @@
     <div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--cp-cyan);"></i> BIO</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">LOADING...</div></div></div></div>
 
     <!-- 共享脚本 -->
-    <script src="common-index.js"></script>
-    <script>initIndexPage('cyberpunk');</script>
+    <script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage('cyberpunk');
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
 
     <div class="author-credit"><p>© 2026 Lang Nie. All rights reserved.</p><p><a href="https://github.com/XiaoLnn/YOUR_GITHUB_USERNAME/Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
-    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <script>
 /* Lang Nie 定制：音乐封面自动同步 */

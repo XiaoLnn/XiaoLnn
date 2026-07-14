@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 <title>xiong da · 侧边</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="tools/common.css">
 <style>
 :root{--sb-bg:#0f172a;--sb-surface:rgba(15,23,42,0.6);--sb-border:rgba(255,107,107,0.15);--sb-text:#e2e8f0;--sb-muted:rgba(148,163,184,0.6);--sb-accent:#ff6b6b;--sb-accent2:#48cae4;--sb-glow:rgba(255,107,107,0.2);--glass-bg:var(--sb-surface);--glass-border:var(--sb-border);--text-main:var(--sb-text);--text-muted:var(--sb-muted);--theme-accent:var(--sb-accent);--theme-accent2:var(--sb-accent2);}
@@ -219,8 +219,15 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 </div>
 
 <div class="footer">© 2026 xiong da · 侧边 &nbsp;|&nbsp; <a href="https://github.com/YOUR_GITHUB_USERNAME/xiongdaa-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></div>
-<script src="common-index.js"></script>
-<script>initIndexPage('sidebar');</script>
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage('sidebar');
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
 </body>
 </html>

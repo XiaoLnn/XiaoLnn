@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Lang Nie 🌸 樱花</title>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="tools/common.css">
     <style>
         :root{--sk-bg:#1a0a10;--sk-surface:rgba(255,240,245,0.1);--sk-border:rgba(255,182,193,0.2);--sk-text:#fff0f3;--sk-muted:rgba(255,200,210,0.6);--sk-accent:#ff9eb5;--sk-accent2:#ffd1dc;--sk-glow:rgba(255,158,181,0.2);--glass-bg:var(--sk-surface);--glass-border:var(--sk-border);--text-main:var(--sk-text);--text-muted:var(--sk-muted);--theme-accent:var(--sk-accent);--theme-accent2:var(--sk-accent2);}
@@ -272,10 +272,17 @@
     <div id="toast"><i class="fas fa-info-circle" style="color:var(--sk-accent);"></i> <span id="toast-msg"></span></div>
     <div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--sk-accent);"></i> 作者生平</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">加载中...</div></div></div></div>
 
-    <script src="common-index.js"></script>
-    <script>initIndexPage('sakura');</script>
+    <script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage('sakura');
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
     <div class="author-credit"><p>© 2026 Lang Nie 🌸 樱花</p><p><a href="https://github.com/XiaoLnn//Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
-    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <script>
 /* Lang Nie - 樱花主题音乐封面自动同步 */

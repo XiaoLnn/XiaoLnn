@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Nie Nie</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <script>
     (function(){
         var tf={aurora:'index.html',cyberpunk:'index-cyberpunk.html',ink:'index-ink.html',galaxy:'index-galaxy.html',sakura:'index-sakura.html',sidebar:'index-sidebar.html',tabbed:'index-tabbed.html',grid:'index-grid.html',terminal:'index-terminal.html',neon:'index-neon.html'};
@@ -1237,8 +1238,16 @@
         </div>
     </div>
 
-    <script src="common-index.js"></script>
-    <script>initIndexPage("aurora");</script>
+    <script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage("aurora");
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
 
 
     <!-- 作者信息 - 请保留此标注 -->
@@ -1252,7 +1261,6 @@
     </div>
 
     <!-- 不蒜子统计 -->
-    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
     <!-- 不蒜子统计容器 -->
 

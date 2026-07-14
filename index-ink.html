@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Lang Nie · 水墨</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="tools/common.css">
     <style>
         /* ===== 水墨主题 CSS ===== */
@@ -409,11 +409,18 @@
     <div id="toast"><i class="fas fa-info-circle" style="color:var(--ink-accent);"></i> <span id="toast-msg"></span></div>
     <div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--ink-accent);"></i> 作者生平</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">正在加载...</div></div></div></div>
 
-    <script src="common-index.js"></script>
-    <script>initIndexPage('ink');</script>
+    <script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage('ink');
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
 
     <div class="author-credit"><p>© 2026 Lang Nie · 水墨</p><p><a href="https://github.com/XiaoLnn//Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
-    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <script>
 /* Lang Nie custom cover sync */
