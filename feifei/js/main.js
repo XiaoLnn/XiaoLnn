@@ -554,10 +554,7 @@ let title2 = `
 let content = `
 版 本 号：1145.15
 更新日期：2025-11-27
-作者昵称：Alec-Apu
-
-主页:  https://apupu.top
-Github:  https://github.com/Alec-Apu
+作者昵称：fei
 `;
 console.log(
   `%c${title1} %c${title2}
