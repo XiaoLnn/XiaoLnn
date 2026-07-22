@@ -1,6 +1,6 @@
-let server = " tencent"; //netease: 网易云音乐; tencent: QQ音乐; kugou: 酷狗音乐; xiami: 虾米; kuwo: 酷我
+let server = "netease"; //netease: 网易云音乐; tencent: QQ音乐; kugou: 酷狗音乐; xiami: 虾米; kuwo: 酷我
 let type = "playlist"; //song: 单曲; playlist: 歌单; album: 唱片
-let id = "9751086143"; //封面 ID / 单曲 ID / 歌单 ID
+let id = "3778678"; //封面 ID / 单曲 ID / 歌单 ID
 let ap = null;
 const metingApiBase = "https://met.api.xiaoguan.fit/";
 
