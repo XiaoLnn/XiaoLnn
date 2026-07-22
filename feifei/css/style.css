@@ -67,6 +67,123 @@ a:hover {
     margin: 14px 0px;
 }
 
+
+
+/*歌曲*/
+
+.song-request {
+    width: 100%;
+    margin-bottom: 14px;
+}
+
+.song-search-bar {
+    display: flex;
+    gap: 10px;
+}
+
+#songInput {
+    flex: 1;
+    min-width: 0;
+    height: 38px;
+    padding: 0 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    outline: none;
+}
+
+#songInput::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#songInput:focus {
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+#requestBtn {
+    min-width: 68px;
+    height: 38px;
+    padding: 0 14px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#requestBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#songSearchStatus {
+    padding: 10px 4px 5px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+
+#songSearchResults {
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 6px;
+}
+
+.song-search-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    color: #fff;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.song-search-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.song-search-item.playing {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.song-result-number {
+    width: 24px;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+}
+
+.song-result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.song-result-name {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.song-result-meta {
+    margin-top: 3px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.song-result-action {
+    color: rgba(255, 255, 255, 0.75);
+}
+
 /*鼠标样式*/
 #g-pointer-1 {
     display: none;
