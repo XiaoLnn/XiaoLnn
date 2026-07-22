@@ -24,6 +24,8 @@ function normalizeSongs(data) {
         .map(song => normalizeSong(song))
         .filter(song => song.url);
 }
+const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
+const kugouApiKey = "JM52NQNG1Kpv4vNPIZU";
 
 async function requestSong(keyword) {
     if (!keyword) return;
@@ -38,56 +40,73 @@ async function requestSong(keyword) {
         return;
     }
 
-    try {
-        // 新接口用 id 传递搜索关键词
-        // QQ音乐不支持搜索，因此这里使用网易云
-        const requestUrl =
-            `${metingApiBase}?server=${searchServer}` +
-            `&type=search&id=${encodeURIComponent(keyword)}`;
+    const requestBtn = document.getElementById("requestBtn");
 
-        const response = await fetch(requestUrl);
+    try {
+        if (requestBtn) {
+            requestBtn.disabled = true;
+            requestBtn.textContent = "搜索中...";
+        }
+
+        const params = new URLSearchParams({
+            key: kugouApiKey,
+            msg: keyword,
+            n: "1",              // 默认播放搜索结果第一首
+            quality: "128"       // 兼容性最好
+        });
+
+        const response = await fetch(
+            `${kugouApiBase}?${params.toString()}`
+        );
 
         if (!response.ok) {
-            throw new Error(`搜索接口请求失败：HTTP ${response.status}`);
+            throw new Error(`HTTP ${response.status}`);
         }
 
-        const data = await response.json();
+        const result = await response.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
-            iziToast.warning({
-                timeout: 3000,
-                icon: "fa-solid fa-circle-exclamation",
-                displayMode: "replace",
-                message: "未找到相关歌曲"
-            });
-            return;
+        if (
+            result.code !== 200 ||
+            !result.data ||
+            !result.data.play_url
+        ) {
+            throw new Error(result.msg || "没有获取到播放地址");
         }
 
-        const playableSong = normalizeSong(data[0], keyword);
+        const song = result.data;
 
-        if (!playableSong.url) {
-            iziToast.warning({
-                timeout: 3000,
-                icon: "fa-solid fa-circle-exclamation",
-                displayMode: "replace",
-                message: "该歌曲暂无可播放链接"
-            });
-            return;
-        }
+        // 接口部分封面可能返回 HTTP，HTTPS 网站必须转成 HTTPS
+        const cover = String(song.cover || "")
+            .replace(/^http:\/\//i, "https://");
+
+        const playableSong = {
+            name: song.name || keyword,
+            artist: song.singer || "未知歌手",
+            url: song.play_url,
+            cover: cover,
+            lrc: ""
+        };
 
         ap.list.clear();
         ap.list.add([playableSong]);
 
         try {
-            await ap.play();
+            await Promise.resolve(ap.play());
+
+            iziToast.success({
+                timeout: 2500,
+                icon: "fa-solid fa-circle-play",
+                displayMode: "replace",
+                message: `正在播放：${playableSong.name} - ${playableSong.artist}`
+            });
         } catch (playError) {
-            console.error("歌曲播放失败：", playableSong.url, playError);
+            console.error("歌曲播放失败：", playError);
 
             iziToast.error({
                 timeout: 4000,
                 icon: "fa-solid fa-circle-exclamation",
                 displayMode: "replace",
-                message: "该歌曲暂时无法播放，请尝试其他歌曲"
+                message: "播放地址失效，请重新搜索或更换歌曲"
             });
         }
     } catch (error) {
@@ -97,10 +116,16 @@ async function requestSong(keyword) {
             timeout: 4000,
             icon: "fa-solid fa-circle-exclamation",
             displayMode: "replace",
-            message: "点歌接口请求失败"
+            message: `点歌失败：${error.message}`
         });
+    } finally {
+        if (requestBtn) {
+            requestBtn.disabled = false;
+            requestBtn.textContent = "点歌";
+        }
     }
 }
+
 
 $.ajax({
     url: metingApiBase + "?server=" + server + "&type=" + type + "&id=" + id,
