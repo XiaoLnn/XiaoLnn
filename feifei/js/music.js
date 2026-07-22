@@ -1,47 +1,66 @@
-let server = "tencent"; //netease: 网易云音乐; tencent: QQ音乐; kugou: 酷狗音乐; xiami: 虾米; kuwo: 酷我
-let type = "playlist"; //song: 单曲; playlist: 歌单; album: 唱片
-let id = "9751086143"; //封面 ID / 单曲 ID / 歌单 ID
+let server = "tencent";
+let type = "playlist";
+let id = "9751086143";
 let ap = null;
-const metingApiBase = "https://kennyz.cn:11444/meting/";
-const searchApiBase = "https://met.liiiu.cn/meting/api";
 
-async function fetchSearchApi(params) {
-    const requestUrl = new URL(searchApiBase);
+// 搜索、歌单、歌曲详情和播放全部使用原接口
+const metingApiBase =
+    "https://kennyz.cn:11444/meting/";
 
-    Object.entries(params).forEach(function ([key, value]) {
-        requestUrl.searchParams.set(key, value);
-    });
+async function fetchMetingJson(params) {
+    const requestUrl = new URL(metingApiBase);
 
-    const response = await fetch(requestUrl.toString(), {
-        method: "GET",
-        cache: "no-store"
-    });
+    Object.entries(params).forEach(
+        function ([key, value]) {
+            requestUrl.searchParams.set(
+                key,
+                value
+            );
+        }
+    );
+
+    const response = await fetch(
+        requestUrl.toString(),
+        {
+            method: "GET",
+            cache: "no-store"
+        }
+    );
 
     if (!response.ok) {
         throw new Error(
-            "点歌接口请求失败，状态码：" + response.status
+            "音乐接口请求失败，状态码：" +
+            response.status
         );
     }
 
     const responseText = await response.text();
     const trimmedText = responseText.trim();
 
+    /*
+     * 防止接口返回HTML错误页面时，
+     * 被当成JSON解析。
+     */
     if (
         !trimmedText.startsWith("[") &&
         !trimmedText.startsWith("{")
     ) {
         console.error(
-            "接口原始返回：",
+            "接口原始返回内容：",
             responseText.substring(0, 300)
         );
 
-        throw new Error("点歌接口没有返回JSON数据");
+        throw new Error(
+            "原音乐接口没有返回JSON数据"
+        );
     }
 
     try {
         return JSON.parse(responseText);
     } catch (error) {
-        throw new Error("点歌接口返回的数据格式错误");
+        throw new Error(
+            "原音乐接口返回的数据格式错误"
+        );
     }
 }
 
@@ -77,10 +96,14 @@ async function requestSong(keyword) {
             requestBtn.textContent = "搜索中...";
         }
 
-        const searchData = await fetchSearchApi({
-            server: "netease",
+        /*
+         * 使用原接口搜索腾讯音乐。
+         * 保留原接口要求的s参数。
+         */
+        const searchData = await fetchMetingJson({
+            server: "tencent",
             type: "search",
-            id: keyword
+            s: keyword
         });
 
         if (
@@ -96,11 +119,16 @@ async function requestSong(keyword) {
             return;
         }
 
-        let playableSong = searchData[0];
+        const searchSong = searchData[0];
+        let playableSong = searchSong;
 
+        /*
+         * 搜索结果没有播放地址时，
+         * 继续使用原接口获取歌曲详情。
+         */
         if (!playableSong.url && playableSong.id) {
-            const songData = await fetchSearchApi({
-                server: "netease",
+            const songData = await fetchMetingJson({
+                server: "tencent",
                 type: "song",
                 id: playableSong.id
             });
@@ -118,22 +146,21 @@ async function requestSong(keyword) {
                 timeout: 3500,
                 icon: "fa-solid fa-circle-exclamation",
                 displayMode: "replace",
-                message: "该歌曲暂时没有可播放地址"
+                message: "该歌曲暂时没有播放地址"
             });
             return;
         }
 
-        const artist = Array.isArray(playableSong.artist)
-            ? playableSong.artist.join("/")
-            : (
-                playableSong.artist ||
-                playableSong.author ||
-                "未知歌手"
-            );
+        const artist =
+            Array.isArray(playableSong.artist)
+                ? playableSong.artist.join("/")
+                : (
+                    playableSong.artist ||
+                    "未知歌手"
+                );
 
         const songName =
             playableSong.name ||
-            playableSong.title ||
             keyword;
 
         ap.list.clear();
@@ -150,7 +177,6 @@ async function requestSong(keyword) {
 
             lrc:
                 playableSong.lrc ||
-                playableSong.lyric ||
                 ""
         }]);
 
@@ -171,7 +197,8 @@ async function requestSong(keyword) {
             timeout: 3000,
             icon: "fa-solid fa-circle-play",
             displayMode: "replace",
-            message: "正在播放：" + songName
+            message:
+                "正在播放：" + songName
         });
     } catch (error) {
         console.error("点歌失败：", error);
@@ -182,7 +209,7 @@ async function requestSong(keyword) {
             displayMode: "replace",
             message:
                 error.message ||
-                "点歌接口暂时不可用"
+                "点歌失败"
         });
     } finally {
         if (requestBtn) {
@@ -191,7 +218,6 @@ async function requestSong(keyword) {
         }
     }
 }
-
 $.ajax({
     url: metingApiBase + "?server=" + server + "&type=" + type + "&id=" + id,
     type: "GET",
