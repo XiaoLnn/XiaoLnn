@@ -112,8 +112,6 @@
         });
     </script>
 </head>
-<!-- 51.LA 统计 -->
-<script src="./js/51LA.js"></script>
 
 <body>
     <!--加载动画-->
@@ -136,7 +134,12 @@
     <!--欢迎界面-->
     <div id="welcome-screen">
         <div class="welcome-bg">
-            <img id="welcome-bg-img" onerror="this.classList.add('error');"></img>
+            <img
+                id="welcome-bg-img"
+                src="/feifei/img/background1.png"
+                alt="欢迎页背景"
+                onerror="this.onerror=null;this.classList.remove('error');this.src='/feifei/img/background1.png';"
+            >
             <div class="welcome-cover"></div>
         </div>
         <div class="welcome-content">
@@ -625,31 +628,62 @@
     </script>
     <button id="enter" style="display:none;">enter</button>
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // 修改成实际背景图片数量
-        const backgroundCount = 5;
+        (function () {
+            const basePath = "/feifei/img/";
+            const mainBackgroundPath = basePath + "background1.png";
+            const welcomeBackgroundCount = 5;
 
-        // 从1到backgroundCount中随机选择
-        const randomNumber =
-            Math.floor(Math.random() * backgroundCount) + 1;
+            function setMainBackground() {
+                const mainBackground = document.getElementById("bg");
+                if (!mainBackground) return;
 
-        const welcomeBackground =
-            document.getElementById("welcome-bg-img");
+                mainBackground.classList.remove("error");
+                mainBackground.onerror = function () {
+                    this.onerror = null;
+                    this.classList.remove("error");
+                    this.src = mainBackgroundPath;
+                };
+                mainBackground.src = mainBackgroundPath;
+            }
 
-        if (welcomeBackground) {
-            welcomeBackground.onerror = function () {
-                // 随机图片不存在时使用默认背景
-                this.onerror = null;
-                this.src = "/feifei/img/background1.png";
-            };
+            function setRandomWelcomeBackground() {
+                const welcomeBackground = document.getElementById("welcome-bg-img");
+                if (!welcomeBackground) return;
 
-            welcomeBackground.src =
-                "/feifei/img/background" +
-                randomNumber +
-                ".png";
-        }
-    });
-</script>
+                const randomNumber =
+                    Math.floor(Math.random() * welcomeBackgroundCount) + 1;
+
+                welcomeBackground.classList.remove("error");
+                welcomeBackground.onerror = function () {
+                    this.onerror = null;
+                    this.classList.remove("error");
+                    this.src = mainBackgroundPath;
+                };
+                welcomeBackground.src =
+                    basePath + "background" + randomNumber + ".png";
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                setMainBackground();
+            });
+
+            window.addEventListener("load", function () {
+                // main.js 会在加载完成约 800ms 后覆盖欢迎页背景，
+                // 因此在它执行完成后重新设置欢迎页随机图片。
+                setTimeout(function () {
+                    setMainBackground();
+                    setRandomWelcomeBackground();
+                }, 1000);
+            });
+
+            const enterButton = document.getElementById("enter-site");
+            if (enterButton) {
+                enterButton.addEventListener("click", function () {
+                    setTimeout(setMainBackground, 900);
+                });
+            }
+        })();
+    </script>
 
 </body>
 
