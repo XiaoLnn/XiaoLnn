@@ -576,9 +576,19 @@
                         <!--Aplayer-->
                         <div class="box-right">
                             <div class="song-request" id="song-request">
-                                <input id="songInput" type="text" placeholder="输入歌名" autocomplete="off">
-                                <button id="requestBtn" type="button">点歌</button>
-                            </div>
+    <div class="song-search-bar">
+        <input
+            id="songInput"
+            type="text"
+            placeholder="输入歌曲名或歌手"
+            autocomplete="off"
+        >
+        <button id="requestBtn" type="button">搜索</button>
+    </div>
+
+    <div id="songSearchStatus"></div>
+    <div id="songSearchResults"></div>
+</div>
                             <div id="aplayer">
                                 <span>音乐播放器加载失败</span>
                             </div>
