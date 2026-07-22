@@ -27,32 +27,44 @@ function normalizeSongs(data) {
 const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
 const kugouApiKey = "JM52NQNG1Kpv4vNPIZU";
 
-async function requestSong(keyword) {
-    if (!keyword) return;
+const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
+const kugouApiKey = "在这里填写你的密钥";
 
-    if (!ap) {
-        iziToast.info({
+let currentSearchKeyword = "";
+let playingSearchButton = null;
+
+/**
+ * 搜索歌曲并显示结果
+ */
+async function requestSong(keyword) {
+    keyword = String(keyword || "").trim();
+
+    if (!keyword) {
+        iziToast.warning({
             timeout: 2500,
-            icon: "fa-solid fa-music",
+            icon: "fa-solid fa-circle-exclamation",
             displayMode: "replace",
-            message: "播放器还在加载，请稍后再试"
+            message: "请输入歌曲名或歌手"
         });
         return;
     }
 
     const requestBtn = document.getElementById("requestBtn");
+    const statusElement = document.getElementById("songSearchStatus");
+    const resultsElement = document.getElementById("songSearchResults");
+
+    currentSearchKeyword = keyword;
 
     try {
-        if (requestBtn) {
-            requestBtn.disabled = true;
-            requestBtn.textContent = "搜索中...";
-        }
+        requestBtn.disabled = true;
+        requestBtn.textContent = "搜索中";
+        statusElement.textContent = "正在搜索歌曲……";
+        resultsElement.innerHTML = "";
 
         const params = new URLSearchParams({
             key: kugouApiKey,
             msg: keyword,
-            n: "1",              // 默认播放搜索结果第一首
-            quality: "128"       // 兼容性最好
+            g: "12"
         });
 
         const response = await fetch(
@@ -60,7 +72,7 @@ async function requestSong(keyword) {
         );
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`搜索请求失败：HTTP ${response.status}`);
         }
 
         const result = await response.json();
@@ -68,21 +80,150 @@ async function requestSong(keyword) {
         if (
             result.code !== 200 ||
             !result.data ||
-            !result.data.play_url
+            !Array.isArray(result.data.songs)
+        ) {
+            throw new Error(result.msg || "搜索接口返回异常");
+        }
+
+        const songs = result.data.songs;
+
+        if (songs.length === 0) {
+            statusElement.textContent = "没有找到相关歌曲";
+            return;
+        }
+
+        statusElement.textContent = `找到 ${songs.length} 首歌曲，点击即可播放`;
+
+        songs.forEach(function (song) {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "song-search-item";
+
+            const number = document.createElement("span");
+            number.className = "song-result-number";
+            number.textContent = song.n;
+
+            const info = document.createElement("span");
+            info.className = "song-result-info";
+
+            const name = document.createElement("div");
+            name.className = "song-result-name";
+            name.textContent = song.name || "未知歌曲";
+
+            const meta = document.createElement("div");
+            meta.className = "song-result-meta";
+            meta.textContent =
+                `${song.singer || "未知歌手"} · ${song.album || "未知专辑"}`;
+
+            const action = document.createElement("span");
+            action.className = "song-result-action";
+            action.innerHTML = '<i class="fa-solid fa-play"></i>';
+
+            info.appendChild(name);
+            info.appendChild(meta);
+
+            item.appendChild(number);
+            item.appendChild(info);
+            item.appendChild(action);
+
+            item.addEventListener("click", function () {
+                playKugouSong(keyword, song.n, item);
+            });
+
+            resultsElement.appendChild(item);
+        });
+    } catch (error) {
+        console.error("歌曲搜索失败：", error);
+        statusElement.textContent = "搜索失败，请稍后重试";
+
+        iziToast.error({
+            timeout: 4000,
+            icon: "fa-solid fa-circle-exclamation",
+            displayMode: "replace",
+            message: error.message || "搜索失败"
+        });
+    } finally {
+        requestBtn.disabled = false;
+        requestBtn.textContent = "搜索";
+    }
+}
+
+/**
+ * 获取选中歌曲的播放地址并播放
+ */
+async function playKugouSong(keyword, index, buttonElement) {
+    if (!ap) {
+        iziToast.warning({
+            timeout: 3000,
+            icon: "fa-solid fa-circle-exclamation",
+            displayMode: "replace",
+            message: "播放器尚未初始化"
+        });
+        return;
+    }
+
+    const statusElement = document.getElementById("songSearchStatus");
+    const actionElement = buttonElement.querySelector(".song-result-action");
+
+    try {
+        buttonElement.disabled = true;
+        actionElement.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        statusElement.textContent = "正在获取播放地址……";
+
+        const params = new URLSearchParams({
+            key: kugouApiKey,
+            msg: keyword,
+            n: String(index),
+
+            // 使用128 MP3，避免FLAC和VIP音质兼容问题
+            quality: "128"
+        });
+
+        const response = await fetch(
+            `${kugouApiBase}?${params.toString()}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`播放请求失败：HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        const song = result.data;
+
+        if (
+            result.code !== 200 ||
+            !song ||
+            !song.play_url
         ) {
             throw new Error(result.msg || "没有获取到播放地址");
         }
 
-        const song = result.data;
+        let playUrl = String(song.play_url).trim();
 
-        // 接口部分封面可能返回 HTTP，HTTPS 网站必须转成 HTTPS
-        const cover = String(song.cover || "")
-            .replace(/^http:\/\//i, "https://");
+        /*
+         * HTTPS网页不能播放HTTP音频。
+         * 128音质通常会返回HTTPS MP3地址。
+         */
+        if (playUrl.startsWith("http://")) {
+            playUrl = playUrl.replace(/^http:\/\//i, "https://");
+        }
+
+        if (!playUrl.startsWith("https://")) {
+            throw new Error("接口返回了不安全的音频地址");
+        }
+
+        let cover = String(song.cover || "").trim();
+
+        if (cover.startsWith("http://")) {
+            cover = cover.replace(/^http:\/\//i, "https://");
+        }
 
         const playableSong = {
             name: song.name || keyword,
             artist: song.singer || "未知歌手",
-            url: song.play_url,
+            url: playUrl,
             cover: cover,
             lrc: ""
         };
@@ -90,39 +231,45 @@ async function requestSong(keyword) {
         ap.list.clear();
         ap.list.add([playableSong]);
 
-        try {
-            await Promise.resolve(ap.play());
+        if (playingSearchButton) {
+            playingSearchButton.classList.remove("playing");
 
-            iziToast.success({
-                timeout: 2500,
-                icon: "fa-solid fa-circle-play",
-                displayMode: "replace",
-                message: `正在播放：${playableSong.name} - ${playableSong.artist}`
-            });
-        } catch (playError) {
-            console.error("歌曲播放失败：", playError);
+            const oldAction =
+                playingSearchButton.querySelector(".song-result-action");
 
-            iziToast.error({
-                timeout: 4000,
-                icon: "fa-solid fa-circle-exclamation",
-                displayMode: "replace",
-                message: "播放地址失效，请重新搜索或更换歌曲"
-            });
+            if (oldAction) {
+                oldAction.innerHTML =
+                    '<i class="fa-solid fa-play"></i>';
+            }
         }
+
+        playingSearchButton = buttonElement;
+        buttonElement.classList.add("playing");
+
+        await Promise.resolve(ap.play());
+
+        actionElement.innerHTML =
+            '<i class="fa-solid fa-volume-high"></i>';
+
+        statusElement.textContent =
+            `正在播放：${playableSong.name} - ${playableSong.artist}`;
     } catch (error) {
-        console.error("点歌失败：", error);
+        console.error("播放歌曲失败：", error);
+
+        buttonElement.classList.remove("playing");
+        actionElement.innerHTML =
+            '<i class="fa-solid fa-play"></i>';
+
+        statusElement.textContent = "播放失败，请尝试其他歌曲";
 
         iziToast.error({
-            timeout: 4000,
+            timeout: 4500,
             icon: "fa-solid fa-circle-exclamation",
             displayMode: "replace",
-            message: `点歌失败：${error.message}`
+            message: error.message || "歌曲播放失败"
         });
     } finally {
-        if (requestBtn) {
-            requestBtn.disabled = false;
-            requestBtn.textContent = "点歌";
-        }
+        buttonElement.disabled = false;
     }
 }
 
