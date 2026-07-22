@@ -1,5 +1,5 @@
 function runtime() {
-    var start = new Date("05/20/2023 00:00:00");
+    var start = new Date("07/22/2026 00:00:00");
     var now = new Date();
     var diff = now.getTime() - start.getTime();
 
