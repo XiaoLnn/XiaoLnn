@@ -28,7 +28,7 @@ const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
 const kugouApiKey = "JM52NQNG1Kpv4vNPIZU";
 
 const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
-const kugouApiKey = "在这里填写你的密钥";
+const kugouApiKey = "JM52NQNG1Kpv4vNPIZU"";
 
 let currentSearchKeyword = "";
 let playingSearchButton = null;
@@ -206,9 +206,13 @@ async function playKugouSong(keyword, index, buttonElement) {
          * HTTPS网页不能播放HTTP音频。
          * 128音质通常会返回HTTPS MP3地址。
          */
-        if (playUrl.startsWith("http://")) {
-            playUrl = playUrl.replace(/^http:\/\//i, "https://");
-        }
+      if (!playUrl.startsWith("https://")) {
+    throw new Error("接口返回HTTP音频，请换一首歌曲");
+}
+
+if (/\.flac(?:\?|$)/i.test(playUrl)) {
+    throw new Error("接口返回FLAC，请检查quality是否为128");
+}
 
         if (!playUrl.startsWith("https://")) {
             throw new Error("接口返回了不安全的音频地址");
