@@ -7,217 +7,67 @@ let ap = null;
 const metingApiBase =
     "https://kennyz.cn:11444/meting/";
 
-async function fetchMetingJson(params) {
-    const requestUrl = new URL(metingApiBase);
-
-    Object.entries(params).forEach(
-        function ([key, value]) {
-            requestUrl.searchParams.set(
-                key,
-                value
-            );
-        }
-    );
-
-    const response = await fetch(
-        requestUrl.toString(),
-        {
-            method: "GET",
-            cache: "no-store"
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "音乐接口请求失败，状态码：" +
-            response.status
-        );
-    }
-
-    const responseText = await response.text();
-    const trimmedText = responseText.trim();
-
-    /*
-     * 防止接口返回HTML错误页面时，
-     * 被当成JSON解析。
-     */
-    if (
-        !trimmedText.startsWith("[") &&
-        !trimmedText.startsWith("{")
-    ) {
-        console.error(
-            "接口原始返回内容：",
-            responseText.substring(0, 300)
-        );
-
-        throw new Error(
-            "原音乐接口没有返回JSON数据"
-        );
-    }
-
-    try {
-        return JSON.parse(responseText);
-    } catch (error) {
-        throw new Error(
-            "原音乐接口返回的数据格式错误"
-        );
-    }
-}
-
 async function requestSong(keyword) {
-    keyword = String(keyword || "").trim();
-
-    if (!keyword) {
-        iziToast.warning({
-            timeout: 2500,
-            icon: "fa-solid fa-magnifying-glass",
-            displayMode: "replace",
-            message: "请输入歌曲名称"
-        });
-        return;
-    }
-
+    if (!keyword) return;
     if (!ap) {
         iziToast.info({
             timeout: 2500,
             icon: "fa-solid fa-music",
-            displayMode: "replace",
-            message: "播放器还在加载，请稍后再试"
+            displayMode: 'replace',
+            message: '播放器还在加载，请稍后再试'
         });
         return;
     }
 
-    const requestBtn =
-        document.getElementById("requestBtn");
-
     try {
-        if (requestBtn) {
-            requestBtn.disabled = true;
-            requestBtn.textContent = "搜索中...";
-        }
+        const response = await fetch(
+            `${metingApiBase}?server=tencent&type=search&s=${encodeURIComponent(keyword)}`
+        );
+        const data = await response.json();
 
-        /*
-         * 使用原接口搜索腾讯音乐。
-         * 保留原接口要求的s参数。
-         */
-        const searchData = await fetchMetingJson({
-            server: "tencent",
-            type: "search",
-            s: keyword
-        });
-
-        if (
-            !Array.isArray(searchData) ||
-            searchData.length === 0
-        ) {
-            iziToast.warning({
-                timeout: 3000,
-                icon: "fa-solid fa-circle-exclamation",
-                displayMode: "replace",
-                message: "没有找到相关歌曲"
-            });
+        if (!data || data.length === 0) {
+            alert("未找到歌曲");
             return;
         }
 
-        const searchSong = searchData[0];
-        let playableSong = searchSong;
+        const song = data[0];
+        let playableSong = song;
 
-        /*
-         * 搜索结果没有播放地址时，
-         * 继续使用原接口获取歌曲详情。
-         */
         if (!playableSong.url && playableSong.id) {
-            const songData = await fetchMetingJson({
-                server: "tencent",
-                type: "song",
-                id: playableSong.id
-            });
-
-            if (
-                Array.isArray(songData) &&
-                songData.length > 0
-            ) {
-                playableSong = songData[0];
+            const songDetailResp = await fetch(
+                `${metingApiBase}?server=tencent&type=song&id=${encodeURIComponent(playableSong.id)}`
+            );
+            const songDetail = await songDetailResp.json();
+            if (songDetail && songDetail.length > 0) {
+                playableSong = songDetail[0];
             }
         }
 
+        const artist = Array.isArray(playableSong.artist)
+            ? playableSong.artist.join("/")
+            : (playableSong.artist || "未知歌手");
+
         if (!playableSong.url) {
-            iziToast.warning({
-                timeout: 3500,
-                icon: "fa-solid fa-circle-exclamation",
-                displayMode: "replace",
-                message: "该歌曲暂时没有播放地址"
-            });
+            alert("该歌曲暂无可播放链接");
             return;
         }
 
-        const artist =
-            Array.isArray(playableSong.artist)
-                ? playableSong.artist.join("/")
-                : (
-                    playableSong.artist ||
-                    "未知歌手"
-                );
-
-        const songName =
-            playableSong.name ||
-            keyword;
-
         ap.list.clear();
-
         ap.list.add([{
-            name: songName,
+            name: playableSong.name || keyword,
             artist: artist,
             url: playableSong.url,
-
-            cover:
-                playableSong.pic ||
-                playableSong.cover ||
-                "",
-
-            lrc:
-                playableSong.lrc ||
-                ""
+            cover: playableSong.pic || playableSong.cover || "",
+            lrc: playableSong.lrc || ""
         }]);
 
-        if (
-            ap.list &&
-            typeof ap.list.switch === "function"
-        ) {
-            ap.list.switch(0);
-        }
-
         ap.play();
-
-        $("#music-name").text(
-            songName + " - " + artist
-        );
-
-        iziToast.success({
-            timeout: 3000,
-            icon: "fa-solid fa-circle-play",
-            displayMode: "replace",
-            message:
-                "正在播放：" + songName
-        });
     } catch (error) {
-        console.error("点歌失败：", error);
-
-        iziToast.error({
-            timeout: 5000,
-            icon: "fa-solid fa-circle-xmark",
-            displayMode: "replace",
-            message:
-                error.message ||
-                "点歌失败"
-        });
-    } finally {
-        if (requestBtn) {
-            requestBtn.disabled = false;
-            requestBtn.textContent = "点歌";
-        }
+        console.error("点歌失败:", error);
+        alert("点歌失败");
     }
 }
+
 $.ajax({
     url: metingApiBase + "?server=" + server + "&type=" + type + "&id=" + id,
     type: "GET",
