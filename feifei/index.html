@@ -134,12 +134,13 @@
     <!--欢迎界面-->
     <div id="welcome-screen">
         <div class="welcome-bg">
-            <img
-                id="welcome-bg-img"
-                src="/feifei/img/background1.png"
-                alt="欢迎页背景"
-                onerror="this.onerror=null;this.classList.remove('error');this.src='/feifei/img/background1.png';"
-            >
+           <img
+    id="welcome-bg-img"
+    src="https://api.elaina.cat/random/"
+    alt="欢迎页随机背景"
+    referrerpolicy="no-referrer"
+    onerror="this.onerror=null;this.classList.remove('error');this.src='/feifei/img/background1.png';"
+>
             <div class="welcome-cover"></div>
         </div>
         <div class="welcome-content">
@@ -646,22 +647,26 @@
                 mainBackground.src = mainBackgroundPath;
             }
 
-            function setRandomWelcomeBackground() {
-                const welcomeBackground = document.getElementById("welcome-bg-img");
-                if (!welcomeBackground) return;
+           function setRandomWelcomeBackground() {
+    const welcomeBackground =
+        document.getElementById("welcome-bg-img");
 
-                const randomNumber =
-                    Math.floor(Math.random() * welcomeBackgroundCount) + 1;
+    if (!welcomeBackground) return;
 
-                welcomeBackground.classList.remove("error");
-                welcomeBackground.onerror = function () {
-                    this.onerror = null;
-                    this.classList.remove("error");
-                    this.src = mainBackgroundPath;
-                };
-                welcomeBackground.src =
-                    basePath + "background" + randomNumber + ".png";
-            }
+    welcomeBackground.classList.remove("error");
+
+    // 接口加载失败时使用本地默认图片
+    welcomeBackground.onerror = function () {
+        this.onerror = null;
+        this.classList.remove("error");
+        this.src = "/feifei/img/background1.png";
+    };
+
+    // 加时间戳，避免浏览器一直显示缓存图片
+    welcomeBackground.src =
+        "https://api.elaina.cat/random/?t=" +
+        Date.now();
+}
 
             document.addEventListener("DOMContentLoaded", function () {
                 setMainBackground();
