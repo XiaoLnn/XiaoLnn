@@ -1,6 +1,6 @@
-let server = "tencent";
+let server = "netease";
 let type = "playlist";
-let id = "9751086143";
+let id = "3778678";
 let ap = null;
 
 // QQ音乐不支持搜索，点歌改用网易云
