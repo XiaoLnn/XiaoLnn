@@ -82,6 +82,98 @@ async function requestKugou(params) {
     return result;
 }
 
+function parseJsonValue(value) {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    const text = value.trim();
+
+    if (!text.startsWith("{") && !text.startsWith("[")) {
+        return value;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return value;
+    }
+}
+
+function parseKugouSongText(value) {
+    if (typeof value !== "string") {
+        return [];
+    }
+
+    return value.split(/\r?\n/).map(line => {
+        const match = line.match(
+            /^\s*(\d+)\s*[:：]\s*(.*?)\s+[—-]\s+(.+?)\s*$/
+        );
+
+        if (!match) {
+            return null;
+        }
+
+        const singer = match[3]
+            .replace(/\[收费\]\s*$/, "")
+            .split(/\s+\*\s+/)[0]
+            .trim();
+
+        return {
+            n: Number(match[1]),
+            name: match[2].trim(),
+            singer
+        };
+    }).filter(Boolean);
+}
+
+function getKugouSongs(result) {
+    const data = parseJsonValue(result?.data);
+    const nestedData = parseJsonValue(data?.data);
+    const candidates = [
+        parseJsonValue(data?.songs),
+        parseJsonValue(nestedData?.songs),
+        parseJsonValue(result?.songs),
+        parseJsonValue(data?.list),
+        parseJsonValue(data?.lists),
+        parseJsonValue(data?.info),
+        nestedData,
+        data
+    ];
+
+    for (const candidate of candidates) {
+        if (Array.isArray(candidate) && candidate.length > 0) {
+            return candidate;
+        }
+
+        if (candidate && typeof candidate === "object") {
+            const songs = Object.values(candidate).filter(item => (
+                item &&
+                typeof item === "object" &&
+                (item.name || item.songname || item.title)
+            ));
+
+            if (songs.length > 0) {
+                return songs;
+            }
+        }
+    }
+
+    const textSongs = [
+        data?.text,
+        data?.simplify,
+        nestedData?.text,
+        nestedData?.simplify,
+        typeof data === "string" ? data : ""
+    ].map(parseKugouSongText).find(songs => songs.length > 0);
+
+    if (textSongs) {
+        return textSongs;
+    }
+
+    return [];
+}
+
 async function requestSong(keyword) {
     keyword = String(keyword || "").trim();
 
@@ -117,11 +209,10 @@ async function requestSong(keyword) {
             g: 12
         });
 
-        const songs = Array.isArray(searchResult?.data?.songs)
-            ? searchResult.data.songs
-            : [];
+        const songs = getKugouSongs(searchResult);
 
         if (songs.length === 0) {
+            console.error("酷狗搜索接口完整响应：", searchResult);
             throw new Error("没有找到相关歌曲");
         }
 
@@ -129,10 +220,10 @@ async function requestSong(keyword) {
         const selectedSong = songs[0];
         const detailResult = await requestKugou({
             msg: keyword,
-            n: selectedSong.n || 1,
+            n: selectedSong.n || selectedSong.index || 1,
             quality: kugouQuality
         });
-        const song = detailResult?.data || {};
+        const song = parseJsonValue(detailResult?.data) || {};
         const artist = song.singer || selectedSong.singer || "未知歌手";
         const audioUrl = song.play_url || "";
 
