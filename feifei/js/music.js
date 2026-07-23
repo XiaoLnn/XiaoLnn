@@ -1,9 +1,10 @@
 let server = "netease"; //netease: 网易云音乐; tencent: QQ音乐; kugou: 酷狗音乐; xiami: 虾米; kuwo: 酷我
 let type = "playlist"; //song: 单曲; playlist: 歌单; album: 唱片
-let id = "3778678"; //封面 ID / 单曲 ID / 歌单 ID
+let id = "5023801844"; //封面 ID / 单曲 ID / 歌单 ID
 let ap = null;
 const metingApiBase = "https://api.injahow.cn/meting/";
-const kugouApiBase = "./music_api.php";
+const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
+const kugouApiKey = "JM52NQNG1Kpv4vNPIZU"; // 请替换为妖狐 API 密钥
 const kugouQuality = "flac";
 
 async function fetchMeting(params) {
@@ -43,8 +44,9 @@ async function fetchMeting(params) {
 }
 
 async function requestKugou(params) {
-    const url = new URL(kugouApiBase, window.location.href);
+    const url = new URL(kugouApiBase);
 
+    url.searchParams.set("key", kugouApiKey);
     Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
             url.searchParams.set(key, String(value));
@@ -78,98 +80,6 @@ async function requestKugou(params) {
     }
 
     return result;
-}
-
-function parseJsonValue(value) {
-    if (typeof value !== "string") {
-        return value;
-    }
-
-    const text = value.trim();
-
-    if (!text.startsWith("{") && !text.startsWith("[")) {
-        return value;
-    }
-
-    try {
-        return JSON.parse(text);
-    } catch {
-        return value;
-    }
-}
-
-function parseKugouSongText(value) {
-    if (typeof value !== "string") {
-        return [];
-    }
-
-    return value.split(/\r?\n/).map(line => {
-        const match = line.match(
-            /^\s*(\d+)\s*[:：]\s*(.*?)\s+[—-]\s+(.+?)\s*$/
-        );
-
-        if (!match) {
-            return null;
-        }
-
-        const singer = match[3]
-            .replace(/\[收费\]\s*$/, "")
-            .split(/\s+\*\s+/)[0]
-            .trim();
-
-        return {
-            n: Number(match[1]),
-            name: match[2].trim(),
-            singer
-        };
-    }).filter(Boolean);
-}
-
-function getKugouSongs(result) {
-    const data = parseJsonValue(result?.data);
-    const nestedData = parseJsonValue(data?.data);
-    const candidates = [
-        parseJsonValue(data?.songs),
-        parseJsonValue(nestedData?.songs),
-        parseJsonValue(result?.songs),
-        parseJsonValue(data?.list),
-        parseJsonValue(data?.lists),
-        parseJsonValue(data?.info),
-        nestedData,
-        data
-    ];
-
-    for (const candidate of candidates) {
-        if (Array.isArray(candidate) && candidate.length > 0) {
-            return candidate;
-        }
-
-        if (candidate && typeof candidate === "object") {
-            const songs = Object.values(candidate).filter(item => (
-                item &&
-                typeof item === "object" &&
-                (item.name || item.songname || item.title)
-            ));
-
-            if (songs.length > 0) {
-                return songs;
-            }
-        }
-    }
-
-    const textSongs = [
-        data?.text,
-        data?.simplify,
-        nestedData?.text,
-        nestedData?.simplify,
-        typeof data === "string" ? data : ""
-    ].map(parseKugouSongText).find(songs => songs.length > 0);
-
-    if (textSongs) {
-        return textSongs;
-    }
-
-    return [];
 }
 
 async function requestSong(keyword) {
@@ -207,10 +117,11 @@ async function requestSong(keyword) {
             g: 12
         });
 
-        const songs = getKugouSongs(searchResult);
+        const songs = Array.isArray(searchResult?.data?.songs)
+            ? searchResult.data.songs
+            : [];
 
         if (songs.length === 0) {
-            console.error("酷狗搜索接口完整响应：", searchResult);
             throw new Error("没有找到相关歌曲");
         }
 
@@ -218,10 +129,10 @@ async function requestSong(keyword) {
         const selectedSong = songs[0];
         const detailResult = await requestKugou({
             msg: keyword,
-            n: selectedSong.n || selectedSong.index || 1,
+            n: selectedSong.n || 1,
             quality: kugouQuality
         });
-        const song = parseJsonValue(detailResult?.data) || {};
+        const song = detailResult?.data || {};
         const artist = song.singer || selectedSong.singer || "未知歌手";
         const audioUrl = song.play_url || "";
 
