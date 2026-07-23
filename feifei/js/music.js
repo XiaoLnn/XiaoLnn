@@ -3,6 +3,9 @@ let type = "playlist"; //song: 单曲; playlist: 歌单; album: 唱片
 let id = "3778678"; //封面 ID / 单曲 ID / 歌单 ID
 let ap = null;
 const metingApiBase = "https://api.injahow.cn/meting/";
+const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
+const kugouApiKey = "JM52NQNG1Kpv4vNPIZU"; 
+const kugouQuality = "flac";
 
 async function fetchMeting(params) {
     const url = new URL(metingApiBase);
@@ -40,11 +43,14 @@ async function fetchMeting(params) {
     }
 }
 
-async function requestMeting(params) {
-    const url = new URL(metingApiBase);
+async function requestKugou(params) {
+    const url = new URL(kugouApiBase);
 
+    url.searchParams.set("key", kugouApiKey);
     Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.set(key, String(value));
+        if (value !== undefined && value !== null && value !== "") {
+            url.searchParams.set(key, String(value));
+        }
     });
 
     const response = await fetch(url.toString(), {
@@ -57,15 +63,23 @@ async function requestMeting(params) {
     const rawText = await response.text();
 
     if (!response.ok) {
-        throw new Error(`音乐接口请求失败：HTTP ${response.status}`);
+        throw new Error(`酷狗接口请求失败：HTTP ${response.status}`);
     }
 
+    let result;
+
     try {
-        return JSON.parse(rawText.replace(/^\uFEFF/, ""));
+        result = JSON.parse(rawText.replace(/^\uFEFF/, ""));
     } catch {
-        console.error("音乐接口原始响应：", rawText);
-        throw new Error("音乐接口没有返回有效 JSON");
+        console.error("酷狗接口原始响应：", rawText);
+        throw new Error("酷狗接口没有返回有效 JSON");
     }
+
+    if (Number(result?.code) !== 200) {
+        throw new Error(result?.msg || `酷狗接口返回错误：${result?.code || "未知状态"}`);
+    }
+
+    return result;
 }
 
 async function requestSong(keyword) {
@@ -98,56 +112,29 @@ async function requestSong(keyword) {
     }
 
     try {
-        const searchData = await requestMeting({
-            server,
-            type: "search",
-            id: keyword
+        const searchResult = await requestKugou({
+            msg: keyword,
+            g: 12
         });
 
-        const songs = Array.isArray(searchData)
-            ? searchData
-            : Array.isArray(searchData?.data)
-                ? searchData.data
-                : [];
+        const songs = Array.isArray(searchResult?.data?.songs)
+            ? searchResult.data.songs
+            : [];
 
         if (songs.length === 0) {
             throw new Error("没有找到相关歌曲");
         }
 
         // 当前默认播放搜索结果第一首
-        let song = songs[0];
-
-        // 搜索结果没有链接时，再取得完整单曲信息
-        if (!song.url && song.id) {
-            const detailData = await requestMeting({
-                server,
-                type: "song",
-                id: song.id
-            });
-
-            const details = Array.isArray(detailData)
-                ? detailData
-                : Array.isArray(detailData?.data)
-                    ? detailData.data
-                    : [];
-
-            if (details.length > 0) {
-                song = {
-                    ...song,
-                    ...details[0]
-                };
-            }
-        }
-
-        const artist = Array.isArray(song.artist)
-            ? song.artist.join("/")
-            : song.artist || song.author || "未知歌手";
-
-        const audioUrl =
-            song.url ||
-            song.play_url ||
-            song.playUrl ||
-            "";
+        const selectedSong = songs[0];
+        const detailResult = await requestKugou({
+            msg: keyword,
+            n: selectedSong.n || 1,
+            quality: kugouQuality
+        });
+        const song = detailResult?.data || {};
+        const artist = song.singer || selectedSong.singer || "未知歌手";
+        const audioUrl = song.play_url || "";
 
         if (!audioUrl) {
             console.error("歌曲数据：", song);
@@ -157,12 +144,12 @@ async function requestSong(keyword) {
         ap.list.clear();
 
         ap.list.add([{
-            id: song.id || "",
-            name: song.name || song.title || keyword,
+            id: song.selected_hash || song.hash?.[song.selected_quality] || "",
+            name: song.name || selectedSong.name || keyword,
             artist,
             url: audioUrl,
-            cover: song.pic || song.cover || "",
-            lrc: song.lrc || song.lyric || ""
+            cover: song.cover || "",
+            lrc: ""
         }]);
 
         ap.play();
