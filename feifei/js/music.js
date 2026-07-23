@@ -3,8 +3,7 @@ let type = "playlist"; //song: 单曲; playlist: 歌单; album: 唱片
 let id = "3778678"; //封面 ID / 单曲 ID / 歌单 ID
 let ap = null;
 const metingApiBase = "https://api.injahow.cn/meting/";
-const kugouApiBase = "https://api.yaohud.cn/api/music/kg";
-const kugouApiKey = "JM52NQNG1Kpv4vNPIZU"; 
+const kugouApiBase = "./music_api.php";
 const kugouQuality = "flac";
 
 async function fetchMeting(params) {
@@ -44,9 +43,8 @@ async function fetchMeting(params) {
 }
 
 async function requestKugou(params) {
-    const url = new URL(kugouApiBase);
+    const url = new URL(kugouApiBase, window.location.href);
 
-    url.searchParams.set("key", kugouApiKey);
     Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
             url.searchParams.set(key, String(value));
