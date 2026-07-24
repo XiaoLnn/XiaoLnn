@@ -16,7 +16,8 @@
 <meta property="og:image:width" content="300">
 <meta property="og:image:height" content="300">
   <meta name="referrer" content="no-referrer" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#02030a" />
   <!-- 圆润可爱字体 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,6 +265,31 @@
       font-weight: 600;
     }
     .panel-title .icon { font-size: 16px; }
+    .panel-header-actions {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:6px;
+      min-width:0;
+    }
+    .lyrics-full-btn {
+      width:30px;
+      height:30px;
+      min-width:30px;
+      padding:0;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.20);
+      background:rgba(0,0,0,0.38);
+      color:var(--text-main);
+      box-shadow:0 5px 12px rgba(0,0,0,0.55);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-size:15px;
+      line-height:1;
+    }
+    .lyrics-full-btn:active { transform:scale(.94); }
     .chip {
       font-size: 10px;
       padding: 2px 8px;
@@ -715,6 +741,10 @@
       overflow-x:hidden;
       position:relative;
       box-shadow:0 12px 32px rgba(0,0,0,0.9);
+      overscroll-behavior:contain;
+      -webkit-overflow-scrolling:touch;
+      scroll-behavior:smooth;
+      touch-action:pan-y;
     }
     .lyrics-container::before,
     .lyrics-container::after {
@@ -791,6 +821,9 @@
       opacity:0.52;
       transition:transform .25s ease, color .25s ease, text-shadow .25s ease, opacity .25s ease;
       white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      line-height:1.45;
       letter-spacing:0.04em;
     }
     .lyrics-line.active {
@@ -812,6 +845,58 @@
       margin-top:18px;
       letter-spacing:0.03em;
     }
+
+    /* 完整歌词模式 */
+    body.lyrics-fullscreen { overflow:hidden !important; }
+    body.lyrics-fullscreen .player-panel {
+      display:flex !important;
+      position:fixed;
+      inset:12px;
+      width:auto;
+      height:auto;
+      max-width:none;
+      max-height:none;
+      z-index:3000;
+      padding:12px;
+      border-radius:20px;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(255,218,120,0.18), transparent 52%),
+        rgba(5,7,22,0.98);
+      box-shadow:0 24px 80px rgba(0,0,0,0.92);
+    }
+    body.lyrics-fullscreen .player-panel .player-top { display:none; }
+    body.lyrics-fullscreen .player-panel .panel-header { margin-bottom:8px; }
+    body.lyrics-fullscreen .player-panel .panel-header-actions .chip { display:none; }
+    body.lyrics-fullscreen .lyrics-container {
+      flex:1;
+      min-height:0;
+      margin-top:0;
+      padding:14px clamp(10px, 4vw, 34px) 20px;
+      border-radius:16px;
+    }
+    body.lyrics-fullscreen .lyrics-inner {
+      max-width:760px;
+      min-height:100%;
+      padding-top:clamp(20px, 10vh, 90px);
+      padding-bottom:clamp(100px, 28vh, 240px);
+    }
+    body.lyrics-fullscreen .lyrics-title-line {
+      position:sticky;
+      top:0;
+      z-index:3;
+      margin:0 0 16px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(5,7,22,0.78);
+      backdrop-filter:blur(10px);
+    }
+    body.lyrics-fullscreen .lyrics-line {
+      font-size:clamp(16px, 2vw, 22px);
+      margin:10px 0;
+      line-height:1.55;
+      opacity:.64;
+    }
+    body.lyrics-fullscreen .lyrics-line.active { transform:scale(1.06); }
 
     /* 右侧播放列表面板 */
     .playlist-panel {
@@ -1205,6 +1290,9 @@
       background:rgba(0,0,0,0.3);
     }
 
+    /* 手机端采用单面板切换，避免三块内容纵向堆叠 */
+    .mobile-nav { display:none; }
+
     @media (max-width:1080px){
       .layout{
         grid-template-columns:1.1fr 1.2fr;
@@ -1217,24 +1305,346 @@
       .player-panel{grid-area:player;}
       .playlist-panel{grid-area:playlist;}
     }
+
     @media (max-width:860px){
-      header{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:6px;
-      }
-      .header-controls{
+      html, body {
         width:100%;
-        justify-content:space-between;
+        height:100%;
+        min-height:100%;
+        overflow:hidden;
       }
-      .layout{
-        grid-template-columns:1fr;
-        grid-template-rows:auto auto auto;
-        grid-template-areas:
-          "player"
-          "search"
-          "playlist";
+
+      body {
+        overscroll-behavior:none;
+        touch-action:manipulation;
       }
+
+      .app {
+        width:100%;
+        height:100dvh;
+        margin:0;
+        padding:
+          max(8px, env(safe-area-inset-top))
+          8px
+          max(8px, env(safe-area-inset-bottom));
+        gap:8px;
+        border:0;
+        border-radius:0;
+        box-shadow:none;
+        background:rgba(0,0,0,0.32);
+      }
+
+      header {
+        min-height:52px;
+        padding:6px 10px;
+        flex-direction:row;
+        align-items:center;
+        gap:8px;
+        border-radius:16px;
+      }
+
+      .logo-area { min-width:0; }
+      .pikachu-box {
+        width:44px;
+        height:44px;
+        padding:2px;
+        flex:0 0 44px;
+      }
+      .title-text { min-width:0; }
+      .title-text h1 {
+        font-size:15px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .title-text p {
+        font-size:9px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .header-controls {
+        width:auto;
+        margin-left:auto;
+        gap:6px;
+        flex-shrink:0;
+      }
+      .shortcut-hint,
+      .shortcut-toggle-btn { display:none; }
+      .lang-btn {
+        min-width:38px;
+        min-height:34px;
+        padding:5px 9px;
+      }
+
+      .layout {
+        display:block;
+        flex:1;
+        min-height:0;
+        overflow:hidden;
+      }
+
+      .layout > .panel {
+        display:none;
+        width:100%;
+        height:100%;
+        min-height:0;
+        padding:8px;
+        border-radius:16px;
+      }
+      .layout > .panel.mobile-active { display:flex; }
+
+      .panel-header { margin-bottom:6px; }
+      .panel-title { min-width:0; font-size:13px; }
+      .panel-header-actions { margin-left:auto; }
+      .lyrics-full-btn {
+        width:38px;
+        height:38px;
+        min-width:38px;
+        font-size:17px;
+      }
+      .panel-header-actions > .chip {
+        max-width:52%;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
+
+      .player-top {
+        min-height:0;
+        gap:8px;
+        align-items:flex-start;
+      }
+      .cover-wrapper {
+        width:88px;
+        height:88px;
+        border-radius:14px;
+      }
+      .cover-disc {
+        width:52px;
+        height:52px;
+        border-width:7px;
+      }
+      .cover-placeholder {
+        gap:3px;
+        font-size:10px;
+        text-align:center;
+      }
+      .player-main { min-width:0; gap:4px; }
+      .track-title-row { gap:4px; }
+      .track-text { max-width:calc(100% - 60px); min-width:0; }
+      .track-title {
+        font-size:15px;
+        line-height:1.25;
+        max-height:38px;
+      }
+      .track-artist { font-size:11px; }
+      .track-tags { margin-top:2px; }
+      .player-actions { gap:4px; }
+      .status-pill { display:none; }
+      .player-btn-row { gap:4px; }
+      .btn-icon {
+        width:40px;
+        height:40px;
+        min-width:40px;
+        min-height:40px;
+      }
+      .player-actions .btn-icon {
+        width:34px;
+        height:34px;
+        min-width:34px;
+        min-height:34px;
+      }
+      .player-controls { gap:7px; }
+      .progress-time { width:36px; font-size:10px; }
+      .progress-bar-wrapper { height:8px; }
+      .progress-handle { width:12px; height:12px; }
+      .control-main .play-btn {
+        width:46px;
+        height:46px;
+        min-width:46px;
+        min-height:46px;
+      }
+      .volume-slider { width:72px; }
+
+      .lyrics-container {
+        margin-top:8px;
+        padding:8px 10px 10px;
+        border-radius:14px;
+      }
+      .lyrics-inner { padding:2px 2px 8px; }
+      .lyrics-title-line { font-size:12px; }
+      .lyrics-line {
+        font-size:15px;
+        margin:6px 0;
+        line-height:1.35;
+      }
+      .lyrics-line.active { transform:scale(1.05); }
+
+      body.lyrics-fullscreen .player-panel {
+        inset:max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom));
+        padding:8px;
+        border-radius:16px;
+      }
+      body.lyrics-fullscreen .player-panel .panel-header {
+        min-height:42px;
+        flex-direction:row;
+        align-items:center;
+      }
+      body.lyrics-fullscreen .lyrics-container {
+        padding:8px 8px 18px;
+      }
+      body.lyrics-fullscreen .lyrics-inner {
+        padding-top:18vh;
+        padding-bottom:42vh;
+      }
+      body.lyrics-fullscreen .lyrics-line {
+        font-size:17px;
+        margin:10px 0;
+        line-height:1.55;
+      }
+
+      .search-panel-content { height:100%; }
+      .search-row { padding-left:8px; }
+      .search-row .input { min-width:0; font-size:14px; }
+      .search-row .btn {
+        min-width:64px;
+        min-height:40px;
+        padding:6px 12px;
+      }
+      .source-row {
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        padding:2px 0 4px;
+        scrollbar-width:none;
+      }
+      .source-row::-webkit-scrollbar { display:none; }
+      .source-chip {
+        flex:0 0 auto;
+        min-height:36px;
+        padding:6px 9px;
+      }
+      .limit-row {
+        justify-content:flex-start;
+        flex-wrap:wrap;
+        row-gap:5px;
+      }
+      .limit-row select { min-height:34px; }
+      .limit-row .btn { min-height:36px; }
+      .search-stats { gap:8px; }
+      .search-stats > :first-child {
+        min-width:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
+      .search-mini-item {
+        min-height:54px;
+        padding:9px 10px;
+      }
+      .mini-title { font-size:13px; }
+      .mini-artist { font-size:11px; }
+
+      .playlist-panel .panel-header {
+        flex-direction:column;
+        align-items:stretch;
+        gap:7px;
+      }
+      .playlist-tabs {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0,1fr));
+        width:100%;
+      }
+      .playlist-tab {
+        min-width:0;
+        min-height:36px;
+        padding:8px 4px;
+        text-align:center;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .playlist-bar { gap:7px; }
+      .playlist-select-tools,
+      .playlist-file-actions { gap:5px; }
+      .playlist-file-actions .btn {
+        flex:1 1 auto;
+        min-height:36px;
+      }
+      .track-item {
+        min-height:58px;
+        padding:9px 8px;
+      }
+      .track-meta-title { font-size:13px; }
+      .track-actions .btn-icon {
+        width:36px;
+        height:36px;
+        min-width:36px;
+        min-height:36px;
+      }
+
+      footer { display:none; }
+
+      .mobile-nav {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0,1fr));
+        gap:6px;
+        flex-shrink:0;
+        padding:6px;
+        border:1px solid var(--border-subtle);
+        border-radius:16px;
+        background:rgba(7,10,30,0.94);
+        backdrop-filter:blur(18px);
+        box-shadow:0 -8px 26px rgba(0,0,0,0.45);
+      }
+      .mobile-nav-btn {
+        appearance:none;
+        border:0;
+        min-width:0;
+        min-height:50px;
+        padding:5px 4px;
+        border-radius:12px;
+        background:transparent;
+        color:var(--text-sub);
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:2px;
+        font:inherit;
+        font-size:10px;
+        cursor:pointer;
+      }
+      .mobile-nav-icon { font-size:18px; line-height:1; }
+      .mobile-nav-btn.active {
+        color:#211907;
+        font-weight:600;
+        background:linear-gradient(135deg, var(--accent-strong), #ff9bd4);
+        box-shadow:0 0 14px rgba(245,200,76,0.42);
+      }
+    }
+
+    @media (max-width:420px){
+      .app { padding-left:6px; padding-right:6px; }
+      header { padding-left:8px; padding-right:8px; }
+      .pikachu-box { width:40px; height:40px; flex-basis:40px; }
+      .title-text p { display:none; }
+      .panel-header-actions > .chip { display:none; }
+      .cover-wrapper { width:78px; height:78px; }
+      .cover-disc { width:46px; height:46px; }
+      .track-text { max-width:calc(100% - 48px); }
+      .control-secondary { display:none; }
+      .lyrics-line { font-size:14px; }
+      .mobile-nav-btn { min-height:46px; }
+    }
+
+    @media (max-width:860px) and (max-height:600px){
+      header { min-height:46px; }
+      .pikachu-box { width:38px; height:38px; flex-basis:38px; }
+      .title-text p { display:none; }
+      .mobile-nav-btn { min-height:42px; }
+      .cover-wrapper { width:72px; height:72px; }
+      .cover-disc { width:42px; height:42px; }
     }
   </style>
 </head>
@@ -1330,13 +1740,16 @@
       </section>
 
       <!-- 中：播放器 -->
-      <section class="panel player-panel ripple-target">
+      <section class="panel player-panel ripple-target mobile-active">
         <div class="panel-header">
           <div class="panel-title">
             <span class="icon">🎧</span>
             <span data-i18n="playerTitle">正在播放</span>
           </div>
-          <span class="chip" data-i18n="playerSubtitle">歌词动态高亮 · 炫酷霓虹</span>
+          <div class="panel-header-actions">
+            <span class="chip" data-i18n="playerSubtitle">歌词动态高亮 · 炫酷霓虹</span>
+            <button id="lyrics-full-btn" class="lyrics-full-btn ripple-target" type="button" aria-label="完整歌词" title="完整歌词">⛶</button>
+          </div>
         </div>
 
         <div class="player-top">
@@ -1444,6 +1857,21 @@
       </section>
     </main>
 
+    <nav class="mobile-nav" aria-label="手机端主导航">
+      <button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="search" aria-label="搜索">
+        <span class="mobile-nav-icon">🔍</span>
+        <span data-i18n="mobileNavSearch">搜索</span>
+      </button>
+      <button class="mobile-nav-btn active ripple-target" type="button" data-mobile-panel="player" aria-label="播放器" aria-current="page">
+        <span class="mobile-nav-icon">🎧</span>
+        <span data-i18n="mobileNavPlayer">播放</span>
+      </button>
+      <button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="playlist" aria-label="歌单">
+        <span class="mobile-nav-icon">📜</span>
+        <span data-i18n="mobileNavPlaylist">歌单</span>
+      </button>
+    </nav>
+
     <footer>
       <span data-i18n="footerText">本站仅作为学习演示，音乐版权归各平台与原作者所有。</span>
     </footer>
@@ -1541,6 +1969,9 @@
         shortcutMute:"静音 / 取消静音",
         shortcutFocusSearch:"聚焦搜索框",
         shortcutCloseModal:"提示：按 Esc 可以关闭弹窗。",
+        mobileNavSearch:"搜索",
+        mobileNavPlayer:"播放",
+        mobileNavPlaylist:"歌单",
         searchTitle:"歌曲搜索",
         searchSubtitle:"支持网易云 / QQ / 酷我 / JOOX",
         searchButton:"搜索",
@@ -1559,6 +1990,8 @@
         playerStatusPlaying:"播放中",
         playerStatusPaused:"已暂停",
         lyricsEmpty:"暂无歌词，试着播放一首支持歌词的歌曲。",
+        lyricsFullscreen:"完整歌词",
+        lyricsExitFullscreen:"退出完整歌词",
         playlistTitle:"播放列表",
         tabResults:"搜索结果",
         tabFavorites:"我的收藏",
@@ -1622,6 +2055,9 @@
         shortcutMute:"Mute / unmute",
         shortcutFocusSearch:"Focus on search box",
         shortcutCloseModal:"Tip: press Esc to close dialogs.",
+        mobileNavSearch:"Search",
+        mobileNavPlayer:"Player",
+        mobileNavPlaylist:"Library",
         searchTitle:"Search",
         searchSubtitle:"Supports Netease / QQ / Kuwo / JOOX",
         searchButton:"Search",
@@ -1640,6 +2076,8 @@
         playerStatusPlaying:"Playing",
         playerStatusPaused:"Paused",
         lyricsEmpty:"No lyrics yet. Try a song with LRC lyrics.",
+        lyricsFullscreen:"Full lyrics",
+        lyricsExitFullscreen:"Exit full lyrics",
         playlistTitle:"Playlists",
         tabResults:"Default",
         tabFavorites:"Favorites",
@@ -1770,6 +2208,7 @@
         : 'e.g. Commute mix / Pokemon list';
       if(dom.playlistSelect) renderPlaylistOptions();
       updatePlaylistInfoLabel();
+      updateLyricsFullscreenUI();
     }
 
     // ========== 旧的质量映射函数，暂时保留（不再使用 API 的 quality 字段） ==========
@@ -2559,22 +2998,55 @@
 
     // ===================== 歌词处理 =====================
 
-    function parseLRC(txt){
+    function normalizeLyricText(raw){
+      if(raw==null)return '';
+      if(typeof raw==='object'){
+        raw = raw.lrc || raw.lyric || raw.song_lyric || raw.text || raw.data || '';
+      }
+      let txt=String(raw);
+      if(!txt.includes('\n') && txt.includes('\\n')) txt=txt.replace(/\\n/g,'\n');
+      txt=txt.replace(/^\uFEFF/,'').replace(/<br\s*\/?>/gi,'\n');
+      const decoder=document.createElement('textarea');
+      decoder.innerHTML=txt;
+      return decoder.value;
+    }
+
+    function parseLRC(raw){
+      const txt=normalizeLyricText(raw);
       if(!txt)return[];
       const lines=txt.split(/\r?\n/);
-      const reg=/\[(\d{1,2}):(\d{1,2})(?:\.(\d{1,3}))?\]/;
+      const timeReg=/\[(\d{1,3}):(\d{1,2})(?:[\.:](\d{1,3}))?\]/g;
+      const metaReg=/^\[(?:ar|ti|al|by|offset|re|ve|length):/i;
       const out=[];
-      for(const line of lines){
-        const m=reg.exec(line); if(!m)continue;
-        const min=parseInt(m[1],10)||0;
-        const sec=parseInt(m[2],10)||0;
-        const ms=m[3]?parseInt(m[3].padEnd(3,'0'),10):0;
-        const time=min*60+sec+ms/1000;
-        const text=line.replace(reg,'').trim();
-        if(text)out.push({time,text});
+      const plain=[];
+
+      for(const rawLine of lines){
+        const line=rawLine.trim();
+        if(!line || metaReg.test(line))continue;
+
+        const stamps=[];
+        let match;
+        timeReg.lastIndex=0;
+        while((match=timeReg.exec(line))!==null){
+          const min=parseInt(match[1],10)||0;
+          const sec=parseInt(match[2],10)||0;
+          const fraction=match[3]||'';
+          const ms=fraction ? parseInt(fraction.padEnd(3,'0').slice(0,3),10) : 0;
+          stamps.push(min*60+sec+ms/1000);
+        }
+
+        const lyricText=line.replace(timeReg,'').replace(/^\[[^\]]+\]\s*/,'').trim();
+        if(stamps.length){
+          if(!lyricText)continue;
+          stamps.forEach(time=>out.push({time,text:lyricText}));
+        }else if(lyricText){
+          plain.push({time:null,text:lyricText});
+        }
       }
+
       out.sort((a,b)=>a.time-b.time);
-      return out;
+      // 有时间轴时保持同步歌词；没有时间轴时也完整显示纯文本歌词。
+      return out.length ? out : plain;
     }
 
     function renderLyrics(){
@@ -2607,25 +3079,70 @@
       });
     }
 
+    let lyricAutoFollowPausedUntil=0;
+
+    function pauseLyricsAutoFollow(ms=6000){
+      lyricAutoFollowPausedUntil=Date.now()+ms;
+    }
+
     function updateLyricsHighlight(time){
-      const lines=state.lyricLines; if(!lines.length)return;
-      let idx=state.currentLyricIndex;
-      if(idx<0||idx>=lines.length||time<lines[idx].time|| (idx+1<lines.length && time>=lines[idx+1].time)){
-        idx=lines.findIndex((l,i)=>{
-          const nxt=lines[i+1];
-          if(!nxt)return time>=l.time-0.05;
-          return time>=l.time-0.05 && time<nxt.time-0.05;
-        });
-      }
-      if(idx<0||idx===state.currentLyricIndex)return;
+      const lines=state.lyricLines;
+      if(!lines.length)return;
+
+      const timed=[];
+      lines.forEach((line,index)=>{
+        if(Number.isFinite(line.time))timed.push({line,index});
+      });
+      if(!timed.length)return;
+
+      let timedPos=timed.findIndex((entry,i)=>{
+        const next=timed[i+1];
+        if(!next)return time>=entry.line.time-0.05;
+        return time>=entry.line.time-0.05 && time<next.line.time-0.05;
+      });
+      if(timedPos<0)return;
+
+      const idx=timed[timedPos].index;
+      if(idx===state.currentLyricIndex)return;
       state.currentLyricIndex=idx;
       const wrap=dom.lyricsInner;
       wrap.querySelectorAll('.lyrics-line.active').forEach(el=>el.classList.remove('active'));
       const act=wrap.querySelector(`.lyrics-line[data-index="${idx}"]`);
       if(act){
         act.classList.add('active');
-        const box=dom.lyricsContainer;
-        box.scrollTo({top:act.offsetTop-box.clientHeight*0.45,behavior:'smooth'});
+        if(Date.now()>=lyricAutoFollowPausedUntil){
+          const box=dom.lyricsContainer;
+          const target=Math.max(0,act.offsetTop-box.clientHeight*0.45);
+          box.scrollTo({top:target,behavior:'smooth'});
+        }
+      }
+    }
+
+    function isLyricsFullscreen(){
+      return document.body.classList.contains('lyrics-fullscreen');
+    }
+
+    function updateLyricsFullscreenUI(){
+      if(!dom.lyricsFullBtn)return;
+      const expanded=isLyricsFullscreen();
+      const label=t(expanded?'lyricsExitFullscreen':'lyricsFullscreen');
+      dom.lyricsFullBtn.textContent=expanded?'✕':'⛶';
+      dom.lyricsFullBtn.title=label;
+      dom.lyricsFullBtn.setAttribute('aria-label',label);
+      dom.lyricsFullBtn.setAttribute('aria-expanded',expanded?'true':'false');
+    }
+
+    function setLyricsFullscreen(expanded){
+      document.body.classList.toggle('lyrics-fullscreen',Boolean(expanded));
+      updateLyricsFullscreenUI();
+      if(expanded){
+        activateMobilePanel('player');
+        setTimeout(()=>{
+          const active=dom.lyricsInner.querySelector('.lyrics-line.active');
+          if(active){
+            dom.lyricsContainer.scrollTop=Math.max(0,active.offsetTop-dom.lyricsContainer.clientHeight*0.42);
+          }
+        },40);
       }
     }
 
@@ -2743,6 +3260,9 @@
       if(index>=list.length)index=0;
       state.playContext={type,index,playlistId:plId||null};
       playTrack(list[index],state.playContext);
+      if(window.matchMedia('(max-width: 860px)').matches){
+        activateMobilePanel('player');
+      }
     }
 
     function playNext(direction){
@@ -3178,6 +3698,7 @@
       dom.volumeSlider=$('volume-slider');
       dom.lyricsInner=$('lyrics-inner');
       dom.lyricsContainer=document.querySelector('.lyrics-container');
+      dom.lyricsFullBtn=$('lyrics-full-btn');
 
       dom.playlistMain=document.querySelector('.playlist-main');
       dom.playlistList=$('playlist-list');
@@ -3201,6 +3722,66 @@
       dom.shortcutModal=$('shortcut-modal');
       dom.shortcutCloseBtn=$('shortcut-close');
     }
+
+
+
+    let mobileActivePanel = 'player';
+
+    function activateMobilePanel(name, options={}){
+      const panels = {
+        search:document.querySelector('.search-panel'),
+        player:document.querySelector('.player-panel'),
+        playlist:document.querySelector('.playlist-panel')
+      };
+      if(!panels[name]) name='player';
+      mobileActivePanel=name;
+
+      Object.entries(panels).forEach(([key,panel])=>{
+        if(panel) panel.classList.toggle('mobile-active',key===name);
+      });
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
+        const active=btn.dataset.mobilePanel===name;
+        btn.classList.toggle('active',active);
+        btn.setAttribute('aria-current',active?'page':'false');
+      });
+
+      if(options.focusSearch && name==='search'){
+        setTimeout(()=>{
+          if(dom.searchInput){
+            dom.searchInput.focus({preventScroll:true});
+            dom.searchInput.select();
+          }
+        },60);
+      }
+    }
+
+    function setupMobileNavigation(){
+      const media=window.matchMedia('(max-width: 860px)');
+
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          activateMobilePanel(btn.dataset.mobilePanel,{
+            focusSearch:btn.dataset.mobilePanel==='search'
+          });
+        });
+      });
+
+      const syncLayout=()=>{
+        document.body.classList.toggle('is-mobile-ui',media.matches);
+        if(media.matches){
+          activateMobilePanel(mobileActivePanel);
+        }else{
+          document.querySelectorAll('.layout > .panel').forEach(panel=>{
+            panel.classList.remove('mobile-active');
+          });
+        }
+      };
+
+      if(media.addEventListener) media.addEventListener('change',syncLayout);
+      else media.addListener(syncLayout);
+      syncLayout();
+    }
+
 
     function setPlaymodeUI(){
       document.querySelectorAll('.playmode-btn').forEach(btn=>{
@@ -3270,6 +3851,10 @@
       dom.nextBtn.addEventListener('click',()=>playNext('next'));
       dom.favBtn.addEventListener('click',toggleFavoriteCurrent);
       dom.downloadBtn.addEventListener('click',handleDownloadCurrent);
+      dom.lyricsFullBtn.addEventListener('click',()=>setLyricsFullscreen(!isLyricsFullscreen()));
+      ['pointerdown','touchstart','wheel'].forEach(eventName=>{
+        dom.lyricsContainer.addEventListener(eventName,()=>pauseLyricsAutoFollow(),{passive:true});
+      });
 
       dom.volumeSlider.addEventListener('input',()=>{
         dom.audio.volume=parseFloat(dom.volumeSlider.value);
@@ -3366,6 +3951,10 @@
         const shortcutOpen=dom.shortcutModal.classList.contains('show');
 
         if(e.key==='Escape'){
+          if(isLyricsFullscreen()){
+            setLyricsFullscreen(false);
+            return;
+          }
           if(playlistOpen)closePlaylistModal();
           if(shortcutOpen)dom.shortcutModal.classList.remove('show');
           return;
@@ -3405,6 +3994,7 @@
       setupParticles();
       setupRipple();
       setupEvents();
+      setupMobileNavigation();
       setLanguage(state.language);
       renderPlaylistOptions();
       renderPlaylistList();
