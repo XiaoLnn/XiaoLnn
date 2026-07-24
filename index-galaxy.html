@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="galaxy">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>Lang Nie ✦ 星河</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="tools/common.css">
+    <style>
+        :root { --gx-bg:#050010; --gx-surface:rgba(15,8,40,0.7); --gx-border:rgba(147,130,255,0.18); --gx-text:#e8e0ff; --gx-muted:rgba(180,170,220,0.65); --gx-accent:#b388ff; --gx-accent2:#ff80ab; --gx-glow:rgba(179,136,255,0.25); --glass-bg:var(--gx-surface); --glass-border:var(--gx-border); --text-main:var(--gx-text); --text-muted:var(--gx-muted); --theme-accent:var(--gx-accent); --theme-accent2:var(--gx-accent2); }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC','Exo 2',sans-serif;-webkit-tap-highlight-color:transparent;}
+        body{min-height:100vh;display:block;background:var(--gx-bg);background-attachment:fixed;color:var(--gx-text);overflow-x:hidden;padding:0;}
+        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 60% 20%,rgba(179,136,255,0.06) 0%,transparent 50%),radial-gradient(ellipse at 20% 80%,rgba(255,128,171,0.04) 0%,transparent 50%);}
+        #skeleton-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:var(--gx-bg);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.7s;}
+        #skeleton-overlay.fade-out{opacity:0;pointer-events:none;}
+        .skeleton-spinner{width:45px;height:45px;border:2px solid rgba(179,136,255,0.15);border-top-color:var(--gx-accent);border-radius:50%;animation:spin 0.9s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .skeleton-text{color:var(--gx-accent);font-family:'Exo 2',sans-serif;margin-top:16px;font-size:0.85rem;letter-spacing:3px;}
+        @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+        /* 星河网格布局 */
+        .gx-wrap{position:relative;z-index:10;width:100%;max-width:1100px;margin:0 auto;padding:20px;animation:gxIn 0.9s ease forwards;}
+        @keyframes gxIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+
+        .gx-card{background:var(--gx-surface);backdrop-filter:blur(32px) saturate(140%);-webkit-backdrop-filter:blur(32px) saturate(140%);border:1px solid var(--gx-border);border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,0.4);padding:25px;transition:all 0.5s;}
+        .gx-card:hover{box-shadow:0 20px 50px rgba(0,0,0,0.5),0 0 30px var(--gx-glow);}
+
+        /* 顶部时钟横跨全宽 */
+        .gx-clock-bar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px;padding:20px 30px;}
+        .gx-clock-left{display:flex;align-items:center;gap:20px;}
+        .gx-avatar-sm{width:50px;height:50px;border-radius:50%;background:url('https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg') center/cover;border:2px solid rgba(179,136,255,0.3);flex-shrink:0;}
+        .gx-clock-center{text-align:center;flex:1;}
+        .gx-time{font-family:'Exo 2',sans-serif;font-size:3.5rem;font-weight:700;letter-spacing:4px;background:linear-gradient(135deg,var(--gx-accent),var(--gx-accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .gx-date{font-size:0.85rem;color:var(--gx-muted);letter-spacing:2px;}
+        .gx-weather-mini{text-align:right;}
+        .gx-weather-mini .weather-icon{color:var(--gx-accent);font-size:1.5rem;}
+        .gx-weather-mini .weather-temp{font-family:'Exo 2',sans-serif;font-size:1.2rem;color:var(--gx-accent2);}
+        .gx-weather-mini .weather-desc,.gx-weather-mini .weather-city{font-size:0.7rem;color:var(--gx-muted);}
+
+        /* 三列主网格 */
+        .gx-grid{display:grid;grid-template-columns:280px 1fr 280px;gap:20px;margin-bottom:20px;}
+
+        /* 左列：个人资料 */
+        .gx-profile{text-align:center;padding:30px 20px;}
+        .gx-avatar{width:85px;height:85px;border-radius:50%;margin:0 auto 15px;background:url('https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg') center/cover;border:2px solid rgba(179,136,255,0.3);box-shadow:0 8px 25px rgba(179,136,255,0.2);}
+        .gx-name{font-family:'Exo 2',sans-serif;font-size:1.3rem;font-weight:600;letter-spacing:2px;color:var(--gx-accent);margin-bottom:10px;}
+        .gx-hitokoto{font-size:0.85rem;color:var(--gx-muted);line-height:1.7;min-height:40px;margin-bottom:15px;}
+        .gx-links{display:flex;flex-direction:column;gap:8px;}
+        .gx-link{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(179,136,255,0.06);border:1px solid rgba(179,136,255,0.12);border-radius:12px;color:var(--gx-text);text-decoration:none;font-size:0.83rem;transition:all 0.3s;cursor:pointer;}
+        .gx-link:hover{background:rgba(179,136,255,0.15);border-color:var(--gx-accent);transform:translateX(4px);}
+        .gx-link i{width:18px;text-align:center;color:var(--gx-accent);}
+        .gx-stats{display:flex;justify-content:center;gap:20px;margin-top:15px;font-size:0.75rem;color:var(--gx-muted);}
+        .gx-stats .num{color:var(--gx-accent);font-weight:600;font-family:'Exo 2',sans-serif;}
+
+        /* 中列：功能网格 */
+        .gx-func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+        .gx-func{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 10px;background:rgba(179,136,255,0.04);border:1px solid rgba(179,136,255,0.1);border-radius:16px;text-decoration:none;color:var(--gx-text);transition:all 0.3s;cursor:pointer;}
+        .gx-func:hover{background:rgba(179,136,255,0.12);border-color:var(--gx-accent);transform:translateY(-3px);box-shadow:0 8px 25px var(--gx-glow);}
+        .gx-func i{font-size:1.5rem;color:var(--gx-accent);transition:all 0.3s;}
+        .gx-func:hover i{color:var(--gx-accent2);}
+        .gx-func span{font-size:0.72rem;color:var(--gx-muted);letter-spacing:1px;}
+
+        /* 右列：播放器 */
+        .gx-player-card{padding:22px;display:flex;flex-direction:column;gap:12px;}
+        .gx-vinyl-wrap{display:flex;align-items:center;gap:15px;}
+        .gx-vinyl{width:65px;height:65px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid rgba(179,136,255,0.25);}
+        .gx-vinyl.playing{animation:vinylSpin 3.5s linear infinite;}
+        @keyframes vinylSpin{to{transform:rotate(360deg);}}
+        .gx-vinyl img{width:100%;height:100%;object-fit:cover;}
+        .gx-player-info{flex:1;min-width:0;}
+        .gx-player-title{font-size:0.95rem;color:var(--gx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .gx-player-artist{font-size:0.75rem;color:var(--gx-muted);margin-top:2px;}
+        .gx-progress{width:100%;height:4px;background:rgba(179,136,255,0.1);border-radius:2px;cursor:pointer;}
+        .gx-progress-fill{height:100%;background:linear-gradient(90deg,var(--gx-accent),var(--gx-accent2));border-radius:2px;width:0%;}
+        .gx-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+        .gx-btn{background:rgba(179,136,255,0.08);border:1px solid rgba(179,136,255,0.15);color:var(--gx-text);padding:7px 12px;border-radius:10px;cursor:pointer;font-size:0.78rem;transition:all 0.3s;}
+        .gx-btn:hover{background:rgba(179,136,255,0.2);border-color:var(--gx-accent);}
+        .gx-btn.play-pause{background:linear-gradient(135deg,var(--gx-accent),var(--gx-accent2));color:#fff;border:none;padding:10px 16px;}
+        .gx-search{display:flex;gap:6px;}
+        .gx-search input{flex:1;background:rgba(179,136,255,0.05);border:1px solid rgba(179,136,255,0.12);color:var(--gx-text);padding:8px 12px;border-radius:10px;font-size:0.82rem;outline:none;}
+        .gx-search input:focus{border-color:var(--gx-accent);}
+        .gx-search input::placeholder{color:var(--gx-muted);}
+        .music-list{max-height:180px;overflow-y:auto;margin-top:8px;}
+        .music-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid rgba(179,136,255,0.06);cursor:pointer;transition:all 0.2s;border-radius:8px;}
+        .music-item:hover,.music-item.active{background:rgba(179,136,255,0.08);}
+        .music-item .play-icon{color:var(--gx-accent);font-size:0.75rem;}
+        .music-item .music-name{font-size:0.82rem;} .music-item .music-artist{font-size:0.68rem;color:var(--gx-muted);}
+        .music-item .music-duration{font-size:0.68rem;color:var(--gx-muted);margin-left:auto;}
+        .source-tag{font-size:0.58rem;padding:2px 5px;border:1px solid rgba(255,128,171,0.3);color:var(--gx-accent2);border-radius:8px;}
+        .status-msg{text-align:center;padding:18px;color:var(--gx-muted);font-size:0.82rem;}
+
+        /* 面板复用 */
+        #history-panel,#bg-settings-panel{max-height:0;overflow:hidden;transition:max-height 0.4s ease, padding 0.4s ease, border-width 0.4s ease;margin-top:10px;border:1px solid var(--gx-border);border-radius:12px;}
+        #history-panel.show{max-height:300px;padding:15px;border-width:1px;}
+        #bg-settings-panel.show{max-height:400px;padding:15px;border-width:1px;}
+        #lyric-panel{max-height:0;overflow:hidden;transition:max-height 0.4s ease, padding 0.4s ease, border-width 0.4s ease;margin-top:10px;border:1px solid var(--gx-border);border-radius:12px;background:rgba(0,0,0,0.15);}
+        #lyric-panel.show{max-height:280px;padding:15px;border-width:1px;}
+        .lyric-header{display:flex;justify-content:space-between;padding:10px 14px;background:rgba(179,136,255,0.05);border-bottom:1px solid var(--gx-border);font-size:0.8rem;color:var(--gx-accent);}
+        #lyric-content{max-height:220px;overflow-y:auto;padding:30px 0;scroll-behavior:smooth;text-align:center;position:relative;}
+        #history-content{max-height:180px;overflow-y:auto;padding:10px;scroll-behavior:smooth;}
+        .lyric-line{padding:5px 10px;cursor:pointer;font-size:0.82rem;color:var(--gx-muted);transition:all 0.3s;border-radius:6px;line-height:1.5;}
+        .lyric-line:hover{background:rgba(179,136,255,0.06);} .lyric-line.active{color:var(--gx-accent);font-weight:600;font-size:0.95rem;text-shadow:0 0 10px rgba(179,136,255,0.5);}
+        .lyric-line.past{opacity:0.35;} .lyric-empty,.history-empty{text-align:center;padding:18px;color:var(--gx-muted);}
+        .history-item{display:flex;align-items:center;padding:7px;gap:8px;border-bottom:1px solid rgba(179,136,255,0.05);}
+        .history-info{flex:1;cursor:pointer;} .history-name{font-size:0.82rem;} .history-artist{font-size:0.68rem;color:var(--gx-muted);}
+        .history-time{font-size:0.62rem;color:var(--gx-muted);} .history-delete{cursor:pointer;color:var(--gx-muted);} .history-delete:hover{color:#ff6b6b;}
+        .bg-option{display:inline-block;width:80px;margin:6px;text-align:center;cursor:pointer;border:1px solid transparent;border-radius:10px;padding:4px;}
+        .bg-option.active,.bg-option:hover{border-color:var(--gx-accent);}
+        .bg-option img{width:100%;border-radius:8px;} .bg-option-label{font-size:0.68rem;color:var(--gx-muted);margin-top:3px;}
+        .bg-upload-btn{display:inline-block;padding:8px 14px;background:rgba(179,136,255,0.08);border:1px solid var(--gx-border);color:var(--gx-text);cursor:pointer;border-radius:10px;font-size:0.78rem;margin:6px 0;}
+        .bg-upload-btn input{display:none;}
+        .bg-url-input{width:100%;padding:7px;background:rgba(179,136,255,0.05);border:1px solid rgba(179,136,255,0.12);color:var(--gx-text);border-radius:8px;font-size:0.78rem;outline:none;}
+        .bg-reset-btn{padding:5px 12px;background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.2);color:#ff6b6b;cursor:pointer;border-radius:8px;font-size:0.78rem;}
+        .video-scale-selector{margin-top:6px;font-size:0.72rem;color:var(--gx-muted);}
+        .video-scale-btn{padding:4px 8px;background:rgba(179,136,255,0.05);border:1px solid rgba(179,136,255,0.1);color:var(--gx-muted);cursor:pointer;border-radius:6px;font-size:0.68rem;margin:0 3px;}
+        .video-scale-btn.active{border-color:var(--gx-accent);color:var(--gx-accent);}
+
+        /* Toast */
+        #toast{position:fixed;top:auto;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);z-index:99999;background:var(--gx-surface);border:1px solid var(--gx-border);color:var(--gx-text);padding:12px 24px;border-radius:14px;backdrop-filter:blur(20px);transition:transform 0.4s;font-size:0.83rem;}
+        #toast.show{transform:translateX(-50%) translateY(0);}
+
+        /* 日志 */
+        #log-trigger-btn{position:fixed;bottom:20px;right:20px;z-index:9998;width:42px;height:42px;border-radius:14px;background:var(--gx-surface);border:1px solid var(--gx-border);color:var(--gx-accent);cursor:pointer;backdrop-filter:blur(20px);transition:all 0.3s;}
+        #log-trigger-btn:hover{background:rgba(179,136,255,0.15);}
+        #log-panel{position:fixed;bottom:0;right:0;width:400px;max-height:55vh;z-index:9999;background:rgba(10,5,30,0.97);border:1px solid var(--gx-border);border-radius:16px 0 0 0;transform:translateY(100%);transition:transform 0.4s;overflow:hidden;display:flex;flex-direction:column;backdrop-filter:blur(20px);}
+        #log-panel.show{transform:translateY(0);}
+        .log-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--gx-border);font-size:0.8rem;color:var(--gx-accent);}
+        .log-filter-tabs{display:flex;gap:5px;padding:8px 12px;border-bottom:1px solid rgba(179,136,255,0.08);overflow-x:auto;}
+        .log-tab{font-size:0.68rem;padding:3px 8px;border-radius:8px;cursor:pointer;color:var(--gx-muted);border:1px solid transparent;transition:all 0.2s;}
+        .log-tab.active{color:var(--gx-accent);border-color:var(--gx-accent);}
+        #log-content{flex:1;overflow-y:auto;padding:10px;}
+        .log-item{padding:8px;margin-bottom:5px;border-left:2px solid var(--gx-accent);background:rgba(179,136,255,0.03);font-size:0.72rem;border-radius:0 6px 6px 0;}
+        .log-item.log-hidden{display:none;}
+        .log-time{font-size:0.62rem;color:var(--gx-muted);} .log-cat-badge{font-size:0.52rem;padding:1px 4px;border-radius:6px;margin-left:5px;}
+        .cat-system,.cat-player,.cat-api,.cat-lyrics,.cat-weather,.cat-error{background:rgba(179,136,255,0.1);color:var(--gx-accent);} .cat-error{color:#ff6b6b;}
+        .log-data,.log-error{font-family:monospace;font-size:0.68rem;color:var(--gx-muted);background:rgba(0,0,0,0.25);padding:5px;border-radius:4px;white-space:pre-wrap;word-break:break-all;max-height:100px;overflow-y:auto;} .log-error{color:#ff6b6b;}
+
+        /* 侧边栏 */
+        #sidebar{position:fixed;top:0;left:-300px;width:270px;height:100vh;z-index:10000;background:rgba(10,5,30,0.98);border-right:1px solid var(--gx-border);transition:left 0.4s;overflow-y:auto;backdrop-filter:blur(20px);}
+        #sidebar.show{left:0;} #sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity 0.4s;} #sidebar-overlay.show{opacity:1;pointer-events:auto;}
+        #sidebar-trigger{position:fixed;top:20px;left:20px;z-index:9998;width:38px;height:38px;border-radius:12px;background:var(--gx-surface);border:1px solid var(--gx-border);color:var(--gx-accent);cursor:pointer;backdrop-filter:blur(20px);transition:all 0.3s;}
+        #sidebar-trigger:hover{background:rgba(179,136,255,0.15);}
+        .sidebar-header{padding:20px;border-bottom:1px solid var(--gx-border);text-align:center;} .sidebar-header h2{font-family:'Exo 2',sans-serif;font-size:1rem;color:var(--gx-accent);letter-spacing:3px;}
+        .sidebar-link{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--gx-text);text-decoration:none;font-size:0.83rem;transition:all 0.3s;border-left:2px solid transparent;}
+        .sidebar-link:hover{background:rgba(179,136,255,0.06);border-left-color:var(--gx-accent);color:var(--gx-accent);}
+        .sidebar-section-title{padding:10px 20px;font-size:0.68rem;color:var(--gx-muted);text-transform:uppercase;letter-spacing:2px;}
+        .link-badge{font-size:0.58rem;padding:2px 6px;border:1px solid rgba(255,128,171,0.3);color:var(--gx-accent2);border-radius:8px;margin-left:auto;}
+        .sidebar-footer{padding:15px 20px;border-top:1px solid var(--gx-border);}
+        .sidebar-night-btn{width:100%;padding:10px;background:rgba(179,136,255,0.08);border:1px solid var(--gx-border);color:var(--gx-text);cursor:pointer;border-radius:10px;font-size:0.83rem;}
+
+        /* Bio */
+        #bio-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;display:none;align-items:center;justify-content:center;}
+        #bio-modal.show{display:flex;} #bio-modal-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);}
+        #bio-panel{position:relative;z-index:1;width:90%;max-width:480px;max-height:80vh;background:rgba(10,5,30,0.98);border:1px solid var(--gx-border);border-radius:20px;overflow-y:auto;backdrop-filter:blur(20px);}
+        .bio-header{display:flex;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--gx-border);color:var(--gx-accent);} .bio-header i{cursor:pointer;} .bio-header i:hover{color:#ff6b6b;}
+        .bio-body{padding:20px;} .bio-loading,.bio-error{text-align:center;padding:30px;color:var(--gx-muted);}
+        .bio-avatar-section{text-align:center;margin-bottom:20px;} .bio-avatar{width:80px;height:80px;border-radius:50%;border:2px solid var(--gx-accent);}
+        .bio-name{color:var(--gx-accent);font-size:1.1rem;margin-top:10px;font-family:'Exo 2',sans-serif;}
+        .bio-quote{background:rgba(179,136,255,0.05);border-left:2px solid var(--gx-accent);padding:10px 15px;margin:15px 0;font-size:0.83rem;color:var(--gx-muted);font-style:italic;border-radius:0 8px 8px 0;}
+        .bio-section-title{font-size:0.83rem;color:var(--gx-accent);margin:15px 0 10px;border-bottom:1px solid rgba(179,136,255,0.12);padding-bottom:5px;}
+        .bio-skill-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:0.78rem;}
+        .bio-skill-bar{flex:1;height:5px;background:rgba(179,136,255,0.1);border-radius:3px;overflow:hidden;} .bio-skill-fill{height:100%;background:linear-gradient(90deg,var(--gx-accent),var(--gx-accent2));border-radius:3px;}
+        .bio-timeline-item{padding-left:15px;border-left:2px solid var(--gx-accent);margin-bottom:10px;} .bio-timeline-year{font-size:0.72rem;color:var(--gx-accent);font-family:'Exo 2',sans-serif;}
+        .bio-tag{display:inline-block;padding:3px 10px;background:rgba(255,128,171,0.08);border:1px solid rgba(255,128,171,0.2);border-radius:8px;font-size:0.72rem;color:var(--gx-accent2);margin:3px;}
+        .bio-contact a{display:inline-block;margin-right:15px;color:var(--gx-text);text-decoration:none;font-size:0.83rem;} .bio-contact a:hover{color:var(--gx-accent);}
+        .bio-project{margin-bottom:12px;} .bio-project a{color:var(--gx-accent2);text-decoration:none;font-size:0.83rem;} .bio-project-desc{font-size:0.78rem;color:var(--gx-muted);margin-top:2px;}
+        .bio-project-lang{font-size:0.68rem;padding:2px 6px;border:1px solid rgba(255,128,171,0.2);color:var(--gx-accent2);border-radius:8px;}
+
+        #bg-video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-1;display:none;} #bg-video.active{display:block;}
+        #bg-video-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:rgba(5,0,16,0.5);}
+
+        /* 主题切换器 */
+        .theme-switcher{position:fixed;bottom:72px;right:20px;z-index:9997;}
+        .theme-switcher-btn{width:38px;height:38px;border-radius:50%;background:var(--gx-surface);border:1px solid var(--gx-border);color:var(--gx-accent);cursor:pointer;backdrop-filter:blur(20px);transition:all 0.3s;}
+        .theme-switcher-btn:hover{background:rgba(179,136,255,0.15);transform:rotate(180deg);}
+        .theme-panel{position:absolute;bottom:48px;right:0;background:rgba(10,5,30,0.98);border:1px solid var(--gx-border);border-radius:12px;padding:10px;display:none;min-width:120px;backdrop-filter:blur(20px);}
+        .theme-panel.show{display:block;}
+        .theme-option{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:0.78rem;color:var(--gx-muted);transition:all 0.2s;border-radius:8px;}
+        .theme-option:hover,.theme-option.active{color:var(--gx-text);background:rgba(179,136,255,0.08);}
+        .theme-dot{width:12px;height:12px;border-radius:50%;} .theme-dot.aurora{background:#6ee7b7;} .theme-dot.cyberpunk{background:#ff2d7b;} .theme-dot.ink{background:#d4a574;} .theme-dot.galaxy{background:#b388ff;} .theme-dot.sakura{background:#ff9eb5;}
+
+        .click-effect{position:fixed;width:100px;height:100px;border:1.5px solid var(--gx-accent);border-radius:50%;pointer-events:none;z-index:99997;animation:clickRipple 0.6s ease-out forwards;}
+        @keyframes clickRipple{0%{transform:scale(0);opacity:1;}100%{transform:scale(1);opacity:0;}}
+        .click-heart{position:fixed;pointer-events:none;z-index:99997;color:var(--gx-accent2);font-size:1.1rem;animation:heartFloat 1.2s ease-out forwards;}
+        @keyframes heartFloat{0%{opacity:1;transform:translateY(0) translateX(var(--tx,0));}100%{opacity:0;transform:translateY(-80px) translateX(var(--tx,0));}}
+        .click-particle{position:fixed;width:4px;height:4px;border-radius:50%;pointer-events:none;z-index:99997;animation:particleBurst 0.8s ease-out forwards;}
+        @keyframes particleBurst{0%{opacity:1;transform:translate(0,0);}100%{opacity:0;transform:translate(var(--tx,0),var(--ty,0));}}
+        #cursor-concentric{position:fixed;z-index:99999;pointer-events:none;transform:translate(-50%,-50%);transition:transform 0.15s;display:none;}
+        @media(hover:hover){#cursor-concentric{display:block;}*{cursor:none !important;}}
+        #cursor-concentric .outer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1.5px solid var(--gx-accent);border-radius:50%;}
+        #cursor-concentric .inner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(179,136,255,0.5);border-radius:50%;}
+        #cursor-concentric .dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:var(--gx-accent);border-radius:50%;}
+        .night-mode{--gx-bg:#000005;--gx-surface:rgba(8,4,25,0.9);}
+        .author-credit{position:relative;z-index:10;text-align:center;padding:20px;font-size:0.72rem;color:var(--gx-muted);} .author-credit a{color:var(--gx-accent2);text-decoration:none;}
+        @media(max-width:900px){.gx-grid{grid-template-columns:1fr;}.gx-clock-bar{flex-direction:column;text-align:center;}.gx-func-grid{grid-template-columns:repeat(3,1fr);}.gx-time{font-size:2.5rem;}}
+        @media(max-width:600px){.gx-func-grid{grid-template-columns:repeat(2,1fr);}#log-panel{width:100%;}}
+    </style>
+</head>
+<body>
+    <div id="skeleton-overlay"><div class="skeleton-spinner"></div><div class="skeleton-text">✦ STAR MAP LOADING</div></div>
+    <video id="bg-video" autoplay muted loop playsinline></video><div id="bg-video-overlay"></div>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar"><div class="sidebar-header"><h2>✦ NAVIGATE</h2></div><div class="sidebar-section-title">主页</div><a href="index.html" class="sidebar-link"><i class="fas fa-home"></i> 极光主题</a><div class="sidebar-section-title">工具集</div><a href="tools/index.html" class="sidebar-link"><i class="fas fa-wrench"></i> 小工具 <span class="link-badge">Tools</span></a><a href="tools/today.html" class="sidebar-link"><i class="fas fa-calendar-alt"></i> 历史上的今天</a><div class="sidebar-section-title">游戏</div><a href="games/index.html" class="sidebar-link"><i class="fas fa-gamepad"></i> 游戏大厅 <span class="link-badge">Play</span></a><div class="sidebar-section-title">设置</div><a href="javascript:void(0)" class="sidebar-link" onclick="openBgSettings(); toggleSidebar();"><i class="fas fa-image"></i> 背景设置</a><div class="sidebar-footer"><button class="sidebar-night-btn" onclick="toggleNightMode(); toggleSidebar();"><i class="fas fa-moon"></i> <span id="sidebar-night-text">夜间模式</span></button></div></div>
+    <button id="sidebar-trigger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <button id="log-trigger-btn" onclick="toggleLogPanel()"><i class="fas fa-terminal"></i></button>
+    <div id="log-panel"><div class="log-header"><span><i class="fas fa-network-wired"></i> 日志终端</span><div style="display:flex;align-items:center;"><i class="fas fa-trash-alt" style="cursor:pointer;color:var(--gx-accent);margin-right:12px;" onclick="clearLogs()"></i><i class="fas fa-times" style="cursor:pointer;color:#ff6b6b;" onclick="toggleLogPanel()"></i></div></div><div class="log-filter-tabs"><span class="log-tab active" data-cat="all" onclick="filterLogs('all')">全部</span><span class="log-tab" data-cat="system" onclick="filterLogs('system')">系统</span><span class="log-tab" data-cat="player" onclick="filterLogs('player')">播放器</span><span class="log-tab" data-cat="api" onclick="filterLogs('api')">API</span><span class="log-tab" data-cat="lyrics" onclick="filterLogs('lyrics')">歌词</span><span class="log-tab" data-cat="weather" onclick="filterLogs('weather')">天气</span><span class="log-tab log-tab-error" data-cat="error" onclick="filterLogs('error')">错误</span></div><div id="log-content"></div></div>
+
+    <div class="gx-wrap">
+        <!-- 顶部时钟栏 -->
+        <div class="gx-card gx-clock-bar">
+            <div class="gx-clock-left"><div class="gx-avatar-sm"></div><div><div class="gx-name" style="margin:0;font-size:0.9rem;">Lang Nie</div><div class="gx-date" id="clock-date">加载中...</div></div></div>
+            <div class="gx-clock-center"><div class="gx-time" id="clock-time">00:00:00</div></div>
+            <div class="gx-weather-mini" id="weather-widget"><div class="weather-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+        </div>
+
+        <!-- 三列主网格 -->
+        <div class="gx-grid">
+            <!-- 左列：个人 -->
+            <div class="gx-card gx-profile">
+                <div class="gx-avatar"></div>
+                <div class="gx-hitokoto"><span id="typed-text"></span><span style="display:inline-block;width:2px;height:1em;background:var(--gx-accent);animation:blink 1s step-end infinite;margin-left:2px;vertical-align:-0.1em;"></span></div>
+                <div class="gx-links">
+                    <a href="https://github.com/XiaoLnn/" target="_blank" class="gx-link"><i class="fab fa-github"></i> GitHub</a>
+                    <div class="gx-link" onclick="openApp('qq','1652939626')"><i class="fab fa-qq"></i> QQ</div>
+                    <div class="gx-link" onclick="openApp('wechat','np85160')"><i class="fab fa-weixin"></i> 微信</div>
+                    <a href="mailto:1652939626@qq.com" class="gx-link"><i class="fas fa-envelope"></i> 邮件</a>
+                    <a href="bio.html" class="gx-link"><i class="fas fa-id-card"></i> 生平</a>
+                </div>
+                <div class="gx-stats"><span>访客 <span class="num" id="busuanzi_value_site_uv">--</span></span><span>访问 <span class="num" id="busuanzi_value_site_pv">--</span></span></div>
+            </div>
+
+            <!-- 中列：功能网格 -->
+            <div class="gx-card" style="padding:20px;">
+                <div class="gx-func-grid">
+                    <a href="tools/index.html" class="gx-func"><i class="fas fa-wrench"></i><span>全部工具</span></a>
+                    <a href="games/index.html" class="gx-func"><i class="fas fa-gamepad"></i><span>游戏大厅</span></a>
+                    <a href="tools/today.html" class="gx-func"><i class="fas fa-calendar-alt"></i><span>历史上的今天</span></a>
+                    <a href="tools/qrcode.html" class="gx-func"><i class="fas fa-qrcode"></i><span>二维码</span></a>
+                    <a href="tools/json.html" class="gx-func"><i class="fas fa-code"></i><span>JSON</span></a>
+                    <a href="tools/base64.html" class="gx-func"><i class="fas fa-lock"></i><span>Base64</span></a>
+                    <a href="tools/regex.html" class="gx-func"><i class="fas fa-asterisk"></i><span>正则</span></a>
+                    <a href="tools/calculator.html" class="gx-func"><i class="fas fa-calculator"></i><span>计算器</span></a>
+                    <a href="tools/timer.html" class="gx-func"><i class="fas fa-stopwatch"></i><span>计时器</span></a>
+                    <a href="tools/todo.html" class="gx-func"><i class="fas fa-tasks"></i><span>待办</span></a>
+                    <a href="tools/notes.html" class="gx-func"><i class="fas fa-sticky-note"></i><span>便签</span></a>
+                    <a href="tools/color.html" class="gx-func"><i class="fas fa-palette"></i><span>颜色</span></a>
+                </div>
+            </div>
+
+            <!-- 右列：播放器 -->
+            <div class="gx-card gx-player-card">
+                <div class="gx-vinyl-wrap"><div class="gx-vinyl" id="vinyl-record"><img src="https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg" id="player-cover" alt="cover"></div><div class="gx-player-info"><div class="gx-player-title" id="player-title">等待播放</div><div class="gx-player-artist" id="player-artist">星河播放器</div></div><span id="player-source-tag" style="font-size:0.58rem;color:var(--gx-muted);border:1px solid var(--gx-border);padding:2px 5px;border-radius:8px;">待机</span></div>
+                <div class="gx-progress" id="progress-container" onclick="seekAudio(event)"><div class="gx-progress-fill" id="progress-fill"></div></div>
+                <div class="gx-controls"><button class="gx-btn" onclick="playPrev()"><i class="fas fa-step-backward"></i></button><button class="gx-btn play-pause" onclick="togglePlay()"><i class="fas fa-play" id="play-pause-icon"></i></button><button class="gx-btn" onclick="playNext()"><i class="fas fa-step-forward"></i></button><button class="gx-btn" onclick="toggleLyricPanel()" id="lyric-trigger-btn"><i class="fas fa-microphone-alt"></i></button><button class="gx-btn" onclick="toggleHistoryPanel()"><i class="fas fa-history"></i></button><button class="gx-btn" onclick="toggleNightMode()" id="night-mode-btn"><i class="fas fa-moon"></i></button><button class="gx-btn" onclick="openBgSettings()"><i class="fas fa-image"></i></button></div>
+                <div id="lyric-panel"><div class="lyric-header"><span><i class="fas fa-music"></i> 歌词</span><span id="lyric-source-info"></span></div><div id="lyric-content"><div class="lyric-empty">暂无歌词</div></div></div>
+                <div id="history-panel"><div class="lyric-header"><span><i class="fas fa-history"></i> 播放历史</span><span id="history-count">0</span></div><div id="history-content"></div></div>
+                <div id="bg-settings-panel"><div class="lyric-header"><span><i class="fas fa-image"></i> 背景设置</span><span id="bg-status">默认</span></div><div id="bg-options"><div class="bg-option active" data-bg="default" onclick="selectBg('default')"><img src="https://img.8845.top/acg" alt="默认"><div class="bg-option-label">默认</div></div><div class="bg-option" data-bg="bing" onclick="selectBingBg()"><img src="https://www.bing.com/th?id=OHR.DragonBoatFestivalY26_ZH-CN5532138555_1920x1080.jpg" alt="Bing"><div class="bg-option-label">Bing</div></div></div><div id="bg-loading-msg" style="display:none;"></div><div style="padding:10px;"><label class="bg-upload-btn"><i class="fas fa-upload"></i> 上传<input type="file" accept="image/*,video/*" onchange="uploadBgMedia(this)"></label><input type="text" class="bg-url-input" id="bg-url-input" placeholder="粘贴链接..."><div style="margin-top:6px;"><button class="bg-reset-btn" onclick="resetBg()">恢复默认</button></div><div class="video-scale-selector" id="video-scale-selector" style="display:none;"><button class="video-scale-btn active" data-scale="cover" onclick="setVideoScale('cover')">全屏</button><button class="video-scale-btn" data-scale="contain" onclick="setVideoScale('contain')">等比</button></div></div></div>
+                <div class="gx-search"><input type="text" id="musicKeyword" placeholder="搜索音乐..."><button class="gx-btn" id="searchQQBtn"><i class="fas fa-search"></i></button><button class="gx-btn" id="searchNeteaseBtn"><i class="fas fa-cloud"></i></button><button class="gx-btn" id="randomMusicBtn"><i class="fas fa-random"></i></button></div>
+                <div class="music-list" id="musicListArea"><div class="status-msg"><i class="fas fa-headphones"></i> 搜索你想听的音乐吧</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><i class="fas fa-info-circle" style="color:var(--gx-accent);"></i> <span id="toast-msg"></span></div>
+    <div id="bio-modal"><div id="bio-modal-backdrop" onclick="closeBioPanel()"></div><div id="bio-panel"><div class="bio-header"><span><i class="fas fa-id-card" style="margin-right:10px;color:var(--gx-accent);"></i> 作者生平</span><i class="fas fa-times" onclick="closeBioPanel()"></i></div><div class="bio-body" id="bio-body"><div class="bio-loading">加载中...</div></div></div></div>
+
+    <script src="./common-index.js" defer></script>
+<script>
+window.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.initIndexPage === "function") {
+        window.initIndexPage('galaxy');
+    } else {
+        console.error("页面核心脚本 common-index.js 加载失败，请检查域名 HTTPS 证书与文件路径。");
+    }
+});
+</script>
+    <div class="author-credit"><p>© 2026 Lang Nie ✦ 星河</p><p><a href="https://github.com/XiaoLnn//Lang Nie-card" target="_blank"><i class="fab fa-github"></i> GitHub</a></p></div>
+
+<script>
+/* Lang Nie custom: auto sync music cover */
+(function(){
+    const defaultCover = "https://i.mji.rip/2026/07/14/0e6381ebec33e37757e64660b403493d.jpeg";
+
+    window.updateSongCover = function(song){
+        if(!song) return;
+        const cover =
+            song.cover ||
+            song.pic ||
+            song.picUrl ||
+            (song.album && (song.album.picUrl || song.album.cover)) ||
+            defaultCover;
+
+        document.querySelectorAll("#player-cover,.gx-vinyl img,.gd-vinyl img,.music-cover")
+        .forEach(function(img){
+            img.src = cover;
+        });
+    };
+
+    document.addEventListener("musicChanged", function(e){
+        updateSongCover(e.detail);
+    });
+})();
+</script>
+
+</body>
+</html>
