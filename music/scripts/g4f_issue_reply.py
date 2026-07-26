@@ -1,10 +1,7 @@
 '''
 Function:
     Issues Auto Reply By Using gpt4free
-Author:
-    Zhenchao Jin
-WeChat Official Account (微信公众号):
-    Charles的皮卡丘
+
 '''
 import os
 import re
