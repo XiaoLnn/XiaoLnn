@@ -356,6 +356,567 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 @media(max-width:390px){.cover-wrapper{width:min(58vw,250px);max-width:250px}.track-title{font-size:21px}}
 </style>
 
+
+
+<style id="requested-layout-refinement-v3">
+/* 用户布局优化：桌面端左侧居中封面、右侧歌词、底部居中进度；移动端 2/3 歌词 + 小封面播放坞 */
+:root{
+  --visual-height:100dvh;
+}
+
+@media (min-width:861px){
+  .player-panel{
+    display:grid;
+    grid-template-columns:clamp(16px,1.5vw,28px) minmax(210px,34%) minmax(260px,1fr) clamp(16px,1.5vw,28px);
+    grid-template-rows:58px auto minmax(0,1fr) auto auto;
+    column-gap:clamp(14px,1.8vw,30px);
+    row-gap:0;
+  }
+  .player-panel > .panel-header{
+    grid-column:1 / -1;
+    grid-row:1;
+  }
+  .player-panel > .player-top,
+  .player-panel .player-main,
+  .player-panel .player-controls{
+    display:contents;
+  }
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:2 / 5;
+    align-self:center;
+    justify-self:start;
+    width:100%;
+    max-width:min(34vw,360px);
+    margin:8px 0;
+  }
+  .player-panel .track-title-row{
+    grid-column:3;
+    grid-row:2;
+    align-self:end;
+    padding:18px 0 10px;
+  }
+  .player-panel .lyrics-container{
+    grid-column:3;
+    grid-row:3;
+    align-self:stretch;
+    min-height:0;
+    width:100%;
+    margin:0;
+    padding:14px 12px 24px;
+    border-radius:18px;
+  }
+  .player-panel .lyrics-inner{
+    max-width:none;
+    padding:24px 10px 90px;
+  }
+  .player-panel .control-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:center;
+    padding:12px 0 4px;
+  }
+  .player-panel .progress-row{
+    grid-column:2 / 4;
+    grid-row:5;
+    justify-self:center;
+    width:min(820px,100%);
+    padding:10px 0 2px;
+  }
+
+  body.lyrics-fullscreen .player-panel{
+    display:flex;
+    flex-direction:column;
+  }
+  body.lyrics-fullscreen .player-panel .player-top{display:none!important}
+  body.lyrics-fullscreen .player-panel .lyrics-container{
+    width:auto;
+    margin:0 14px 14px;
+    flex:1;
+  }
+}
+
+@media (max-width:860px){
+  html,body{
+    height:100%;
+    min-height:100%;
+    overflow:hidden;
+  }
+  .app{
+    height:var(--visual-height,100dvh);
+    min-height:0;
+  }
+  .layout{
+    height:100%;
+    min-height:0;
+  }
+  .layout > .player-panel.mobile-active{
+    display:grid;
+    grid-template-columns:12px 72px minmax(0,1fr) 12px;
+    grid-template-rows:52px auto minmax(0,2fr) minmax(112px,1fr);
+    column-gap:10px;
+    row-gap:0;
+    overflow:hidden;
+  }
+  .player-panel > .player-top,
+  .player-panel .player-main,
+  .player-panel .player-controls{
+    display:contents;
+  }
+  .player-panel > .panel-header{
+    grid-column:1 / -1;
+    grid-row:1;
+  }
+  .player-panel .track-title-row{
+    grid-column:2 / 4;
+    grid-row:2;
+    align-self:center;
+    min-width:0;
+    padding:8px 0 7px;
+  }
+  .player-panel .track-text{
+    padding-left:0;
+    text-align:left;
+  }
+  .player-panel .track-title{
+    font-size:clamp(19px,5.5vw,23px);
+    -webkit-line-clamp:1;
+  }
+  .player-panel .track-artist{
+    margin-top:5px;
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .player-panel .track-tags{display:none}
+  .player-panel .player-actions{
+    flex:0 0 auto;
+    width:auto;
+  }
+  .player-panel .player-actions .btn-icon{
+    width:34px;
+    height:34px;
+  }
+  .player-panel .player-actions #download-btn{display:none}
+
+  .player-panel .lyrics-container{
+    grid-column:2 / 4;
+    grid-row:3;
+    align-self:stretch;
+    min-height:0;
+    width:100%;
+    height:auto;
+    margin:2px 0 0;
+    padding:0 5px;
+    border-radius:18px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scroll-padding-block:38%;
+    mask-image:linear-gradient(transparent 0,#000 7%,#000 93%,transparent 100%);
+  }
+  .player-panel .lyrics-inner{
+    max-width:none;
+    padding:34% 8px 42%;
+  }
+  .player-panel .lyrics-line{
+    font-size:clamp(16px,4.65vw,20px);
+    line-height:1.62;
+    margin:10px 0;
+  }
+  .player-panel .lyrics-line.active{
+    transform:scale(1.025);
+  }
+
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:4;
+    align-self:center;
+    justify-self:start;
+    width:72px;
+    height:72px;
+    max-width:none;
+    aspect-ratio:1;
+    margin:0;
+    border-radius:16px;
+    box-shadow:0 14px 34px rgba(0,0,0,.40),0 12px 30px rgb(var(--album-primary)/.16);
+  }
+  .player-panel .cover-placeholder{
+    padding:6px;
+    font-size:0;
+  }
+  .player-panel .cover-disc{
+    width:38px;
+    height:38px;
+  }
+  .player-panel .progress-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:start;
+    width:100%;
+    margin-top:13px;
+    padding:0;
+    grid-template-columns:34px 1fr 34px;
+    gap:6px;
+  }
+  .player-panel .control-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:end;
+    width:100%;
+    padding-bottom:9px;
+    justify-content:flex-start;
+  }
+  .player-panel .control-main{
+    gap:10px;
+  }
+  .player-panel .control-main .btn-icon{
+    width:40px;
+    height:40px;
+  }
+  .player-panel .control-main .play-btn{
+    width:50px;
+    height:50px;
+  }
+  .player-panel .control-secondary{display:none}
+
+  body.lyrics-fullscreen .player-panel{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  body.lyrics-fullscreen .player-panel .player-top{display:none!important}
+  body.lyrics-fullscreen .player-panel .lyrics-container{
+    width:auto;
+    height:auto;
+    margin:0 8px 8px;
+    flex:1;
+  }
+
+  /* 输入法弹出时使用 visualViewport 高度，避免页面被键盘挤压、折叠。 */
+  body.keyboard-open .app{
+    height:var(--visual-height,100dvh);
+    padding:6px 8px max(6px,env(safe-area-inset-bottom));
+  }
+  body.keyboard-open header,
+  body.keyboard-open .mobile-nav{
+    display:none!important;
+  }
+  body.keyboard-open .layout > .panel.mobile-active{
+    height:100%;
+    border-radius:18px;
+  }
+  body.keyboard-open .search-panel.mobile-active{
+    display:flex;
+    min-height:0;
+  }
+  body.keyboard-open .search-panel .panel-header{
+    height:44px;
+    flex:0 0 44px;
+  }
+  body.keyboard-open .search-panel-content{
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding:8px 10px max(10px,env(safe-area-inset-bottom));
+    gap:8px;
+  }
+  body.keyboard-open .search-row{
+    position:sticky;
+    top:0;
+    z-index:12;
+    flex:0 0 auto;
+    background:rgba(34,35,42,.94);
+    backdrop-filter:blur(22px) saturate(1.25);
+  }
+  body.keyboard-open .hot-comment-card{display:none}
+  body.keyboard-open .source-row,
+  body.keyboard-open .limit-row,
+  body.keyboard-open .search-stats{flex:0 0 auto}
+  body.keyboard-open .search-results-mini{
+    min-height:140px;
+    flex:1 1 auto;
+  }
+}
+
+@media (max-width:390px){
+  .layout > .player-panel.mobile-active{
+    grid-template-columns:10px 64px minmax(0,1fr) 10px;
+    grid-template-rows:52px auto minmax(0,2fr) minmax(104px,1fr);
+    column-gap:8px;
+  }
+  .player-panel .cover-wrapper{
+    width:64px;
+    height:64px;
+    border-radius:14px;
+  }
+  .player-panel .progress-row{
+    grid-template-columns:31px 1fr 31px;
+  }
+  .player-panel .control-main .btn-icon{
+    width:37px;
+    height:37px;
+  }
+  .player-panel .control-main .play-btn{
+    width:47px;
+    height:47px;
+  }
+}
+</style>
+
+
+<style id="requested-layout-centering-v4">
+/* 用户新要求：专辑图右侧的歌曲信息居中，歌词居中，去除歌词框 */
+@media (min-width:861px){
+  .player-panel .track-title-row{
+    position:relative;
+    grid-column:3;
+    grid-row:2;
+    align-self:center;
+    min-height:160px;
+    padding:8px 0 4px;
+    justify-content:center;
+  }
+  .player-panel .track-text{
+    width:100%;
+    max-width:min(720px,88%);
+    margin:0 auto;
+    text-align:center;
+  }
+  .player-panel .track-title{
+    -webkit-line-clamp:2;
+    text-align:center;
+  }
+  .player-panel .track-artist{
+    text-align:center;
+  }
+  .player-panel .track-tags{
+    justify-content:center;
+  }
+  .player-panel .player-actions{
+    position:absolute;
+    right:0;
+    top:12px;
+    align-items:flex-end;
+  }
+
+  .player-panel .lyrics-container{
+    grid-column:3;
+    grid-row:3;
+    margin:0;
+    padding:0;
+    background:transparent !important;
+    box-shadow:none !important;
+    border:0 !important;
+    border-radius:0 !important;
+    mask-image:none;
+    -webkit-mask-image:none;
+  }
+  .player-panel .lyrics-inner{
+    max-width:min(780px,90%);
+    margin:0 auto;
+    padding:40px 6px 90px;
+    text-align:center;
+  }
+  .player-panel .lyrics-title-line,
+  .player-panel .lyrics-line,
+  .player-panel .lyrics-empty{
+    text-align:center;
+  }
+
+  body.lyrics-fullscreen .player-panel .lyrics-container{
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+}
+</style>
+
+
+<style id="requested-control-progress-v5">
+/* 用户新要求：播放控制放在专辑图下方；进度条缩短、加粗，并放在歌词正下方居中 */
+@media (min-width:861px){
+  .player-panel{
+    grid-template-rows:58px auto minmax(0,1fr) auto 18px;
+  }
+
+  /* 专辑封面列：下方放控制按钮 */
+  .player-panel .control-row{
+    grid-column:2;
+    grid-row:4;
+    align-self:start;
+    justify-self:center;
+    width:auto;
+    padding:14px 0 0;
+    justify-content:center;
+  }
+  .player-panel .control-main{
+    gap:14px;
+  }
+  .player-panel .control-main .btn-icon{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:rgb(var(--album-primary)/.18);
+    box-shadow:0 8px 28px rgb(var(--album-primary)/.12);
+  }
+  .player-panel .control-main .play-btn{
+    width:68px;
+    height:68px;
+    border-radius:50%;
+    box-shadow:0 14px 38px rgb(var(--album-primary)/.22);
+  }
+  .player-panel .control-secondary{
+    display:none;
+  }
+
+  /* 歌词列：下方放沉浸式进度条 */
+  .player-panel .progress-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:start;
+    justify-self:center;
+    width:min(560px,78%);
+    padding:20px 0 0;
+    grid-template-columns:42px 1fr 42px;
+    gap:12px;
+  }
+  .player-panel .progress-time{
+    font-size:10px;
+    color:rgba(255,255,255,.42);
+  }
+  .player-panel .progress-bar-wrapper{
+    height:22px;
+    display:flex;
+    align-items:center;
+  }
+  .player-panel .progress-bar-wrapper::before{
+    height:7px;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.04), 0 0 22px rgb(var(--album-primary)/.08);
+  }
+  .player-panel .progress-bar{
+    height:7px;
+    border-radius:999px;
+    background:linear-gradient(90deg,rgb(var(--album-highlight)),rgb(var(--album-primary)) 62%,#fff);
+    box-shadow:0 0 22px rgb(var(--album-primary)/.34),0 0 42px rgb(var(--album-highlight)/.18);
+  }
+  .player-panel .progress-handle{
+    width:14px;
+    height:14px;
+    opacity:1;
+    background:#fff;
+    box-shadow:0 0 0 4px rgb(var(--album-primary)/.12),0 2px 12px rgba(0,0,0,.28);
+  }
+
+  /* 让歌词区与进度条关系更紧密、无边框沉浸 */
+  .player-panel .lyrics-inner{
+    padding-bottom:48px;
+  }
+}
+</style>
+
+
+<style id="requested-control-progress-v6">
+/* 精准布局：控制键位于专辑图正下方；短款沉浸式进度条位于歌词正下方 */
+@media (min-width:861px){
+  .player-panel{
+    grid-template-rows:58px auto minmax(0,1fr) 92px 12px;
+  }
+
+  /* 封面只占歌曲信息与歌词两行，给下方控制区留出独立位置 */
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:2 / 4;
+    align-self:center;
+    justify-self:center;
+  }
+
+  /* 播放控制：严格落在封面正下方并水平居中 */
+  .player-panel .control-row{
+    grid-column:2;
+    grid-row:4;
+    align-self:center;
+    justify-self:center;
+    width:max-content;
+    padding:0;
+    margin:0;
+    justify-content:center;
+  }
+  .player-panel .control-main{
+    justify-content:center;
+    gap:14px;
+  }
+  .player-panel .control-main .btn-icon{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:rgb(var(--album-primary)/.17);
+    box-shadow:inset 0 0 0 1px rgb(var(--album-highlight)/.08),0 10px 28px rgba(0,0,0,.18);
+    backdrop-filter:blur(16px);
+  }
+  .player-panel .control-main .play-btn{
+    width:68px;
+    height:68px;
+    border-radius:50%;
+    background:var(--album-contrast,#fff);
+    color:rgb(var(--album-deep));
+    box-shadow:0 14px 36px rgb(var(--album-primary)/.26),0 0 34px rgb(var(--album-highlight)/.12);
+  }
+  .player-panel .control-secondary{display:none!important}
+
+  /* 歌词区略收底部留白，使进度条自然贴在歌词下方 */
+  .player-panel .lyrics-inner{
+    padding-bottom:34px;
+  }
+
+  /* 进度条：歌词正下方、短、粗、居中，颜色跟随封面变量 */
+  .player-panel .progress-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:center;
+    justify-self:center;
+    width:min(520px,70%);
+    margin:0;
+    padding:0;
+    grid-template-columns:40px minmax(180px,1fr) 40px;
+    gap:12px;
+  }
+  .player-panel .progress-time{
+    font-size:10px;
+    color:rgba(255,255,255,.40);
+    font-variant-numeric:tabular-nums;
+  }
+  .player-panel .progress-bar-wrapper{
+    height:28px;
+    display:flex;
+    align-items:center;
+  }
+  .player-panel .progress-bar-wrapper::before{
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(90deg,rgb(var(--album-primary)/.18),rgba(255,255,255,.10));
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.07),0 0 22px rgb(var(--album-primary)/.10);
+  }
+  .player-panel .progress-bar{
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(90deg,
+      rgb(var(--album-highlight)) 0%,
+      rgb(var(--album-primary)) 52%,
+      rgb(var(--album-secondary)) 100%);
+    box-shadow:0 0 14px rgb(var(--album-highlight)/.36),0 0 32px rgb(var(--album-primary)/.24);
+  }
+  .player-panel .progress-handle{
+    width:15px;
+    height:15px;
+    opacity:1;
+    background:#fff;
+    box-shadow:0 0 0 4px rgb(var(--album-primary)/.13),0 0 18px rgb(var(--album-highlight)/.40),0 2px 8px rgba(0,0,0,.26);
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -377,7 +938,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       <section class="panel search-panel ripple-target">
         <div class="panel-header"><div class="panel-title"><span class="icon">⌕</span><span data-i18n="searchTitle">发现音乐</span></div><span class="chip" data-i18n="searchSubtitle">多平台聚合搜索</span></div>
         <div class="search-panel-content">
-          <div class="search-row ripple-target"><span class="search-prefix">⌕</span><input id="search-input" class="input" type="text" placeholder="搜索歌曲、歌手或专辑…"><button id="search-btn" class="btn ripple-target" data-i18n="searchButton">搜索</button></div>
+          <div class="search-row ripple-target"><span class="search-prefix">⌕</span><input id="search-input" class="input" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="搜索歌曲、歌手或专辑…"><button id="search-btn" class="btn ripple-target" data-i18n="searchButton">搜索</button></div>
           <div class="source-row">
             <label class="source-chip ripple-target"><span class="source-dot netease"></span><input type="checkbox" data-source="netease" checked><span>网易云</span></label>
             <label class="source-chip ripple-target"><span class="source-dot qq"></span><input type="checkbox" data-source="qq" checked><span>QQ</span></label>
@@ -3018,5 +3579,83 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
     document.addEventListener('DOMContentLoaded',init);
   })();
 </script>
+
+
+<script id="mobile-visual-viewport-fix">
+(function(){
+  const mobileMedia=window.matchMedia('(max-width: 860px)');
+  const viewport=window.visualViewport;
+  const root=document.documentElement;
+  const searchInput=document.getElementById('search-input');
+  let stableHeight=Math.max(window.innerHeight,viewport?viewport.height:0);
+  let raf=0;
+
+  if(searchInput){
+    searchInput.setAttribute('inputmode','search');
+    searchInput.setAttribute('enterkeyhint','search');
+    searchInput.setAttribute('autocomplete','off');
+    searchInput.setAttribute('autocapitalize','off');
+    searchInput.setAttribute('spellcheck','false');
+  }
+
+  function isEditableFocused(){
+    const el=document.activeElement;
+    return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+  }
+
+  function applyViewport(){
+    raf=0;
+    const current=Math.max(1,Math.round(viewport?viewport.height:window.innerHeight));
+    const focused=isEditableFocused();
+
+    if(!focused || current>stableHeight-36){
+      stableHeight=Math.max(stableHeight,current,window.innerHeight);
+    }
+
+    root.style.setProperty('--visual-height',current+'px');
+
+    const keyboardOpen=mobileMedia.matches && focused && current<stableHeight-110;
+    document.body.classList.toggle('keyboard-open',keyboardOpen);
+
+    if(keyboardOpen){
+      const searchPanel=document.querySelector('.search-panel.mobile-active');
+      if(searchPanel)searchPanel.scrollTop=0;
+    }
+  }
+
+  function scheduleViewportSync(){
+    if(raf)cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(applyViewport);
+  }
+
+  if(viewport){
+    viewport.addEventListener('resize',scheduleViewportSync,{passive:true});
+    viewport.addEventListener('scroll',scheduleViewportSync,{passive:true});
+  }
+  window.addEventListener('resize',scheduleViewportSync,{passive:true});
+  window.addEventListener('orientationchange',()=>{
+    stableHeight=0;
+    setTimeout(scheduleViewportSync,80);
+    setTimeout(scheduleViewportSync,360);
+  },{passive:true});
+
+  if(searchInput){
+    searchInput.addEventListener('focus',()=>{
+      setTimeout(scheduleViewportSync,40);
+      setTimeout(scheduleViewportSync,260);
+    });
+    searchInput.addEventListener('blur',()=>{
+      setTimeout(()=>{
+        document.body.classList.remove('keyboard-open');
+        stableHeight=Math.max(stableHeight,window.innerHeight,viewport?viewport.height:0);
+        scheduleViewportSync();
+      },120);
+    });
+  }
+
+  scheduleViewportSync();
+})();
+</script>
+
 </body>
 </html>
