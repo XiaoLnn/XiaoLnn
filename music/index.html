@@ -917,6 +917,225 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 }
 </style>
 
+
+<style id="requested-control-progress-v7-final">
+/* 最终布局：控制键在专辑图正下方居中；短款沉浸式进度条在歌词正下方居中，无任何边框 */
+@media (min-width:861px){
+  .player-panel{
+    grid-template-rows:58px auto minmax(0,1fr) 86px 12px;
+  }
+
+  /* 封面与控制键形成同一条垂直中轴 */
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:2 / 4;
+    align-self:center;
+    justify-self:center;
+    margin:6px 0 0;
+  }
+  .player-panel .control-row{
+    grid-column:2;
+    grid-row:4;
+    align-self:start;
+    justify-self:center;
+    width:max-content;
+    margin:0;
+    padding:8px 0 0;
+    justify-content:center;
+  }
+  .player-panel .control-main{
+    justify-content:center;
+    gap:14px;
+  }
+  .player-panel .control-main .btn-icon{
+    width:52px;
+    height:52px;
+    border:0!important;
+    outline:0!important;
+    border-radius:50%;
+    background:rgb(var(--album-primary)/.18);
+    box-shadow:0 10px 28px rgba(0,0,0,.18),0 0 24px rgb(var(--album-primary)/.10);
+    backdrop-filter:blur(16px) saturate(1.2);
+  }
+  .player-panel .control-main .play-btn{
+    width:68px;
+    height:68px;
+    border:0!important;
+    outline:0!important;
+    border-radius:50%;
+    background:linear-gradient(135deg,rgb(var(--album-highlight)),rgb(var(--album-primary)) 58%,rgb(var(--album-secondary)));
+    color:rgb(var(--album-deep));
+    box-shadow:0 14px 38px rgb(var(--album-primary)/.28),0 0 34px rgb(var(--album-highlight)/.16);
+  }
+  .player-panel .control-secondary{display:none!important}
+
+  /* 歌词区与进度条贴合，形成沉浸式连续视觉 */
+  .player-panel .lyrics-inner{
+    padding-bottom:28px;
+  }
+  .player-panel .progress-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:start;
+    justify-self:center;
+    width:min(440px,62%);
+    min-width:300px;
+    margin:0;
+    padding:12px 0 0;
+    grid-template-columns:38px minmax(190px,1fr) 38px;
+    gap:10px;
+  }
+  .player-panel .progress-time{
+    font-size:9px;
+    color:rgba(255,255,255,.38);
+    font-variant-numeric:tabular-nums;
+  }
+  .player-panel .progress-bar-wrapper{
+    height:24px;
+    display:flex;
+    align-items:center;
+    background:transparent!important;
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    border-radius:0!important;
+    overflow:visible;
+  }
+  .player-panel .progress-bar-wrapper::before{
+    left:0;
+    right:0;
+    height:6px;
+    border:0!important;
+    outline:0!important;
+    border-radius:999px;
+    background:linear-gradient(90deg,
+      rgb(var(--album-highlight)/.20),
+      rgb(var(--album-primary)/.20) 52%,
+      rgb(var(--album-secondary)/.16));
+    box-shadow:none!important;
+  }
+  .player-panel .progress-bar{
+    height:6px;
+    border:0!important;
+    outline:0!important;
+    border-radius:999px;
+    background:linear-gradient(90deg,
+      rgb(var(--album-highlight)) 0%,
+      rgb(var(--album-primary)) 52%,
+      rgb(var(--album-secondary)) 100%);
+    box-shadow:0 0 14px rgb(var(--album-highlight)/.38),0 0 28px rgb(var(--album-primary)/.22);
+  }
+  .player-panel .progress-handle{
+    width:12px;
+    height:12px;
+    opacity:1;
+    border:0!important;
+    outline:0!important;
+    background:rgb(var(--album-highlight));
+    box-shadow:0 0 14px rgb(var(--album-highlight)/.64),0 2px 8px rgba(0,0,0,.24);
+  }
+}
+
+@media (min-width:861px) and (max-width:1120px){
+  .player-panel .progress-row{
+    width:min(380px,70%);
+    min-width:260px;
+  }
+}
+</style>
+
+
+<style id="requested-transport-controls-v8-final">
+/* 极简播放控件：无边框、无底色；桌面端位于封面与播放器底端之间的视觉中点。 */
+.player-panel .control-main{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.player-panel .transport-btn,
+.player-panel .control-main .transport-btn,
+.player-panel .control-main .transport-btn.btn-icon,
+.player-panel .control-main .transport-btn.play-btn{
+  position:relative;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  padding:0!important;
+  margin:0;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  color:rgba(255,255,255,.93);
+  cursor:pointer;
+  overflow:visible;
+  transition:transform .18s var(--ease),color .18s var(--ease),filter .18s var(--ease);
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.24)) drop-shadow(0 0 12px rgb(var(--album-highlight)/.08));
+}
+.player-panel .transport-btn::before,
+.player-panel .transport-btn::after{content:none!important}
+.player-panel .transport-btn:hover{
+  color:#fff;
+  background:transparent!important;
+  transform:translateY(-2px);
+  filter:drop-shadow(0 7px 15px rgba(0,0,0,.28)) drop-shadow(0 0 16px rgb(var(--album-highlight)/.18));
+}
+.player-panel .transport-btn:active{transform:scale(.92)}
+.player-panel .transport-btn:focus-visible{
+  outline:0!important;
+  filter:drop-shadow(0 0 15px rgb(var(--album-highlight)/.38));
+}
+.player-panel .transport-icon{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  fill:currentColor;
+}
+.player-panel .skip-btn{width:62px!important;height:62px!important}
+.player-panel .skip-btn .transport-icon{width:48px;height:32px}
+.player-panel .play-btn.transport-btn{width:82px!important;height:82px!important}
+.player-panel .play-btn .transport-icon{width:62px;height:62px}
+.player-panel .pause-glyph{display:none}
+.player-panel .play-btn.is-playing .play-glyph{display:none}
+.player-panel .play-btn.is-playing .pause-glyph{display:block}
+.player-panel .control-secondary{display:none!important}
+
+@media (min-width:861px){
+  .player-panel{
+    grid-template-rows:58px auto minmax(0,1fr) clamp(118px,14vh,148px) 18px;
+  }
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:2 / 4;
+    align-self:center;
+    justify-self:center;
+    margin:4px 0 0;
+  }
+  .player-panel .control-row{
+    grid-column:2;
+    grid-row:4;
+    align-self:center;
+    justify-self:center;
+    width:max-content;
+    margin:0;
+    padding:0;
+    transform:translateY(-22px);
+    justify-content:center;
+  }
+  .player-panel .control-main{gap:24px}
+}
+
+@media (max-width:860px){
+  .player-panel .control-main{gap:12px}
+  .player-panel .skip-btn{width:42px!important;height:42px!important}
+  .player-panel .skip-btn .transport-icon{width:34px;height:24px}
+  .player-panel .play-btn.transport-btn{width:54px!important;height:54px!important}
+  .player-panel .play-btn .transport-icon{width:46px;height:46px}
+}
+</style>
 </head>
 
 <body>
@@ -972,7 +1191,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
             </div>
             <div class="player-controls">
               <div class="progress-row"><span id="current-time" class="progress-time">00:00</span><div id="progress-bar-wrapper" class="progress-bar-wrapper ripple-target"><div id="progress-bar" class="progress-bar"></div><div id="progress-handle" class="progress-handle"></div></div><span id="total-time" class="progress-time">00:00</span></div>
-              <div class="control-row"><div class="control-main"><button id="prev-btn" class="btn btn-secondary btn-icon ripple-target" title="上一首 (P)">│◀</button><button id="play-btn" class="btn play-btn ripple-target" title="播放/暂停 (Space)">▶</button><button id="next-btn" class="btn btn-secondary btn-icon ripple-target" title="下一首 (N)">▶│</button></div><div class="control-secondary"><span>音量</span><input id="volume-slider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8"></div></div>
+              <div class="control-row"><div class="control-main"><button id="prev-btn" class="btn btn-secondary btn-icon transport-btn skip-btn" type="button" title="上一首 (P)" aria-label="上一首"><svg class="transport-icon" viewBox="0 0 96 64" aria-hidden="true"><path d="M37.8 8.5C41.1 6 45.8 8.3 45.8 12.5v39c0 4.2-4.7 6.5-8 4L10.2 37.1c-3.8-2.5-3.8-7.7 0-10.2L37.8 8.5Z"/><path d="M77.8 8.5c3.3-2.5 8-0.2 8 4v39c0 4.2-4.7 6.5-8 4L50.2 37.1c-3.8-2.5-3.8-7.7 0-10.2L77.8 8.5Z"/></svg></button><button id="play-btn" class="btn play-btn transport-btn" type="button" title="播放/暂停 (Space)" aria-label="播放"><svg class="transport-icon play-glyph" viewBox="0 0 72 72" aria-hidden="true"><path d="M25.1 8.5C21.5 6.2 17 8.8 17 13.1v45.8c0 4.3 4.5 6.9 8.1 4.6l34-22.9c3.2-2.2 3.2-6.9 0-9.1l-34-23Z"/></svg><svg class="transport-icon pause-glyph" viewBox="0 0 72 72" aria-hidden="true"><rect x="16" y="8" width="15" height="56" rx="7.5"/><rect x="41" y="8" width="15" height="56" rx="7.5"/></svg></button><button id="next-btn" class="btn btn-secondary btn-icon transport-btn skip-btn" type="button" title="下一首 (N)" aria-label="下一首"><svg class="transport-icon" viewBox="0 0 96 64" aria-hidden="true"><path d="M58.2 8.5C54.9 6 50.2 8.3 50.2 12.5v39c0 4.2 4.7 6.5 8 4l27.6-18.4c3.8-2.5 3.8-7.7 0-10.2L58.2 8.5Z"/><path d="M18.2 8.5c-3.3-2.5-8-0.2-8 4v39c0 4.2 4.7 6.5 8 4l27.6-18.4c3.8-2.5 3.8-7.7 0-10.2L18.2 8.5Z"/></svg></button></div><div class="control-secondary"><span>音量</span><input id="volume-slider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8"></div></div>
             </div>
           </div>
         </div>
@@ -2754,7 +2973,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         dom.audio.src=track.audioUrl;
         await dom.audio.play();
         state.isPlaying=true;
-        dom.playBtn.textContent='⏸';
+        setPlayButtonState(true);
         dom.playerStatus.textContent=t('playerStatusPlaying');
       }catch(e){
         console.error(e);
@@ -2826,6 +3045,13 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         idx = (idx + (direction==='prev'?-1:1) + list.length) % list.length;
       }
       playFromList(state.playContext.type,idx,state.playContext.playlistId);
+    }
+
+    function setPlayButtonState(isPlaying){
+      if(!dom.playBtn)return;
+      dom.playBtn.classList.toggle('is-playing',Boolean(isPlaying));
+      dom.playBtn.setAttribute('aria-label',isPlaying?'暂停':'播放');
+      dom.playBtn.title=(isPlaying?'暂停':'播放')+' (Space)';
     }
 
     function togglePlayPause(){
@@ -3444,12 +3670,12 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       });
       dom.audio.addEventListener('play',()=>{
         state.isPlaying=true;
-        dom.playBtn.textContent='⏸';
+        setPlayButtonState(true);
         dom.playerStatus.textContent=t('playerStatusPlaying');
       });
       dom.audio.addEventListener('pause',()=>{
         state.isPlaying=false;
-        dom.playBtn.textContent='▶';
+        setPlayButtonState(false);
         dom.playerStatus.textContent=t('playerStatusPaused');
         audioLevel = 0;
       });
