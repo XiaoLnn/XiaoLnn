@@ -1,1963 +1,368 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <title>Nie的音乐站 - 聚合Music</title>
-  <link rel="icon" href="pikachu.gif" type="image/gif">
-  <meta name="description" content="一个可爱的在线音乐聚合播放器，支持网易云、QQ音乐、酷我、JOOX搜索播放。">
+  <meta charset="UTF-8">
+  <title>Nie Music · Spatial Player</title>
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101321">
+   <meta name="description" content="一个贼全面的在线音乐聚合播放器，支持网易云、QQ音乐、酷我、JOOX搜索播放。">
 <meta property="og:title" content="Nie的音乐站 - 聚合Music">
 <meta property="og:description" content="一个可爱的在线音乐聚合播放器，支持网易云、QQ音乐、酷我、JOOX搜索播放。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xiaolnne.shop/music/index.html">
 <meta property="og:site_name" content="Nie的音乐站">
-
-<meta property="og:image" content="https://xiaolnne.shop/music/touxiang.jpg">
-<meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:width" content="300">
-<meta property="og:image:height" content="300">
-  <meta name="referrer" content="no-referrer" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#02030a" />
-  <!-- 圆润可爱字体 -->
+  <link rel="icon" href="pikachu.gif" type="image/gif">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-dark: #02030a;
-      --panel-glass: rgba(8, 10, 26, 0.26);
-      --panel-glass-soft: rgba(10, 14, 35, 0.26);
-      --accent: #f5c84c;
-      --accent-strong: #ffdd55;
-      --accent-pink: #ff7bb0;
-      --accent-blue: #4ac8ff;
-      --accent-green: #65f7c4;
-      --accent-red: #ff5c7a;
-      --text-main: #f5f6ff;
-      --text-sub: #a1a6d0;
-      --border-subtle: rgba(255, 255, 255, 0.12);
-    }
+:root{
+  color-scheme:dark;
+  --album-primary:104 127 255;
+  --album-secondary:217 95 255;
+  --album-highlight:151 231 255;
+  --cover-art:none;
+  --ink:#f7f8ff;
+  --ink-2:rgba(241,243,255,.68);
+  --ink-3:rgba(241,243,255,.42);
+  --surface:rgba(10,12,20,.68);
+  --surface-strong:rgba(12,14,23,.90);
+  --surface-soft:rgba(255,255,255,.055);
+  --stroke:rgba(255,255,255,.105);
+  --stroke-strong:rgba(255,255,255,.18);
+  --shadow:0 28px 90px rgba(0,0,0,.40);
+  --radius-xl:30px;
+  --radius-lg:22px;
+  --radius-md:16px;
+  --ease:cubic-bezier(.2,.72,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07080d;color:var(--ink)}
+body{font-family:Manrope,"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;letter-spacing:-.01em}
+button,input,select{font:inherit}
+button{color:inherit}
+body::before{
+  content:"";position:fixed;inset:-16%;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 16%,rgb(var(--album-primary)/.72),transparent 35%),
+    radial-gradient(circle at 83% 12%,rgb(var(--album-secondary)/.50),transparent 33%),
+    radial-gradient(circle at 62% 92%,rgb(var(--album-highlight)/.34),transparent 34%),
+    linear-gradient(145deg,#07080d 12%,#101321 54%,#07080d 100%);
+  filter:saturate(1.22);transition:background 1s var(--ease);
+}
+body::after{
+  content:"";position:fixed;inset:-40px;z-index:-2;pointer-events:none;opacity:.18;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+  mix-blend-mode:soft-light;
+}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;opacity:.30;pointer-events:none}
+.app{height:100dvh;padding:18px;display:flex;flex-direction:column;gap:14px;position:relative}
+.app::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.34;
+  background-image:var(--cover-art);background-size:cover;background-position:center;filter:blur(90px) saturate(1.45) brightness(.55);transform:scale(1.12);transition:background-image .8s ease;
+}
+header{
+  height:66px;flex:0 0 66px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 8px 0 13px;
+  border:1px solid var(--stroke);border-radius:24px;background:rgba(7,8,14,.57);backdrop-filter:blur(32px) saturate(1.25);box-shadow:0 16px 54px rgba(0,0,0,.18)
+}
+.logo-area{display:flex;align-items:center;gap:12px;min-width:0}
+.pikachu-box{width:42px;height:42px;border-radius:14px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,rgb(var(--album-highlight)/.92),rgb(var(--album-primary)/.72));box-shadow:0 10px 28px rgb(var(--album-primary)/.24);border:1px solid rgba(255,255,255,.24)}
+.brand-mark{font-size:17px;font-weight:800;letter-spacing:-.05em}.pikachu-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.title-text{min-width:0}.title-text h1{font-size:15px;line-height:1.1;margin:0;font-weight:760;letter-spacing:.02em}.title-text p{margin:5px 0 0;font-size:10px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.header-controls{display:flex;align-items:center;gap:10px;min-width:0}.shortcut-hint{font-size:10px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px}
+.lang-toggle{display:flex;padding:3px;border:1px solid var(--stroke);border-radius:999px;background:rgba(255,255,255,.04)}
+.lang-btn{border:0;background:transparent;border-radius:999px;padding:7px 10px;font-size:10px;color:var(--ink-3);cursor:pointer;transition:.2s var(--ease)}
+.lang-btn.active{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.shortcut-toggle-btn,.lyrics-full-btn,.hot-comment-refresh,.playmode-btn{border:1px solid var(--stroke);background:rgba(255,255,255,.055);cursor:pointer;transition:.18s var(--ease)}
+.shortcut-toggle-btn{width:38px;height:38px;border-radius:13px}.shortcut-toggle-btn:hover,.lyrics-full-btn:hover,.hot-comment-refresh:hover,.playmode-btn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,.86fr) minmax(540px,1.64fr) minmax(320px,.96fr);gap:14px}
+.panel{min-height:0;position:relative;border:1px solid var(--stroke);border-radius:var(--radius-xl);background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.018) 42%),rgba(8,10,17,.58);backdrop-filter:blur(34px) saturate(1.22);box-shadow:var(--shadow);overflow:hidden}
+.panel::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.panel-header{height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 18px;position:relative;z-index:4;border-bottom:1px solid rgba(255,255,255,.065)}
+.panel-title{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.01em}.panel-title .icon{font-size:16px}.chip{font-size:9px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel-header-actions{display:flex;align-items:center;gap:8px;min-width:0}.lyrics-full-btn{width:36px;height:36px;border-radius:12px;font-size:15px}
+.search-panel{display:flex;flex-direction:column}.search-panel-content{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;position:relative;z-index:2}
+.search-row{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:18px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.055)}
+.search-prefix{font-size:15px;opacity:.65}.input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;font-size:12px}.input::placeholder{color:var(--ink-3)}
+.btn{border:0;border-radius:14px;padding:9px 13px;cursor:pointer;font-size:11px;font-weight:720;transition:.18s var(--ease);background:linear-gradient(135deg,rgb(var(--album-highlight)/.98),rgb(var(--album-primary)/.94));color:#090b13;box-shadow:0 10px 26px rgb(var(--album-primary)/.20)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}.btn:active{transform:scale(.97)}
+.btn-secondary{background:rgba(255,255,255,.09);color:#fff;box-shadow:none;border:1px solid var(--stroke)}.btn-ghost{background:transparent;color:var(--ink-2);box-shadow:none;border:1px solid var(--stroke)}
+.btn-icon{width:36px;height:36px;padding:0;display:grid;place-items:center;border-radius:13px}.btn-fav-active{background:linear-gradient(135deg,#ff6d9f,#ff3e6c);border-color:transparent;box-shadow:0 10px 28px rgba(255,62,108,.25)}
+.source-row{display:flex;gap:7px;overflow:auto;padding-bottom:1px;scrollbar-width:none}.source-row::-webkit-scrollbar{display:none}.source-chip{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--stroke);border-radius:12px;background:rgba(255,255,255,.035);font-size:10px;color:var(--ink-2);cursor:pointer}.source-chip:has(input:checked){background:rgba(255,255,255,.09);color:#fff;border-color:var(--stroke-strong)}.source-chip input{display:none}
+.source-dot{width:7px;height:7px;border-radius:50%;display:inline-block;box-shadow:0 0 10px currentColor}.source-dot.netease{background:#ff4966;color:#ff4966}.source-dot.qq{background:#35d9ff;color:#35d9ff}.source-dot.kuwo{background:#b87cff;color:#b87cff}.source-dot.joox{background:#5af0aa;color:#5af0aa}
+.limit-row{display:flex;align-items:center;gap:7px;color:var(--ink-3);font-size:9px}.limit-row select,.playlist-select-tools select{min-width:58px;border:1px solid var(--stroke);border-radius:10px;background:#141722;color:#fff;padding:7px 8px;outline:0}.limit-row .btn{margin-left:auto;padding:8px 10px}
+.search-stats{display:flex;justify-content:space-between;gap:10px;color:var(--ink-3);font-size:9px;padding:0 2px}.search-stats span:first-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.hot-comment-card{position:relative;min-height:158px;padding:13px;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.11);background:linear-gradient(145deg,rgb(var(--album-primary)/.20),rgba(255,255,255,.045) 55%),rgba(4,5,10,.48);cursor:pointer;transition:.22s var(--ease)}
+.hot-comment-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.19);box-shadow:0 18px 42px rgba(0,0,0,.24)}
+.hot-comment-card::before{content:"";position:absolute;right:-30px;bottom:-42px;width:160px;height:160px;border-radius:50%;background:rgb(var(--album-secondary)/.23);filter:blur(34px)}
+.hot-comment-main{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;position:relative;z-index:2}.hot-comment-cover{width:54px;height:54px;border-radius:15px;object-fit:cover;background:rgba(255,255,255,.08);box-shadow:0 10px 26px rgba(0,0,0,.28)}
+.hot-comment-head{min-width:0}.hot-comment-head strong{display:block;font-size:11px}.hot-comment-head span{display:block;margin-top:5px;color:var(--ink-3);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hot-comment-refresh{width:34px;height:34px;border-radius:12px}
+.hot-comment-card p{position:relative;z-index:2;margin:12px 0 9px;font-size:11px;line-height:1.68;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.hot-comment-footer{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:var(--ink-3)}.hot-comment-user{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hot-comment-like{flex:0 0 auto}.hot-comment-action{color:rgb(var(--album-highlight));font-weight:700}
+.search-results-mini{flex:1;min-height:0;overflow:auto;padding-right:3px}.search-mini-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 11px;margin-bottom:5px;border-radius:14px;border:1px solid transparent;background:rgba(255,255,255,.025);cursor:pointer;transition:.18s var(--ease)}.search-mini-item:hover{background:rgba(255,255,255,.075);border-color:var(--stroke);transform:translateX(2px)}.mini-meta-main{min-width:0}.mini-title{font-size:11px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini-artist{font-size:9px;color:var(--ink-3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini-right{display:flex;align-items:flex-end;gap:5px;flex-direction:column}.mini-badge{font-size:9px;color:var(--ink-3)}.mini-source{display:flex;align-items:center;gap:5px;font-size:8px;color:var(--ink-3)}
+.player-panel{display:flex;flex-direction:column;background:linear-gradient(145deg,rgb(var(--album-primary)/.14),rgba(255,255,255,.025) 40%),rgba(7,8,14,.62)}
+.player-panel>.panel-header{background:linear-gradient(180deg,rgba(8,10,17,.5),transparent)}
+.player-top{padding:22px 24px 18px;display:grid;grid-template-columns:minmax(220px,290px) minmax(250px,1fr);gap:26px;align-items:center;position:relative;z-index:2;flex:0 0 auto}
+.cover-wrapper{aspect-ratio:1;width:100%;max-width:290px;border-radius:28px;position:relative;overflow:hidden;background:linear-gradient(145deg,rgb(var(--album-primary)/.42),rgb(var(--album-secondary)/.24));box-shadow:0 36px 72px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.13),0 0 70px rgb(var(--album-primary)/.22);transform:translateZ(0)}
+.cover-wrapper::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.22);pointer-events:none}.cover-wrapper img{width:100%;height:100%;object-fit:cover;display:none}.cover-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--ink-2);font-size:11px;text-align:center;padding:20px}.cover-disc{width:106px;height:106px;border-radius:50%;background:radial-gradient(circle at center,#10121a 0 10%,rgb(var(--album-highlight)) 11% 17%,#08090e 18% 54%,#1d2130 55% 58%,#08090e 59%);box-shadow:0 16px 38px rgba(0,0,0,.35);animation:disc-spin 10s linear infinite}@keyframes disc-spin{to{transform:rotate(360deg)}}
+.player-main{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:18px}.track-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.track-text{min-width:0}.track-title{font-size:clamp(27px,3.2vw,48px);font-weight:760;line-height:1.03;letter-spacing:-.055em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.track-artist{font-size:13px;color:var(--ink-2);margin-top:12px}.track-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.source-pill,.lossless-pill,.status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--stroke);border-radius:999px;background:rgba(255,255,255,.055);font-size:8px;font-weight:700;letter-spacing:.06em}.lossless-pill{color:rgb(var(--album-highlight));border-color:rgb(var(--album-highlight)/.28)}
+.player-actions{display:flex;flex-direction:column;align-items:flex-end;gap:9px}.player-btn-row{display:flex;gap:7px}.status-pill{color:var(--ink-3)}
+.player-controls{display:flex;flex-direction:column;gap:16px}.progress-row{display:grid;grid-template-columns:40px 1fr 40px;gap:10px;align-items:center}.progress-time{font-size:9px;color:var(--ink-3);font-variant-numeric:tabular-nums}.progress-time:last-child{text-align:right}.progress-bar-wrapper{height:18px;display:flex;align-items:center;position:relative;cursor:pointer}.progress-bar-wrapper::before{content:"";position:absolute;left:0;right:0;height:4px;border-radius:999px;background:rgba(255,255,255,.12)}.progress-bar{position:absolute;left:0;height:4px;width:100%;border-radius:999px;background:linear-gradient(90deg,rgb(var(--album-highlight)),rgb(var(--album-primary)));transform-origin:left;transform:scaleX(0);box-shadow:0 0 16px rgb(var(--album-primary)/.55)}.progress-handle{position:absolute;left:0;width:12px;height:12px;border-radius:50%;background:#fff;transform:translate(-50%,0);box-shadow:0 2px 12px rgba(0,0,0,.35)}
+.control-row{display:flex;align-items:center;justify-content:space-between;gap:15px}.control-main{display:flex;align-items:center;gap:9px}.control-main .play-btn{width:58px;height:58px;border-radius:20px;font-size:19px}.control-secondary{display:flex;align-items:center;gap:8px;color:var(--ink-3);font-size:10px}.volume-slider{width:110px;accent-color:rgb(var(--album-highlight))}
+.lyrics-container{flex:1;min-height:0;margin:0 18px 18px;padding:20px 20px 28px;border:1px solid rgba(255,255,255,.075);border-radius:23px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.10));overflow:auto;scroll-behavior:smooth;position:relative;z-index:2;mask-image:linear-gradient(transparent 0,#000 11%,#000 89%,transparent 100%)}
+.lyrics-inner{max-width:680px;margin:0 auto;text-align:center;padding:28px 8px 100px}.lyrics-title-line{font-size:10px;color:var(--ink-3);margin-bottom:18px;letter-spacing:.08em;text-transform:uppercase}.lyrics-line{font-size:17px;line-height:1.55;margin:11px 0;color:rgba(235,238,255,.32);font-weight:580;transition:.32s var(--ease)}.lyrics-line.active{color:#fff;transform:scale(1.09);text-shadow:0 0 28px rgb(var(--album-highlight)/.55)}.lyrics-empty{color:var(--ink-3);font-size:12px;padding-top:50px}
+.playlist-panel{display:flex;flex-direction:column}.playlist-tabs{display:flex;gap:3px;padding:3px;border:1px solid var(--stroke);border-radius:13px;background:rgba(255,255,255,.035)}.playlist-tab{padding:7px 9px;border-radius:10px;color:var(--ink-3);font-size:8px;cursor:pointer;white-space:nowrap}.playlist-tab.active{color:#fff;background:rgba(255,255,255,.12)}
+.playlist-main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;padding:0 13px 13px;position:relative;z-index:2}.playlist-bar{position:sticky;top:0;z-index:4;padding:12px 2px 10px;background:linear-gradient(180deg,rgba(11,13,21,.96) 68%,transparent)}.playlist-top-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.playlist-info{font-size:9px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.playmode-row{display:flex;gap:5px}.playmode-btn{width:31px;height:31px;border-radius:11px;font-size:12px}.playmode-btn.active{background:rgb(var(--album-primary)/.22);border-color:rgb(var(--album-highlight)/.30);color:rgb(var(--album-highlight))}
+.playlist-select-row{display:flex;flex-direction:column;gap:7px;margin-top:8px}.playlist-select-tools,.playlist-file-actions{display:flex;align-items:center;gap:6px}.playlist-select-tools select{flex:1;min-width:0}.playlist-file-actions{flex-wrap:wrap}.playlist-file-actions .btn{padding:7px 9px;font-size:8px}
+.playlist-list{padding-bottom:18px}.track-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px 8px;margin-bottom:5px;border-radius:15px;border:1px solid transparent;background:rgba(255,255,255,.025);cursor:pointer;transition:.18s var(--ease)}.track-item:hover{background:rgba(255,255,255,.075);border-color:var(--stroke);transform:translateX(-2px)}.track-item.playing{background:linear-gradient(90deg,rgb(var(--album-primary)/.20),rgba(255,255,255,.035));border-color:rgb(var(--album-highlight)/.20)}.track-index{font-size:9px;color:var(--ink-3);text-align:center}.track-meta-title{font-size:11px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-meta-sub{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:8px;color:var(--ink-3)}.track-meta-sub span{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-actions{display:flex;gap:4px}.track-actions .btn-icon{width:30px;height:30px;border-radius:10px;font-size:10px}
+footer{height:12px;flex:0 0 12px;font-size:8px;color:rgba(255,255,255,.25);text-align:right;padding:0 8px}.mobile-nav{display:none}
+.modal-backdrop{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(3,4,8,.72);backdrop-filter:blur(24px)}.modal-backdrop.show{display:flex}.modal{width:min(430px,100%);border:1px solid var(--stroke-strong);border-radius:25px;padding:18px;background:rgba(15,17,27,.96);box-shadow:0 36px 100px rgba(0,0,0,.56)}.modal-header{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}.modal-title-wrap{display:flex;align-items:center;gap:9px}.modal-title-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:12px;background:rgb(var(--album-primary)/.20)}.modal-close-btn{border:0;background:transparent;color:var(--ink-2);font-size:24px;cursor:pointer}.modal-desc{font-size:10px;line-height:1.6;color:var(--ink-3)}.modal input{width:100%;padding:12px 13px;border:1px solid var(--stroke);border-radius:13px;outline:0;background:rgba(255,255,255,.055);color:#fff}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.shortcut-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.shortcut-card{padding:10px;border:1px solid var(--stroke);border-radius:13px;background:rgba(255,255,255,.035)}.shortcut-label{font-size:9px;color:var(--ink-3);margin-bottom:6px}.shortcut-key{display:flex;gap:5px}.shortcut-key kbd{padding:3px 7px;border:1px solid var(--stroke-strong);border-radius:7px;background:rgba(255,255,255,.07);font-size:9px}
+#toast{position:fixed;left:50%;bottom:28px;z-index:5000;transform:translate(-50%,12px);padding:10px 15px;border:1px solid var(--stroke-strong);border-radius:999px;background:rgba(15,17,27,.93);backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.42);font-size:10px;opacity:0;pointer-events:none;transition:.25s var(--ease)}#toast.show{opacity:1;transform:translate(-50%,0)}
+.search-results-mini,.playlist-main,.lyrics-container{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.20) transparent}.search-results-mini::-webkit-scrollbar,.playlist-main::-webkit-scrollbar,.lyrics-container::-webkit-scrollbar{width:5px}.search-results-mini::-webkit-scrollbar-thumb,.playlist-main::-webkit-scrollbar-thumb,.lyrics-container::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:999px}
+.ripple-target,.btn,.track-item,.search-mini-item{position:relative;overflow:hidden}.ripple-circle,.ripple-circle-inner{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);animation:ripple .65s ease-out forwards;background:rgba(255,255,255,.16);z-index:30}.ripple-circle-inner{display:none}@keyframes ripple{to{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+body.lyrics-fullscreen .player-panel{position:fixed;inset:16px;z-index:2500;border-radius:30px;background:rgba(8,9,15,.95)}body.lyrics-fullscreen .player-panel .player-top{display:none}body.lyrics-fullscreen .player-panel .panel-header{height:58px}body.lyrics-fullscreen .lyrics-container{margin:0 14px 14px;mask-image:linear-gradient(transparent,#000 10%,#000 90%,transparent)}body.lyrics-fullscreen .lyrics-inner{max-width:860px;padding-top:16vh;padding-bottom:45vh}body.lyrics-fullscreen .lyrics-line{font-size:clamp(19px,2vw,28px);margin:18px 0}
+@media(max-width:1260px){.layout{grid-template-columns:minmax(260px,.8fr) minmax(480px,1.5fr) minmax(285px,.86fr)}.player-top{grid-template-columns:minmax(210px,250px) minmax(230px,1fr);gap:20px}.track-title{font-size:clamp(25px,3vw,40px)}}
+@media(max-width:1020px) and (min-width:861px){.layout{grid-template-columns:minmax(250px,.82fr) minmax(470px,1.45fr)}.playlist-panel{display:none}.shortcut-hint{display:none}}
+@media(max-width:860px){
+  html,body{overflow:hidden}.app{padding:max(8px,env(safe-area-inset-top)) 8px max(88px,calc(env(safe-area-inset-bottom) + 74px));gap:8px}
+  .app::before{filter:blur(74px) saturate(1.32) brightness(.48)}
+  header{height:54px;flex-basis:54px;border-radius:18px;padding:0 7px 0 9px;background:rgba(8,9,15,.38)}.pikachu-box{width:38px;height:38px;border-radius:12px}.title-text h1{font-size:13px}.title-text p,.shortcut-hint,.shortcut-toggle-btn{display:none}.header-controls{margin-left:auto}.lang-btn{padding:6px 9px}
+  .layout{display:block;min-height:0;overflow:hidden}.layout>.panel{display:none;width:100%;height:100%;border-radius:24px;background:rgba(7,8,14,.46);box-shadow:none}.layout>.panel.mobile-active{display:flex}
+  .panel-header{height:54px;padding:0 14px}.panel-title{font-size:12px}.panel-header .chip{display:none}
+  .player-panel{background:linear-gradient(180deg,rgb(var(--album-primary)/.15),rgba(7,8,14,.40) 46%,rgba(7,8,14,.72))}
+  .player-top{flex:0 0 auto;padding:11px 16px 8px;display:flex;flex-direction:column;align-items:center;gap:14px;overflow:visible}.cover-wrapper{width:min(68vw,340px);max-width:none;border-radius:27px;box-shadow:0 28px 62px rgba(0,0,0,.44),0 0 55px rgb(var(--album-primary)/.18)}
+  .player-main{width:100%;gap:12px}.track-title-row{align-items:center}.track-text{flex:1;text-align:center;padding-left:38px}.track-title{font-size:23px;line-height:1.08;-webkit-line-clamp:1}.track-artist{font-size:11px;margin-top:7px}.track-tags{justify-content:center;margin-top:8px}.player-actions{width:38px}.player-actions .status-pill{display:none}.player-btn-row{flex-direction:column}.player-actions .btn-icon{width:36px;height:36px}.player-controls{gap:12px}.progress-row{grid-template-columns:36px 1fr 36px;gap:7px}.control-row{justify-content:center;position:relative}.control-main{gap:14px}.control-main .btn-icon{width:48px;height:48px;border-radius:17px}.control-main .play-btn{width:62px;height:62px;border-radius:22px}.control-secondary{position:absolute;right:0}.control-secondary span,.volume-slider{display:none}
+  .lyrics-container{flex:1;min-height:110px;margin:4px 10px 8px;padding:10px 8px 22px;border-radius:19px;mask-image:linear-gradient(transparent,#000 14%,#000 88%,transparent)}.lyrics-inner{padding:25px 5px 100px}.lyrics-line{font-size:15px;margin:8px 0}.lyrics-line.active{transform:scale(1.05)}
+  .search-panel-content{padding:12px;gap:10px}.search-row{padding:5px 5px 5px 12px}.search-row .btn{min-width:64px;min-height:40px}.source-chip{padding:9px 11px}.hot-comment-card{min-height:150px}.search-mini-item{min-height:52px}
+  .playlist-tabs{max-width:70vw;overflow:auto;scrollbar-width:none}.playlist-main{padding:0 10px 10px}.track-item{min-height:55px}
+  .mobile-nav{position:fixed;left:50%;bottom:max(10px,env(safe-area-inset-bottom));z-index:2400;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:5px;border:1px solid rgba(255,255,255,.13);border-radius:21px;background:rgba(11,13,21,.76);backdrop-filter:blur(28px) saturate(1.35);box-shadow:0 20px 50px rgba(0,0,0,.42)}.mobile-nav-btn{min-width:76px;height:52px;border:0;border-radius:16px;background:transparent;color:var(--ink-3);display:flex;align-items:center;justify-content:center;gap:4px;flex-direction:column;font-size:8px;cursor:pointer}.mobile-nav-icon{font-size:16px}.mobile-nav-btn.active{background:linear-gradient(135deg,rgb(var(--album-primary)/.30),rgba(255,255,255,.10));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+  footer{display:none}#toast{bottom:88px}
+  body.lyrics-fullscreen .player-panel{inset:max(6px,env(safe-area-inset-top)) 6px max(6px,env(safe-area-inset-bottom));border-radius:24px}body.lyrics-fullscreen .lyrics-inner{padding-top:17vh;padding-bottom:48vh}body.lyrics-fullscreen .lyrics-line{font-size:18px;margin:13px 0}
+}
+@media(max-width:390px){.cover-wrapper{width:min(62vw,270px)}.track-title{font-size:20px}.lyrics-container{min-height:90px}.mobile-nav-btn{min-width:68px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+</style>
+
+<style id="apple-spatial-ui">
+:root{
+  color-scheme:dark;
+  --ink:#f5f5f7;
+  --ink-2:rgba(245,245,247,.72);
+  --ink-3:rgba(245,245,247,.46);
+  --stroke:rgba(255,255,255,.10);
+  --stroke-strong:rgba(255,255,255,.18);
+  --surface:rgba(29,29,31,.64);
+  --surface-strong:rgba(22,22,24,.90);
+  --surface-soft:rgba(255,255,255,.055);
+  --shadow:0 24px 80px rgba(0,0,0,.34);
+  --radius-xl:28px;
+  --radius-lg:22px;
+  --radius-md:14px;
+  --lyrics-font-size:17px;
+  --ease:cubic-bezier(.22,.8,.24,1);
+}
+html,body{background:#09090b}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Noto Sans SC","Helvetica Neue",Arial,sans-serif;letter-spacing:-.018em}
+body::before{
+  inset:-22%;
+  background:
+    radial-gradient(circle at 52% 8%,rgb(var(--album-primary)/.48),transparent 34%),
+    radial-gradient(circle at 91% 36%,rgb(var(--album-secondary)/.30),transparent 31%),
+    radial-gradient(circle at 18% 86%,rgb(var(--album-highlight)/.20),transparent 30%),
+    linear-gradient(160deg,#08080a 5%,#131316 48%,#08080a 100%);
+  filter:saturate(1.05) contrast(1.03);
+}
+body::after{opacity:.07;mix-blend-mode:overlay}
+#bg-canvas{opacity:.09}
+.app{padding:14px 16px 16px;gap:12px;max-width:1920px;margin:0 auto}
+.app::before{opacity:.22;filter:blur(110px) saturate(1.15) brightness(.52);transform:scale(1.18)}
+header{
+  height:62px;flex-basis:62px;padding:0 10px 0 12px;border-radius:20px;
+  background:linear-gradient(180deg,rgba(42,42,45,.72),rgba(25,25,28,.66));
+  border-color:rgba(255,255,255,.09);backdrop-filter:blur(40px) saturate(1.35);
+  box-shadow:0 12px 42px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.07)
+}
+.pikachu-box{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,rgb(var(--album-highlight)/.88),rgb(var(--album-primary)/.72));box-shadow:0 8px 24px rgb(var(--album-primary)/.18)}
+.brand-mark{font-size:16px;font-weight:750}.title-text h1{font-size:15px;font-weight:690;letter-spacing:-.025em}.title-text p{font-size:9px;letter-spacing:.055em;text-transform:none}
+.shortcut-hint{max-width:520px;font-size:10px}.lang-toggle{border:0;background:rgba(255,255,255,.07);padding:2px}.lang-btn{padding:7px 10px}.lang-btn.active{background:rgba(255,255,255,.16);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.shortcut-toggle-btn{width:36px;height:36px;border-radius:11px;border:0;background:rgba(255,255,255,.08)}
+.layout{grid-template-columns:minmax(260px,300px) minmax(570px,1fr) minmax(340px,390px);gap:12px;transition:grid-template-columns .45s var(--ease)}
+body.library-collapsed .layout{grid-template-columns:minmax(260px,300px) minmax(670px,1fr) 66px}
+.panel{
+  border-radius:26px;border-color:rgba(255,255,255,.085);
+  background:linear-gradient(180deg,rgba(46,46,50,.57),rgba(20,20,23,.62));
+  backdrop-filter:blur(38px) saturate(1.25);box-shadow:0 22px 74px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.06)
+}
+.panel::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.panel-header{height:58px;padding:0 16px;border-bottom-color:rgba(255,255,255,.065)}
+.panel-title{font-size:13px;font-weight:650;gap:8px}.panel-title .icon{font-size:14px;color:var(--ink-2)}.chip{font-size:9px}
+.search-panel{background:linear-gradient(180deg,rgba(40,40,44,.72),rgba(23,23,26,.74))}
+.search-panel-content{padding:13px;gap:10px}
+.search-row{padding:5px 5px 5px 12px;border-radius:14px;background:rgba(255,255,255,.075);border-color:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
+.search-row:focus-within{box-shadow:0 0 0 3px rgb(var(--album-primary)/.18),inset 0 0 0 1px rgb(var(--album-primary)/.45)}
+.input{font-size:12px}.btn{border-radius:12px;padding:9px 13px;font-weight:650;background:rgb(var(--album-highlight));box-shadow:none;color:#111114}.btn:hover{filter:brightness(1.08)}
+.btn-secondary{background:rgba(255,255,255,.095);color:#fff;border:0}.btn-ghost{border-color:rgba(255,255,255,.12)}.btn-icon{border-radius:50%}
+.source-chip{border:0;border-radius:10px;background:rgba(255,255,255,.045);padding:8px 9px}.source-chip:has(input:checked){background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.limit-row select,.playlist-select-tools select{border:0;border-radius:9px;background:rgba(255,255,255,.09);padding:7px 8px}
+.hot-comment-card{min-height:150px;border:0;border-radius:18px;background:linear-gradient(145deg,rgb(var(--album-primary)/.24),rgba(255,255,255,.055) 58%),rgba(12,12,15,.66);box-shadow:inset 0 1px rgba(255,255,255,.07)}
+.hot-comment-card:hover{transform:scale(1.012);box-shadow:0 15px 40px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.09)}
+.hot-comment-cover{border-radius:12px}.hot-comment-refresh{border:0;background:rgba(255,255,255,.10);border-radius:50%}
+.search-results-mini{padding-right:1px}.search-mini-item{border:0;border-radius:12px;background:transparent;padding:9px 8px;margin-bottom:2px}.search-mini-item:hover{background:rgba(255,255,255,.075);transform:none}.mini-badge{border:0;background:rgba(255,255,255,.08)}
+.player-panel{background:linear-gradient(180deg,rgb(var(--album-primary)/.105),rgba(27,27,30,.64) 28%,rgba(18,18,21,.72));display:flex;flex-direction:column}
+.player-panel-header{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)}
+.player-top{padding:30px clamp(24px,3vw,48px) 22px;display:grid;grid-template-columns:minmax(280px,430px) minmax(250px,1fr);gap:clamp(30px,4.5vw,76px);align-items:center;overflow:visible}
+.cover-wrapper{width:100%;max-width:430px;border-radius:24px;box-shadow:0 38px 90px rgba(0,0,0,.46),0 1px 0 rgba(255,255,255,.10);background:linear-gradient(145deg,rgb(var(--album-primary)/.30),rgb(var(--album-secondary)/.18))}
+.cover-wrapper::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}.cover-disc{width:118px;height:118px}
+.player-main{gap:22px;min-width:0}.track-title-row{align-items:flex-start}.track-text{max-width:none}.track-title{font-size:clamp(30px,3vw,52px);line-height:1.02;font-weight:740;letter-spacing:-.05em;max-height:none;-webkit-line-clamp:2}.track-artist{font-size:15px;margin-top:11px;color:var(--ink-2)}
+.track-tags{margin-top:13px;gap:7px}.source-pill,.lossless-pill{border:0;border-radius:999px;background:rgba(255,255,255,.095);padding:5px 9px;font-size:9px}.lossless-pill{color:var(--ink-2)}
+.player-actions{gap:10px}.player-actions .btn-icon{width:38px;height:38px;background:rgba(255,255,255,.09)}.status-pill{border:0;background:rgba(255,255,255,.06);font-size:9px}
+.player-controls{gap:17px}.progress-row{gap:10px}.progress-time{font-size:9px;color:var(--ink-3)}.progress-bar-wrapper{height:4px;background:rgba(255,255,255,.16)}.progress-bar{background:#fff}.progress-handle{width:12px;height:12px;background:#fff;border:0;box-shadow:0 2px 7px rgba(0,0,0,.3);opacity:0;transition:.18s}.progress-row:hover .progress-handle{opacity:1}
+.control-row{align-items:center}.control-main{gap:13px}.control-main .btn-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.10);border:0}.control-main .play-btn{width:64px;height:64px;border-radius:50%;font-size:22px;background:#fff;color:#111114;box-shadow:0 10px 30px rgba(0,0,0,.24)}.control-secondary{color:var(--ink-3)}.volume-slider{accent-color:#fff}
+.lyrics-size-control{display:flex;align-items:center;height:34px;border-radius:999px;padding:2px;background:rgba(255,255,255,.075);box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
+.lyrics-size-control button{width:34px;height:30px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--ink-2);font-size:10px;font-weight:650;cursor:pointer}.lyrics-size-control button:hover{background:rgba(255,255,255,.10);color:#fff}.lyrics-size-control span{min-width:26px;text-align:center;font-size:9px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.lyrics-full-btn{width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.075)}
+.lyrics-container{margin:0 18px 18px;padding:18px 20px 30px;border:0;border-radius:20px;background:rgba(0,0,0,.13);mask-image:linear-gradient(transparent 0,#000 10%,#000 90%,transparent 100%)}
+.lyrics-inner{max-width:780px;padding:30px 8px 120px}.lyrics-title-line{font-size:9px;letter-spacing:.04em}.lyrics-line{font-size:var(--lyrics-font-size);font-weight:560;line-height:1.48;margin:12px 0;color:rgba(245,245,247,.30);letter-spacing:-.018em}.lyrics-line.active{color:#fff;transform:scale(1.055);text-shadow:0 0 30px rgb(var(--album-highlight)/.34)}
+.playlist-panel{transition:all .42s var(--ease);background:linear-gradient(180deg,rgba(38,38,42,.74),rgba(22,22,25,.78))}
+.playlist-panel-header{padding-right:10px}.playlist-header-content{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;flex:1}.library-toggle{flex:0 0 auto;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.09);display:grid;place-items:center;cursor:pointer;transition:.25s var(--ease)}.library-toggle:hover{background:rgba(255,255,255,.15)}.library-toggle-icon{font-size:24px;line-height:1;transform:translateX(-1px);transition:transform .35s var(--ease)}.library-toggle-text{display:none}
+body.library-collapsed .playlist-panel{border-radius:22px;background:rgba(31,31,34,.72)}
+body.library-collapsed .playlist-panel-header{height:100%;padding:10px 0;justify-content:flex-start;flex-direction:column;border:0}
+body.library-collapsed .playlist-header-content,body.library-collapsed .playlist-main{display:none}
+body.library-collapsed .library-toggle{margin-top:2px;background:rgba(255,255,255,.11)}
+body.library-collapsed .library-toggle-icon{transform:rotate(180deg) translateX(-1px)}
+body.library-collapsed .library-toggle-text{display:block;writing-mode:vertical-rl;font-size:9px;color:var(--ink-3);letter-spacing:.16em;margin-top:8px}
+body.library-collapsed .library-toggle{width:42px;height:auto;min-height:108px;border-radius:18px;display:flex;flex-direction:column;justify-content:flex-start;padding-top:8px}
+.playlist-tabs{border:0;background:rgba(255,255,255,.07);padding:2px}.playlist-tab{padding:6px 10px}.playlist-tab.active{background:rgba(255,255,255,.16);color:#fff;box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.playlist-main{padding:0 11px 11px}.playlist-bar{background:linear-gradient(180deg,rgba(31,31,35,.98),rgba(31,31,35,.88));padding:10px 2px 8px}.track-item{border:0;border-radius:13px;background:transparent;padding:9px 8px;margin-bottom:2px}.track-item:hover{background:rgba(255,255,255,.075);transform:none}.track-item.playing{border:0;background:rgb(var(--album-primary)/.17);box-shadow:none}.playmode-btn{border:0;border-radius:50%;background:rgba(255,255,255,.07)}.playmode-btn.active{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+.modal-backdrop{background:rgba(0,0,0,.52);backdrop-filter:blur(22px)}.modal{border:1px solid rgba(255,255,255,.10);border-radius:22px;background:rgba(35,35,38,.94);box-shadow:0 30px 90px rgba(0,0,0,.48)}
+#toast{background:rgba(45,45,48,.88);border:0;backdrop-filter:blur(24px);font-size:11px}
+body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(--album-primary)/.13),rgba(13,13,15,.94));border-radius:28px}body.lyrics-fullscreen .lyrics-line{font-size:calc(var(--lyrics-font-size) + 6px)}
+@media(max-width:1380px) and (min-width:861px){
+  .layout{grid-template-columns:250px minmax(500px,1fr) minmax(310px,350px)}
+  body.library-collapsed .layout{grid-template-columns:250px minmax(590px,1fr) 62px}
+  .player-top{grid-template-columns:minmax(230px,340px) minmax(230px,1fr);gap:34px;padding:26px 28px 18px}.track-title{font-size:clamp(28px,3.3vw,44px)}
+}
+@media(max-width:1120px) and (min-width:861px){
+  .layout{grid-template-columns:242px minmax(480px,1fr) 62px}
+  body:not(.library-collapsed) .playlist-panel{position:fixed;right:16px;top:88px;bottom:16px;width:350px;z-index:1800;box-shadow:0 30px 90px rgba(0,0,0,.52)}
+  body:not(.library-collapsed) .playlist-panel .playlist-header-content{display:flex}
+  body:not(.library-collapsed) .playlist-panel .playlist-main{display:flex}
+  body:not(.library-collapsed) .playlist-panel .playlist-panel-header{height:58px;padding:0 10px 0 16px;flex-direction:row;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.065)}
+  body:not(.library-collapsed) .playlist-panel .library-toggle{width:38px;height:38px;min-height:0;padding:0;margin:0;display:grid;border-radius:50%}
+  body:not(.library-collapsed) .playlist-panel .library-toggle-icon{transform:translateX(-1px)}
+  body:not(.library-collapsed) .playlist-panel .library-toggle-text{display:none}
+  .player-top{grid-template-columns:minmax(220px,300px) minmax(220px,1fr)}
+}
+@media(max-width:860px){
+  .app{padding:max(8px,env(safe-area-inset-top)) 8px max(86px,calc(env(safe-area-inset-bottom) + 72px));gap:8px}
+  header{height:52px;flex-basis:52px;border-radius:17px;background:rgba(36,36,39,.58)}
+  .layout{display:block}.layout>.panel{border-radius:23px;background:linear-gradient(180deg,rgba(39,39,43,.58),rgba(19,19,22,.72))}
+  .panel-header{height:52px;padding:0 13px}.player-panel-header .panel-title{display:none}.player-panel-header{justify-content:flex-end}.player-panel-header .panel-header-actions{width:100%;justify-content:flex-end}.player-panel-header .chip{display:block;margin-right:auto;font-size:9px}
+  .library-toggle{display:none}.playlist-header-content{width:100%}
+  body.library-collapsed .playlist-panel{border-radius:23px}
+  body.library-collapsed .playlist-panel-header{height:52px;padding:0 13px;justify-content:space-between;flex-direction:row;border-bottom:1px solid rgba(255,255,255,.065)}
+  body.library-collapsed .playlist-header-content{display:flex}
+  body.library-collapsed .playlist-main{display:flex}
+  .player-top{padding:12px 16px 8px;display:flex;flex-direction:column;gap:15px}.cover-wrapper{width:min(72vw,350px);border-radius:23px;box-shadow:0 28px 68px rgba(0,0,0,.48)}
+  .track-title{font-size:25px;line-height:1.05}.track-artist{font-size:12px}.player-main{gap:13px}.track-text{padding-left:38px}.player-controls{gap:12px}.control-main .btn-icon{width:46px;height:46px}.control-main .play-btn{width:62px;height:62px}
+  .lyrics-size-control{height:32px}.lyrics-size-control button{height:28px;width:31px}.lyrics-full-btn{width:32px;height:32px}
+  .lyrics-container{margin:3px 9px 8px;border-radius:18px;padding:8px 7px 22px}.lyrics-inner{padding:25px 5px 110px}.lyrics-line{font-size:calc(var(--lyrics-font-size) - 1px);margin:9px 0}.lyrics-line.active{transform:scale(1.035)}
+  .mobile-nav{border:0;background:rgba(37,37,40,.78);box-shadow:0 18px 48px rgba(0,0,0,.42),inset 0 0 0 1px rgba(255,255,255,.07)}.mobile-nav-btn.active{background:rgba(255,255,255,.13);box-shadow:none}
+  body.lyrics-fullscreen .lyrics-line{font-size:calc(var(--lyrics-font-size) + 3px)}
+}
+@media(max-width:390px){.cover-wrapper{width:min(66vw,285px)}.track-title{font-size:22px}.lyrics-size-control span{display:none}.lyrics-size-control button{width:30px}}
+</style>
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: var(--bg-dark);
-      color: var(--text-main);
-      overflow: hidden; /* 页面整体不滚动 */
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    /* 背景粒子画布 */
-    #bg-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 10% 0, #1b2340 0, transparent 55%),
-        radial-gradient(circle at 90% 100%, #211a38 0, transparent 60%),
-        #02030a;
-    }
-
-    /* 主容器：四周留白 */
-    .app {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 104px);
-      margin: 44px 80px;
-      padding: 10px 12px;
-      gap: 10px;
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.06), transparent 60%),
-                  radial-gradient(circle at 100% 100%, rgba(136,196,255,0.10), transparent 60%),
-                  rgba(0,0,0,0.45);
-      backdrop-filter: blur(14px);
-      box-shadow:
-        0 0 40px rgba(0,0,0,0.9),
-        0 0 120px rgba(136,196,255,0.35);
-    }
-    @media (max-width: 1280px) {
-      .app { margin: 32px 40px; height: calc(100vh - 70px); }
-    }
-    @media (max-width: 900px) {
-      .app { margin: 16px; height: calc(100vh - 32px); }
-    }
-
-    .ripple-target,
-    .btn,
-    .track-item,
-    .search-mini-item {
-      position: relative;
-      overflow: hidden;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      border-radius: 18px;
-      background: linear-gradient(120deg, rgba(255,255,255,0.06), rgba(7,10,30,0.90));
-      border: 1px solid var(--border-subtle);
-      box-shadow: 0 10px 26px rgba(0,0,0,0.8);
-      min-height: 64px;
-      flex-shrink: 0;
-    }
-
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .pikachu-box {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      padding: 4px;
-      background:
-        radial-gradient(circle at 30% 0, rgba(255,255,255,0.65), rgba(255,230,140,1)),
-        radial-gradient(circle at 70% 100%, rgba(255,150,200,0.9), rgba(255,220,130,0.9));
-      box-shadow:
-        0 0 18px rgba(255,215,130,1),
-        0 14px 28px rgba(0,0,0,0.95);
-      border: 2px solid rgba(255,238,190,1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: pika-float 2.4s ease-in-out infinite;
-    }
-    .pikachu-img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    @keyframes pika-float {
-      0%,100% { transform: translateY(0); }
-      50%     { transform: translateY(-5px); }
-    }
-
-    .title-text h1 {
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: 1px;
-      text-shadow:
-        0 0 12px rgba(255,212,95,0.9),
-        0 0 26px rgba(255,176,117,0.7);
-    }
-    .title-text p {
-      margin: 2px 0 0;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    .lang-toggle {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 2px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(0,0,0,0.4);
-    }
-    .lang-btn {
-      border: none;
-      background: transparent;
-      padding: 3px 10px;
-      border-radius: 999px;
-      color: var(--text-sub);
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .lang-btn.active {
-      background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.28), var(--accent));
-      color: #231b08;
-      font-weight: 600;
-      box-shadow: 0 0 8px rgba(245,200,76,0.8);
-    }
-
-    .shortcut-hint {
-      max-width: 260px;
-      text-align: right;
-    }
-
-    .shortcut-toggle-btn {
-      border: none;
-      border-radius: 999px;
-      width: 28px; height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.4);
-      color: var(--text-sub);
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.9);
-      font-size: 15px;
-    }
-
-    /* 布局修正：左右也参与分配宽度，不再挤出空白 */
-    .layout {
-      flex: 1;
-      display: grid;
-      grid-template-columns:
-        minmax(260px, 0.8fr)
-        minmax(360px, 1.58fr)
-        minmax(260px, 0.82fr);
-      gap: 10px;
-      min-height: 0;
-    }
-
-    .panel {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      padding: 10px;
-      border-radius: 18px;
-      background: var(--panel-glass-soft);
-      border: 1px solid var(--border-subtle);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.85);
-      z-index: 0;
-    }
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: -25%;
-      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.08), transparent 60%);
-      opacity: .5;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      position: relative;
-      z-index: 1;
-      flex-shrink: 0;
-    }
-    .panel-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .panel-title .icon { font-size: 16px; }
-    .panel-header-actions {
-      display:flex;
-      align-items:center;
-      justify-content:flex-end;
-      gap:6px;
-      min-width:0;
-    }
-    .lyrics-full-btn {
-      width:30px;
-      height:30px;
-      min-width:30px;
-      padding:0;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.20);
-      background:rgba(0,0,0,0.38);
-      color:var(--text-main);
-      box-shadow:0 5px 12px rgba(0,0,0,0.55);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      font-size:15px;
-      line-height:1;
-    }
-    .lyrics-full-btn:active { transform:scale(.94); }
-    .chip {
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.25);
-      color: var(--text-sub);
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 13px;
-      background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.2), var(--accent));
-      color: #231b08;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      box-shadow: 0 7px 16px rgba(245,200,76,0.75);
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .btn-secondary {
-      background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.05), rgba(80,100,180,0.95));
-      color: var(--text-main);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.8);
-    }
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.22);
-      color: var(--text-sub);
-      box-shadow: none;
-    }
-    .btn:active {
-      transform: translateY(1px) scale(.97);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.85);
-    }
-    .btn-icon {
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      font-size: 13px;
-      border-radius: 999px;
-    }
-
-    .input {
-      flex: 1;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(5,7,20,0.8);
-      color: var(--text-main);
-      font-size: 13px;
-      outline: none;
-    }
-    .input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(245,200,76,0.7);
-    }
-
-    /* 左侧搜索 */
-    .search-panel-content {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-height: 0;
-    }
-
-    .search-row {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      padding: 2px 2px 2px 10px;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at 0 0, rgba(255,255,255,0.18), transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(104,174,255,0.25), transparent 60%),
-        rgba(4,6,20,0.98);
-      border: 1px solid rgba(255,255,255,0.25);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.9);
-    }
-    .search-prefix {
-      font-size: 14px;
-      margin-right: 6px;
-      color: var(--accent-strong);
-      text-shadow: 0 0 8px rgba(245,200,76,0.9);
-    }
-    .search-row .input {
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      padding-left: 0;
-    }
-    .search-row .btn {
-      margin-left: 4px;
-      border-radius: 999px;
-    }
-
-    .source-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 11px;
-    }
-    .source-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(4,6,20,0.82);
-      border: 1px solid rgba(255,255,255,0.16);
-      cursor: pointer;
-      user-select: none;
-    }
-    .source-chip input {
-      margin: 0;
-      width: 12px;
-      height: 12px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-    .source-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 6px currentColor;
-    }
-    .source-dot.netease{ background:#ff6b6b; color:#ff6b6b;}
-    .source-dot.qq     { background:#4dd0e1; color:#4dd0e1;}
-    .source-dot.kuwo   { background:#ba68c8; color:#ba68c8;}
-    .source-dot.joox   { background:#65f7c4; color:#65f7c4;}
-
-    .limit-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-    .limit-row select {
-      background: rgba(5,7,24,0.8);
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.18);
-      color: var(--text-main);
-      padding: 3px 8px;
-      font-size: 11px;
-      outline: none;
-    }
-
-    .search-stats {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    .search-results-mini {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding-right: 4px;
-      margin-top: 4px;
-    }
-
-    .search-mini-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      border-radius: 10px;
-      background: rgba(8,10,32,0.78);
-      border: 1px solid rgba(255,255,255,0.05);
-      font-size: 11px;
-      cursor: pointer;
-      transition: background .15s, transform .1s, box-shadow .1s;
-    }
-    .search-mini-item:hover {
-      background: rgba(26,32,80,0.9);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.85);
-      transform: translateY(-1px);
-    }
-    .mini-meta-main {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .mini-title {
-      font-size: 11px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .mini-artist {
-      font-size: 10px;
-      color: var(--text-sub);
-    }
-    .mini-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-    .mini-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.18);
-    }
-    .mini-source {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 9px;
-    }
-
-    /* 中间播放器 */
-    .player-panel {
-      background:
-        radial-gradient(circle at 50% -40%, rgba(255,218,120,0.20), transparent 60%),
-        var(--panel-glass);
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .player-top {
-      display: flex;
-      gap: 10px;
-      position: relative;
-      z-index: 1;
-      min-height: 165px;
-      flex-shrink: 0;
-    }
-
-    .cover-wrapper {
-      width: 130px;
-      height: 130px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: radial-gradient(circle at 30% 0, #34344b,#151628);
-      box-shadow:
-        0 14px 30px rgba(0,0,0,0.9),
-        0 0 18px rgba(245,200,76,0.75);
-      flex-shrink: 0;
-      position: relative;
-    }
-    .cover-wrapper img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none;
-    }
-    .cover-placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: var(--text-sub);
-      font-size: 12px;
-    }
-    .cover-disc {
-      width: 70px; height: 70px;
-      border-radius: 50%;
-      border: 10px solid rgba(0,0,0,0.7);
-      background: radial-gradient(circle,#16141f 0,#000 45%,#222 70%,#000 100%);
-      position: relative;
-      animation: disc-spin 12s linear infinite;
-    }
-    .cover-disc::before {
-      content:"";
-      position:absolute;
-      inset:24%;
-      border-radius:50%;
-      background:radial-gradient(circle at 30% 0, var(--accent-pink), #b546b8,#5a2a7c);
-    }
-    .cover-disc::after {
-      content:"";
-      position:absolute;
-      inset:42%;
-      border-radius:50%;
-      background:#05050a;
-    }
-    @keyframes disc-spin { to { transform:rotate(360deg);} }
-
-    .player-main {
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .track-title-row {
-      display:flex;
-      justify-content:space-between;
-      gap:6px;
-    }
-    .track-text { max-width:68%; }
-    .track-title {
-      font-size:18px;
-      font-weight:600;
-      max-height:48px;
-      overflow:hidden;
-    }
-    .track-artist {
-      font-size:12px;
-      color:var(--text-sub);
-      margin-top:2px;
-    }
-    .track-tags {
-      display:flex;
-      flex-wrap:wrap;
-      gap:4px;
-      margin-top:4px;
-      font-size:10px;
-    }
-    .source-pill {
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.18);
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      background:rgba(0,0,0,0.35);
-    }
-    .source-pill.source-netease{ color:#ff7b7b; background:rgba(255,107,107,0.12);}
-    .source-pill.source-qq     { color:#7ee5f0; background:rgba(77,208,225,0.12);}
-    .source-pill.source-kuwo   { color:#e2baff; background:rgba(186,104,200,0.12);}
-    .source-pill.source-joox   { color:#9dffd9; background:rgba(101,247,196,0.12);}
-
-    .lossless-pill {
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(164,255,224,0.6);
-      color:var(--accent-green);
-      background:rgba(13,82,60,0.8);
-    }
-
-    .player-actions {
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:6px;
-      font-size:11px;
-    }
-    .player-btn-row { display:flex; gap:5px; }
-    .status-pill {
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.18);
-      background:rgba(0,0,0,0.35);
-      color:var(--text-sub);
-      font-size:11px;
-    }
-
-    .player-controls {
-      margin-top:4px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .progress-row {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-size:11px;
-    }
-    .progress-time {
-      width:42px;
-      text-align:center;
-      color:var(--text-sub);
-    }
-    .progress-bar-wrapper {
-      flex:1;
-      height:6px;
-      border-radius:999px;
-      background:rgba(5,7,22,0.9);
-      position:relative;
-      cursor:pointer;
-      overflow:hidden;
-    }
-    .progress-bar {
-      position:absolute;
-      inset:0;
-      transform-origin:left center;
-      transform:scaleX(0);
-      background:linear-gradient(90deg, var(--accent-pink), var(--accent-strong), var(--accent-blue));
-    }
-    .progress-handle {
-      position:absolute;
-      top:50%;
-      width:10px; height:10px;
-      border-radius:50%;
-      background:#fffbe3;
-      border:2px solid #e6a52b;
-      transform:translate(-50%,-50%);
-      box-shadow:0 0 8px rgba(255,255,255,0.8);
-    }
-
-    .control-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:12px;
-    }
-    .control-main {
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .control-main .play-btn {
-      width:40px;
-      height:40px;
-      font-size:18px;
-    }
-    .control-secondary {
-      display:flex;
-      align-items:center;
-      gap:4px;
-      font-size:11px;
-    }
-    .volume-slider {
-      width:90px;
-      accent-color:var(--accent);
-    }
-
-    /* 歌词区域 */
-    .lyrics-container {
-      flex: 1;
-      min-height: 0;
-      margin-top: 6px;
-      padding: 10px 18px 8px;
-      border-radius: 16px;
-      background:
-        radial-gradient(circle at 50% 0, rgba(255,220,150,0.26), transparent 60%),
-        radial-gradient(circle at 10% 100%, rgba(107,150,255,0.26), transparent 60%),
-        rgba(4,6,20,0.72);
-      border:1px solid rgba(255,255,255,0.16);
-      overflow-y:auto;
-      overflow-x:hidden;
-      position:relative;
-      box-shadow:0 12px 32px rgba(0,0,0,0.9);
-      overscroll-behavior:contain;
-      -webkit-overflow-scrolling:touch;
-      scroll-behavior:smooth;
-      touch-action:pan-y;
-    }
-    .lyrics-container::before,
-    .lyrics-container::after {
-      content:"";
-      position:absolute;
-      pointer-events:none;
-      mix-blend-mode:screen;
-    }
-    .lyrics-container::before {
-      inset:-25%;
-      background:conic-gradient(
-        from 0deg,
-        rgba(255,214,102,0.08),
-        rgba(255,214,102,0.38),
-        rgba(104,184,255,0.38),
-        rgba(186,132,255,0.40),
-        rgba(255,214,102,0.08)
-      );
-      opacity:0.46;
-      filter:blur(14px);
-      animation: lyricsGlow 16s linear infinite;
-    }
-    @keyframes lyricsGlow { to { transform:rotate(360deg);} }
-    .lyrics-container::after {
-      top:-40%;
-      left:-20%;
-      width:70%;
-      height:150%;
-      background:linear-gradient(
-        120deg,
-        rgba(255,248,170,0.0),
-        rgba(255,248,170,0.36),
-        rgba(161,233,255,0.0)
-      );
-      transform:translateX(-130%);
-      animation: lyricsSweep 7s linear infinite;
-      opacity:0.95;
-    }
-    @keyframes lyricsSweep {
-      0% { transform:translateX(-130%); }
-      50%{ transform:translateX(40%); }
-      100%{ transform:translateX(130%); }
-    }
-    .lyrics-container.alt-style::before {
-      background:conic-gradient(
-        from 0deg,
-        rgba(104,184,255,0.14),
-        rgba(186,132,255,0.40),
-        rgba(255,214,102,0.32),
-        rgba(104,184,255,0.46),
-        rgba(186,132,255,0.40)
-      );
-    }
-    .lyrics-inner {
-      position:relative;
-      z-index:1;
-      padding:2px 4px 10px;
-      text-align:center;
-      max-width:540px;
-      margin:0 auto;
-    }
-    .lyrics-title-line {
-      font-family: "Baloo 2","Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      font-size:14px;
-      color:var(--text-sub);
-      margin-bottom:8px;
-      letter-spacing:0.05em;
-    }
-    .lyrics-line {
-      font-family: "Baloo 2","Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      font-size:17px;
-      color:rgba(196,199,235,0.78);
-      margin:4px 0;
-      opacity:0.52;
-      transition:transform .25s ease, color .25s ease, text-shadow .25s ease, opacity .25s ease;
-      white-space:normal;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-      line-height:1.45;
-      letter-spacing:0.04em;
-    }
-    .lyrics-line.active {
-      opacity:1;
-      transform:scale(1.14);
-      background:linear-gradient(120deg,#ffe6a7,#ff9bd4,#8fd5ff);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-      text-shadow:
-        0 0 10px rgba(255,255,255,0.7),
-        0 0 22px rgba(245,200,76,0.9),
-        0 0 30px rgba(106,207,255,1);
-    }
-    .lyrics-empty {
-      font-family: "Baloo 2","Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      font-size:15px;
-      color:var(--text-sub);
-      margin-top:18px;
-      letter-spacing:0.03em;
-    }
-
-    /* 完整歌词模式 */
-    body.lyrics-fullscreen { overflow:hidden !important; }
-    body.lyrics-fullscreen .player-panel {
-      display:flex !important;
-      position:fixed;
-      inset:12px;
-      width:auto;
-      height:auto;
-      max-width:none;
-      max-height:none;
-      z-index:3000;
-      padding:12px;
-      border-radius:20px;
-      background:
-        radial-gradient(circle at 50% -20%, rgba(255,218,120,0.18), transparent 52%),
-        rgba(5,7,22,0.98);
-      box-shadow:0 24px 80px rgba(0,0,0,0.92);
-    }
-    body.lyrics-fullscreen .player-panel .player-top { display:none; }
-    body.lyrics-fullscreen .player-panel .panel-header { margin-bottom:8px; }
-    body.lyrics-fullscreen .player-panel .panel-header-actions .chip { display:none; }
-    body.lyrics-fullscreen .lyrics-container {
-      flex:1;
-      min-height:0;
-      margin-top:0;
-      padding:14px clamp(10px, 4vw, 34px) 20px;
-      border-radius:16px;
-    }
-    body.lyrics-fullscreen .lyrics-inner {
-      max-width:760px;
-      min-height:100%;
-      padding-top:clamp(20px, 10vh, 90px);
-      padding-bottom:clamp(100px, 28vh, 240px);
-    }
-    body.lyrics-fullscreen .lyrics-title-line {
-      position:sticky;
-      top:0;
-      z-index:3;
-      margin:0 0 16px;
-      padding:8px 10px;
-      border-radius:999px;
-      background:rgba(5,7,22,0.78);
-      backdrop-filter:blur(10px);
-    }
-    body.lyrics-fullscreen .lyrics-line {
-      font-size:clamp(16px, 2vw, 22px);
-      margin:10px 0;
-      line-height:1.55;
-      opacity:.64;
-    }
-    body.lyrics-fullscreen .lyrics-line.active { transform:scale(1.06); }
-
-    /* 右侧播放列表面板 */
-    .playlist-panel {
-      background:
-        radial-gradient(circle at 100% -40%, rgba(120,195,255,0.22), transparent 60%),
-        var(--panel-glass);
-      display:flex;
-      flex-direction:column;
-      min-height:0;
-      z-index:1;
-    }
-
-    .playlist-tabs {
-      display:inline-flex;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.2);
-      padding:2px;
-      background:rgba(0,0,0,0.35);
-      font-size:11px;
-    }
-    .playlist-tab {
-      padding:3px 10px;
-      border-radius:999px;
-      cursor:pointer;
-      color:var(--text-sub);
-    }
-    .playlist-tab.active {
-      background:radial-gradient(circle at 30% 0, rgba(255,255,255,0.15), rgba(104,174,255,0.9));
-      color:#02040a;
-      font-weight:600;
-      box-shadow:0 0 8px rgba(104,174,255,0.7);
-    }
-
-    /* 让 playlist-main 内部滚动，顶部条 sticky 不再消失 */
-    .playlist-main {
-      flex:1;
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-      position:relative;
-      z-index:1;
-      overflow-y:auto;
-      padding-right:4px;
-    }
-
-    .playlist-bar {
-      display:flex;
-      flex-direction:column;
-      align-items:stretch;
-      font-size:11px;
-      color:var(--text-sub);
-      gap:5px;
-      flex-shrink:0;
-      padding-bottom:5px;
-      margin-bottom:4px;
-      position:sticky;
-      top:0;
-      z-index:2;
-      background:
-        linear-gradient(180deg, rgba(7,10,30,0.98), rgba(7,10,30,0.85));
-      border-bottom:1px solid rgba(255,255,255,0.08);
-    }
-    .playlist-top-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:6px;
-    }
-    .playlist-info {
-      flex:1;
-      min-width:0;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .playlist-select-row {
-      display:flex;
-      flex-direction:column;
-      align-items:stretch;
-      gap:5px;
-    }
-    .playlist-select-tools,
-    .playlist-file-actions {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      flex-wrap:wrap;
-    }
-    .playlist-select-tools select {
-      flex:1;
-      min-width:0;
-      background:rgba(5,7,24,0.8);
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.2);
-      color:var(--text-main);
-      padding:3px 8px;
-      font-size:11px;
-      outline:none;
-    }
-    .playlist-file-actions .btn {
-      padding:4px 10px;
-      font-size:11px;
-    }
-
-    .playmode-row {
-      display:flex;
-      align-items:center;
-      gap:4px;
-      flex-shrink:0;
-    }
-    .playmode-btn {
-      border:none;
-      border-radius:999px;
-      width:24px; height:24px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      background:rgba(0,0,0,0.35);
-      color:var(--text-sub);
-      cursor:pointer;
-      box-shadow:0 0 8px rgba(0,0,0,0.8);
-    }
-    .playmode-btn.active {
-      background:radial-gradient(circle at 30% 0, rgba(255,255,255,0.18), rgba(110,190,255,0.95));
-      color:#02030a;
-      box-shadow:0 0 10px rgba(110,190,255,0.95);
-    }
-
-    .playlist-list {
-      flex:0 0 auto;
-      position:relative;
-      z-index:1;
-    }
-
-    .track-item {
-      display:grid;
-      grid-template-columns:auto 1fr auto;
-      gap:6px;
-      align-items:center;
-      padding:6px 8px;
-      margin-bottom:4px;
-      border-radius:10px;
-      background:rgba(7,11,34,0.86);
-      border:1px solid rgba(255,255,255,0.06);
-      font-size:11px;
-      cursor:pointer;
-      transition:background .15s, transform .1s, box-shadow .1s;
-    }
-    .track-item:hover {
-      background:rgba(26,32,80,0.95);
-      transform:translateY(-1px);
-      box-shadow:0 8px 18px rgba(0,0,0,0.9);
-    }
-    .track-item.playing {
-      border-color:var(--accent);
-      box-shadow:0 0 14px rgba(245,200,76,0.9);
-    }
-    .track-index {
-      width:22px;
-      text-align:right;
-      color:var(--text-sub);
-    }
-    .track-meta-title {
-      font-size:12px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .track-meta-sub {
-      display:flex;
-      justify-content:space-between;
-      gap:4px;
-      font-size:10px;
-      color:var(--text-sub);
-      margin-top:2px;
-    }
-    .track-actions {
-      display:flex;
-      gap:4px;
-      justify-content:flex-end;
-    }
-    .track-actions .btn-icon {
-      width:24px;
-      height:24px;
-      font-size:12px;
-    }
-    .btn-fav-active {
-      background:radial-gradient(circle at 30% 0, rgba(255,255,255,0.2), var(--accent-red));
-      color:#fff5f7;
-      box-shadow:0 0 12px rgba(255,92,122,0.95);
-    }
-
-    footer {
-      font-size:10px;
-      color:var(--text-sub);
-      text-align:right;
-      padding:0 4px 2px;
-      flex-shrink: 0;
-    }
-
-    #toast {
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      padding:8px 14px;
-      border-radius:999px;
-      background:rgba(8,10,26,0.96);
-      border:1px solid rgba(255,255,255,0.15);
-      font-size:11px;
-      color:var(--text-main);
-      box-shadow:0 12px 30px rgba(0,0,0,0.9);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .2s ease, transform .2s ease;
-      z-index:1500;
-    }
-    #toast.show {
-      opacity:1;
-      transform:translateX(-50%) translateY(-4px);
-    }
-
-    /* 柔和水波纹：双圈 */
-    .ripple-circle,
-    .ripple-circle-inner {
-      position:absolute;
-      border-radius:50%;
-      pointer-events:none;
-      transform:translate(-50%,-50%) scale(0);
-      opacity:0.9;
-      z-index:20;
-    }
-
-    .ripple-circle {
-      border:2px solid rgba(255,223,140,0.85);
-      box-shadow:0 0 14px rgba(255,223,140,0.9);
-      background:radial-gradient(circle, rgba(255,250,220,0.45), rgba(255,223,140,0.0));
-      animation:rippleOuter .75s cubic-bezier(0.22,0.61,0.36,1) forwards;
-    }
-    .ripple-circle-inner {
-      border:1px solid rgba(130,196,255,0.9);
-      box-shadow:0 0 16px rgba(130,196,255,0.9);
-      background:radial-gradient(circle, rgba(255,255,255,0.35), rgba(102,196,255,0.0));
-      animation:rippleInner .75s cubic-bezier(0.22,0.61,0.36,1) forwards;
-      z-index:19;
-    }
-    @keyframes rippleOuter {
-      to {
-        transform:translate(-50%,-50%) scale(2.4);
-        opacity:0;
-      }
-    }
-    @keyframes rippleInner {
-      to {
-        transform:translate(-50%,-50%) scale(1.7);
-        opacity:0;
-      }
-    }
-
-    /* 滚动条 */
-    .search-results-mini::-webkit-scrollbar,
-    .playlist-main::-webkit-scrollbar,
-    .lyrics-container::-webkit-scrollbar {
-      width:6px;
-    }
-    .search-results-mini::-webkit-scrollbar-track,
-    .playlist-main::-webkit-scrollbar-track,
-    .lyrics-container::-webkit-scrollbar-track {
-      background:rgba(4,6,22,0.65);
-      border-radius:999px;
-    }
-    .search-results-mini::-webkit-scrollbar-thumb,
-    .playlist-main::-webkit-scrollbar-thumb,
-    .lyrics-container::-webkit-scrollbar-thumb {
-      border-radius:999px;
-      background:linear-gradient(180deg, rgba(122,182,255,0.9), rgba(255,196,120,0.9));
-      box-shadow:0 0 8px rgba(130,190,255,0.9);
-    }
-    .search-results-mini,
-    .playlist-main,
-    .lyrics-container {
-      scrollbar-width:thin;
-      scrollbar-color:rgba(130,190,255,0.9) rgba(4,6,22,0.65);
-    }
-
-    /* 弹窗 */
-    .modal-backdrop {
-      position:fixed;
-      inset:0;
-      background:rgba(5,7,20,0.86);
-      backdrop-filter:blur(18px);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:2000;
-    }
-    .modal-backdrop.show { display:flex; }
-
-    .modal {
-      background:radial-gradient(circle at 0 0, rgba(255,255,255,0.08), transparent 60%), rgba(10,14,40,0.98);
-      border-radius:18px;
-      padding:16px 20px 14px;
-      box-shadow:0 20px 40px rgba(0,0,0,0.9);
-      max-width:380px;
-      width:92%;
-      color:#f5f6ff;
-      position:relative;
-      border:1px solid rgba(255,255,255,0.18);
-    }
-
-    .modal-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:14px;
-      margin-bottom:6px;
-    }
-    .modal-title-wrap {
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .modal-title-icon {
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:14px;
-      background:radial-gradient(circle at 30% 0, rgba(255,255,255,0.32), rgba(255,217,140,0.9));
-      box-shadow:0 0 10px rgba(255,217,140,0.8);
-    }
-    .modal-close-btn {
-      border:none;
-      background:transparent;
-      color:#aaa;
-      font-size:18px;
-      cursor:pointer;
-    }
-
-    .modal-desc {
-      margin:2px 0 8px;
-      font-size:11px;
-      color:var(--text-sub);
-    }
-
-    .modal input {
-      width:100%;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.22);
-      background:rgba(4,6,20,0.96);
-      color:var(--text-main);
-      font-size:12px;
-      outline:none;
-      margin-bottom:10px;
-    }
-    .modal-actions {
-      display:flex;
-      justify-content:flex-end;
-      gap:8px;
-      margin-top:4px;
-    }
-
-    /* 快捷键说明 */
-    .shortcut-grid {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:6px;
-      margin-top:6px;
-      font-size:12px;
-    }
-    .shortcut-card {
-      border-radius:12px;
-      padding:6px 8px;
-      background:rgba(15,18,52,0.95);
-      border:1px solid rgba(255,255,255,0.12);
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-    }
-    .shortcut-label { font-size:11px; color:var(--text-sub); }
-    .shortcut-key { display:flex; flex-wrap:wrap; gap:3px; }
-    .shortcut-key kbd {
-      padding:2px 6px;
-      border-radius:6px;
-      border:1px solid rgba(255,255,255,0.4);
-      font-size:11px;
-      background:rgba(0,0,0,0.3);
-    }
-
-    /* 手机端采用单面板切换，避免三块内容纵向堆叠 */
-    .mobile-nav { display:none; }
-
-    @media (max-width:1080px){
-      .layout{
-        grid-template-columns:1.1fr 1.2fr;
-        grid-template-rows:minmax(260px,0.9fr) minmax(260px,1.1fr);
-        grid-template-areas:
-          "player player"
-          "search playlist";
-      }
-      .search-panel{grid-area:search;}
-      .player-panel{grid-area:player;}
-      .playlist-panel{grid-area:playlist;}
-    }
-
-    @media (max-width:860px){
-      html, body {
-        width:100%;
-        height:100%;
-        min-height:100%;
-        overflow:hidden;
-      }
-
-      body {
-        overscroll-behavior:none;
-        touch-action:manipulation;
-      }
-
-      .app {
-        width:100%;
-        height:100dvh;
-        margin:0;
-        padding:
-          max(8px, env(safe-area-inset-top))
-          8px
-          max(8px, env(safe-area-inset-bottom));
-        gap:8px;
-        border:0;
-        border-radius:0;
-        box-shadow:none;
-        background:rgba(0,0,0,0.32);
-      }
-
-      header {
-        min-height:52px;
-        padding:6px 10px;
-        flex-direction:row;
-        align-items:center;
-        gap:8px;
-        border-radius:16px;
-      }
-
-      .logo-area { min-width:0; }
-      .pikachu-box {
-        width:44px;
-        height:44px;
-        padding:2px;
-        flex:0 0 44px;
-      }
-      .title-text { min-width:0; }
-      .title-text h1 {
-        font-size:15px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .title-text p {
-        font-size:9px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .header-controls {
-        width:auto;
-        margin-left:auto;
-        gap:6px;
-        flex-shrink:0;
-      }
-      .shortcut-hint,
-      .shortcut-toggle-btn { display:none; }
-      .lang-btn {
-        min-width:38px;
-        min-height:34px;
-        padding:5px 9px;
-      }
-
-      .layout {
-        display:block;
-        flex:1;
-        min-height:0;
-        overflow:hidden;
-      }
-
-      .layout > .panel {
-        display:none;
-        width:100%;
-        height:100%;
-        min-height:0;
-        padding:8px;
-        border-radius:16px;
-      }
-      .layout > .panel.mobile-active { display:flex; }
-
-      .panel-header { margin-bottom:6px; }
-      .panel-title { min-width:0; font-size:13px; }
-      .panel-header-actions { margin-left:auto; }
-      .lyrics-full-btn {
-        width:38px;
-        height:38px;
-        min-width:38px;
-        font-size:17px;
-      }
-      .panel-header-actions > .chip {
-        max-width:52%;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-      }
-
-      .player-top {
-        min-height:0;
-        gap:8px;
-        align-items:flex-start;
-      }
-      .cover-wrapper {
-        width:88px;
-        height:88px;
-        border-radius:14px;
-      }
-      .cover-disc {
-        width:52px;
-        height:52px;
-        border-width:7px;
-      }
-      .cover-placeholder {
-        gap:3px;
-        font-size:10px;
-        text-align:center;
-      }
-      .player-main { min-width:0; gap:4px; }
-      .track-title-row { gap:4px; }
-      .track-text { max-width:calc(100% - 60px); min-width:0; }
-      .track-title {
-        font-size:15px;
-        line-height:1.25;
-        max-height:38px;
-      }
-      .track-artist { font-size:11px; }
-      .track-tags { margin-top:2px; }
-      .player-actions { gap:4px; }
-      .status-pill { display:none; }
-      .player-btn-row { gap:4px; }
-      .btn-icon {
-        width:40px;
-        height:40px;
-        min-width:40px;
-        min-height:40px;
-      }
-      .player-actions .btn-icon {
-        width:34px;
-        height:34px;
-        min-width:34px;
-        min-height:34px;
-      }
-      .player-controls { gap:7px; }
-      .progress-time { width:36px; font-size:10px; }
-      .progress-bar-wrapper { height:8px; }
-      .progress-handle { width:12px; height:12px; }
-      .control-main .play-btn {
-        width:46px;
-        height:46px;
-        min-width:46px;
-        min-height:46px;
-      }
-      .volume-slider { width:72px; }
-
-      .lyrics-container {
-        margin-top:8px;
-        padding:8px 10px 10px;
-        border-radius:14px;
-      }
-      .lyrics-inner { padding:2px 2px 8px; }
-      .lyrics-title-line { font-size:12px; }
-      .lyrics-line {
-        font-size:15px;
-        margin:6px 0;
-        line-height:1.35;
-      }
-      .lyrics-line.active { transform:scale(1.05); }
-
-      body.lyrics-fullscreen .player-panel {
-        inset:max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom));
-        padding:8px;
-        border-radius:16px;
-      }
-      body.lyrics-fullscreen .player-panel .panel-header {
-        min-height:42px;
-        flex-direction:row;
-        align-items:center;
-      }
-      body.lyrics-fullscreen .lyrics-container {
-        padding:8px 8px 18px;
-      }
-      body.lyrics-fullscreen .lyrics-inner {
-        padding-top:18vh;
-        padding-bottom:42vh;
-      }
-      body.lyrics-fullscreen .lyrics-line {
-        font-size:17px;
-        margin:10px 0;
-        line-height:1.55;
-      }
-
-      .search-panel-content { height:100%; }
-      .search-row { padding-left:8px; }
-      .search-row .input { min-width:0; font-size:14px; }
-      .search-row .btn {
-        min-width:64px;
-        min-height:40px;
-        padding:6px 12px;
-      }
-      .source-row {
-        flex-wrap:nowrap;
-        overflow-x:auto;
-        padding:2px 0 4px;
-        scrollbar-width:none;
-      }
-      .source-row::-webkit-scrollbar { display:none; }
-      .source-chip {
-        flex:0 0 auto;
-        min-height:36px;
-        padding:6px 9px;
-      }
-      .limit-row {
-        justify-content:flex-start;
-        flex-wrap:wrap;
-        row-gap:5px;
-      }
-      .limit-row select { min-height:34px; }
-      .limit-row .btn { min-height:36px; }
-      .search-stats { gap:8px; }
-      .search-stats > :first-child {
-        min-width:0;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-      }
-      .search-mini-item {
-        min-height:54px;
-        padding:9px 10px;
-      }
-      .mini-title { font-size:13px; }
-      .mini-artist { font-size:11px; }
-
-      .playlist-panel .panel-header {
-        flex-direction:column;
-        align-items:stretch;
-        gap:7px;
-      }
-      .playlist-tabs {
-        display:grid;
-        grid-template-columns:repeat(3, minmax(0,1fr));
-        width:100%;
-      }
-      .playlist-tab {
-        min-width:0;
-        min-height:36px;
-        padding:8px 4px;
-        text-align:center;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .playlist-bar { gap:7px; }
-      .playlist-select-tools,
-      .playlist-file-actions { gap:5px; }
-      .playlist-file-actions .btn {
-        flex:1 1 auto;
-        min-height:36px;
-      }
-      .track-item {
-        min-height:58px;
-        padding:9px 8px;
-      }
-      .track-meta-title { font-size:13px; }
-      .track-actions .btn-icon {
-        width:36px;
-        height:36px;
-        min-width:36px;
-        min-height:36px;
-      }
-
-      footer { display:none; }
-
-      .mobile-nav {
-        display:grid;
-        grid-template-columns:repeat(3, minmax(0,1fr));
-        gap:6px;
-        flex-shrink:0;
-        padding:6px;
-        border:1px solid var(--border-subtle);
-        border-radius:16px;
-        background:rgba(7,10,30,0.94);
-        backdrop-filter:blur(18px);
-        box-shadow:0 -8px 26px rgba(0,0,0,0.45);
-      }
-      .mobile-nav-btn {
-        appearance:none;
-        border:0;
-        min-width:0;
-        min-height:50px;
-        padding:5px 4px;
-        border-radius:12px;
-        background:transparent;
-        color:var(--text-sub);
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap:2px;
-        font:inherit;
-        font-size:10px;
-        cursor:pointer;
-      }
-      .mobile-nav-icon { font-size:18px; line-height:1; }
-      .mobile-nav-btn.active {
-        color:#211907;
-        font-weight:600;
-        background:linear-gradient(135deg, var(--accent-strong), #ff9bd4);
-        box-shadow:0 0 14px rgba(245,200,76,0.42);
-      }
-    }
-
-    @media (max-width:420px){
-      .app { padding-left:6px; padding-right:6px; }
-      header { padding-left:8px; padding-right:8px; }
-      .pikachu-box { width:40px; height:40px; flex-basis:40px; }
-      .title-text p { display:none; }
-      .panel-header-actions > .chip { display:none; }
-      .cover-wrapper { width:78px; height:78px; }
-      .cover-disc { width:46px; height:46px; }
-      .track-text { max-width:calc(100% - 48px); }
-      .control-secondary { display:none; }
-      .lyrics-line { font-size:14px; }
-      .mobile-nav-btn { min-height:46px; }
-    }
-
-    @media (max-width:860px) and (max-height:600px){
-      header { min-height:46px; }
-      .pikachu-box { width:38px; height:38px; flex-basis:38px; }
-      .title-text p { display:none; }
-      .mobile-nav-btn { min-height:42px; }
-      .cover-wrapper { width:72px; height:72px; }
-      .cover-disc { width:42px; height:42px; }
-    }
-  </style>
 </head>
+
 <body>
   <canvas id="bg-canvas"></canvas>
-
   <div class="app">
     <header class="ripple-target">
       <div class="logo-area">
-        <div class="pikachu-box ripple-target">
-          <!-- 请放一张你喜欢的 pikachu.gif 到同目录 -->
-          <img src="pikachu.gif" alt="Pikachu" class="pikachu-img">
-        </div>
-        <div class="title-text">
-          <h1 data-i18n="appTitle">Xiaolang的音乐站</h1>
-          <p data-i18n="authorLabel">作者：nie  + GPT 5.6</p>
-        </div>
+        <div class="pikachu-box ripple-target"><span class="brand-mark">N</span><img src="pikachu.gif" alt="Nie Music" class="pikachu-img" onerror="this.style.display='none'"></div>
+        <div class="title-text"><h1 data-i18n="appTitle">Nie Music · Spatial Player</h1><p data-i18n="authorLabel">空间音频感 · 聚合音乐播放器</p></div>
       </div>
       <div class="header-controls">
-        <div class="lang-toggle ripple-target">
-          <button class="lang-btn active" data-lang="zh">中</button>
-          <button class="lang-btn" data-lang="en">EN</button>
-        </div>
-        <div class="shortcut-hint" data-i18n="shortcutHint">
-          快捷键：Space 播放/暂停 · ←/→ 跳转 · ↑/↓ 音量 · N/P 切歌 · F 收藏 · L 切换歌词效果
-        </div>
-        <button id="shortcut-toggle-btn" class="shortcut-toggle-btn ripple-target" title="快捷键说明">⌨️</button>
+        <div class="shortcut-hint" data-i18n="shortcutHint">Space 播放/暂停 · ←/→ 跳转 · N/P 切歌 · F 收藏</div>
+        <div class="lang-toggle ripple-target"><button class="lang-btn active" data-lang="zh">中</button><button class="lang-btn" data-lang="en">EN</button></div>
+        <button id="shortcut-toggle-btn" class="shortcut-toggle-btn ripple-target" title="快捷键说明">⌨</button>
       </div>
     </header>
 
     <main class="layout">
-      <!-- 左：搜索 -->
       <section class="panel search-panel ripple-target">
-        <div class="panel-header">
-          <div class="panel-title">
-            <span class="icon">🔍</span>
-            <span data-i18n="searchTitle">歌曲搜索</span>
-          </div>
-          <span class="chip" data-i18n="searchSubtitle">支持网易云 / QQ / 酷我 / JOOX</span>
-        </div>
+        <div class="panel-header"><div class="panel-title"><span class="icon">⌕</span><span data-i18n="searchTitle">发现音乐</span></div><span class="chip" data-i18n="searchSubtitle">多平台聚合搜索</span></div>
         <div class="search-panel-content">
-          <div class="search-row ripple-target">
-            <span class="search-prefix">🔍</span>
-            <input id="search-input" class="input" type="text"
-                   placeholder="输入歌名 / 歌手，回车搜索…" />
-            <button id="search-btn" class="btn ripple-target" data-i18n="searchButton">搜索</button>
-          </div>
-
+          <div class="search-row ripple-target"><span class="search-prefix">⌕</span><input id="search-input" class="input" type="text" placeholder="搜索歌曲、歌手或专辑…"><button id="search-btn" class="btn ripple-target" data-i18n="searchButton">搜索</button></div>
           <div class="source-row">
-            <label class="source-chip ripple-target">
-              <span class="source-dot netease"></span>
-              <input type="checkbox" data-source="netease" checked />
-              <span>网易云</span>
-            </label>
-            <label class="source-chip ripple-target">
-              <span class="source-dot qq"></span>
-              <input type="checkbox" data-source="qq" checked />
-              <span>QQ</span>
-            </label>
-            <label class="source-chip ripple-target">
-              <span class="source-dot kuwo"></span>
-              <input type="checkbox" data-source="kuwo" checked />
-              <span>酷我</span>
-            </label>
-            <label class="source-chip ripple-target">
-              <span class="source-dot joox"></span>
-              <input type="checkbox" data-source="joox" />
-              <span>JOOX</span>
-            </label>
+            <label class="source-chip ripple-target"><span class="source-dot netease"></span><input type="checkbox" data-source="netease" checked><span>网易云</span></label>
+            <label class="source-chip ripple-target"><span class="source-dot qq"></span><input type="checkbox" data-source="qq" checked><span>QQ</span></label>
+            <label class="source-chip ripple-target"><span class="source-dot kuwo"></span><input type="checkbox" data-source="kuwo" checked><span>酷我</span></label>
+            <label class="source-chip ripple-target"><span class="source-dot joox"></span><input type="checkbox" data-source="joox"><span>JOOX</span></label>
           </div>
+          <div class="limit-row"><span data-i18n="perSourceCount">每源</span><select id="limit-select"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="30">30</option></select><span data-i18n="perSourceCountTail">首</span><button id="load-more-btn" class="btn btn-secondary ripple-target" data-i18n="loadMore">加载更多</button></div>
+          <div class="search-stats"><span id="search-status" data-i18n="searchStatusIdle">输入关键词，开始一段新的聆听。</span><span id="search-count">0</span></div>
 
-          <div class="limit-row">
-            <span data-i18n="perSourceCount">每个源加载</span>
-            <select id="limit-select">
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-            </select>
-            <span data-i18n="perSourceCountTail">首结果</span>
-            <button id="load-more-btn" class="btn btn-secondary ripple-target" data-i18n="loadMore">
-              加载更多
-            </button>
-          </div>
-
-          <div class="search-stats">
-            <span id="search-status" data-i18n="searchStatusIdle">尚未搜索，试试输入“林俊杰”？</span>
-            <span id="search-count">0</span>
-          </div>
-
+          <article id="hot-comment-card" class="hot-comment-card ripple-target" tabindex="0" aria-label="网易云热评歌曲">
+            <div class="hot-comment-main">
+              <img id="hot-comment-cover" class="hot-comment-cover" alt="热评歌曲封面">
+              <div class="hot-comment-head"><strong>网易云 · 此刻热评</strong><span id="hot-comment-song">随机遇见一句话</span></div>
+              <button id="hot-comment-refresh" class="hot-comment-refresh ripple-target" type="button" title="换一条热评">↻</button>
+            </div>
+            <p id="hot-comment-text">正在加载一条热评…</p>
+            <div class="hot-comment-footer"><span id="hot-comment-user" class="hot-comment-user">— 网易云音乐</span><span id="hot-comment-like" class="hot-comment-like"></span><span id="hot-comment-action" class="hot-comment-action">点击播放歌曲</span></div>
+          </article>
           <div id="search-mini-list" class="search-results-mini"></div>
         </div>
       </section>
 
-      <!-- 中：播放器 -->
       <section class="panel player-panel ripple-target mobile-active">
-        <div class="panel-header">
-          <div class="panel-title">
-            <span class="icon">🎧</span>
-            <span data-i18n="playerTitle">正在播放</span>
-          </div>
-          <div class="panel-header-actions">
-            <span class="chip" data-i18n="playerSubtitle">歌词动态高亮 · 炫酷霓虹</span>
-            <button id="lyrics-full-btn" class="lyrics-full-btn ripple-target" type="button" aria-label="完整歌词" title="完整歌词">⛶</button>
-          </div>
-        </div>
-
+        <div class="panel-header player-panel-header"><div class="panel-title"><span class="icon">◉</span><span data-i18n="playerTitle">正在播放</span></div><div class="panel-header-actions"><span class="chip" data-i18n="playerSubtitle">封面色彩驱动 · 同步歌词</span><div class="lyrics-size-control" aria-label="歌词字体大小"><button id="lyrics-size-down" type="button" title="缩小歌词">A−</button><span id="lyrics-size-value">17</span><button id="lyrics-size-up" type="button" title="放大歌词">A+</button></div><button id="lyrics-full-btn" class="lyrics-full-btn ripple-target" type="button" aria-label="完整歌词" title="完整歌词">⛶</button></div></div>
         <div class="player-top">
-          <div class="cover-wrapper">
-            <img id="cover-img" src="" alt="cover" />
-            <div class="cover-placeholder">
-              <div class="cover-disc"></div>
-              <div data-i18n="coverHint">搜索并播放一首歌吧！</div>
-            </div>
-          </div>
+          <div class="cover-wrapper"><img id="cover-img" src="" alt="歌曲封面"><div class="cover-placeholder"><div class="cover-disc"></div><div data-i18n="coverHint">选择一首歌，让色彩开始流动。</div></div></div>
           <div class="player-main">
             <div class="track-title-row">
-              <div class="track-text">
-                <div id="track-title" class="track-title">暂未选择歌曲</div>
-                <div id="track-artist" class="track-artist"></div>
-                <div class="track-tags">
-                  <span id="track-source-pill" class="source-pill" style="display:none;"></span>
-                  <span id="track-quality-pill" class="lossless-pill" style="display:none;">LOSSLESS</span>
-                </div>
-              </div>
-              <div class="player-actions">
-                <div class="player-btn-row">
-                  <button id="fav-btn" class="btn btn-secondary btn-icon ripple-target" title="收藏 (F)">❤</button>
-                  <button id="download-btn" class="btn btn-secondary btn-icon ripple-target" title="下载">⬇</button>
-                </div>
-                <div id="player-status" class="status-pill" data-i18n="playerStatusIdle">空闲</div>
-              </div>
+              <div class="track-text"><div id="track-title" class="track-title">暂未选择歌曲</div><div id="track-artist" class="track-artist">从左侧搜索，或点开一条热评</div><div class="track-tags"><span id="track-source-pill" class="source-pill" style="display:none"></span><span id="track-quality-pill" class="lossless-pill" style="display:none">LOSSLESS</span></div></div>
+              <div class="player-actions"><div class="player-btn-row"><button id="fav-btn" class="btn btn-secondary btn-icon ripple-target" title="收藏 (F)">♡</button><button id="download-btn" class="btn btn-secondary btn-icon ripple-target" title="下载">↓</button></div><div id="player-status" class="status-pill" data-i18n="playerStatusIdle">待机</div></div>
             </div>
-
             <div class="player-controls">
-              <div class="progress-row">
-                <span id="current-time" class="progress-time">00:00</span>
-                <div id="progress-bar-wrapper" class="progress-bar-wrapper ripple-target">
-                  <div id="progress-bar" class="progress-bar"></div>
-                  <div id="progress-handle" class="progress-handle"></div>
-                </div>
-                <span id="total-time" class="progress-time">00:00</span>
-              </div>
-              <div class="control-row">
-                <div class="control-main">
-                  <button id="prev-btn" class="btn btn-secondary btn-icon ripple-target" title="上一首 (P)">⏮</button>
-                  <button id="play-btn" class="btn play-btn ripple-target" title="播放/暂停 (Space)">▶</button>
-                  <button id="next-btn" class="btn btn-secondary btn-icon ripple-target" title="下一首 (N)">⏭</button>
-                </div>
-                <div class="control-secondary">
-                  <span>🔊</span>
-                  <input id="volume-slider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8" />
-                </div>
-              </div>
+              <div class="progress-row"><span id="current-time" class="progress-time">00:00</span><div id="progress-bar-wrapper" class="progress-bar-wrapper ripple-target"><div id="progress-bar" class="progress-bar"></div><div id="progress-handle" class="progress-handle"></div></div><span id="total-time" class="progress-time">00:00</span></div>
+              <div class="control-row"><div class="control-main"><button id="prev-btn" class="btn btn-secondary btn-icon ripple-target" title="上一首 (P)">│◀</button><button id="play-btn" class="btn play-btn ripple-target" title="播放/暂停 (Space)">▶</button><button id="next-btn" class="btn btn-secondary btn-icon ripple-target" title="下一首 (N)">▶│</button></div><div class="control-secondary"><span>音量</span><input id="volume-slider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8"></div></div>
             </div>
           </div>
         </div>
-
-        <div class="lyrics-container">
-          <div id="lyrics-inner" class="lyrics-inner">
-            <div id="lyrics-empty" class="lyrics-empty" data-i18n="lyricsEmpty">
-              暂无歌词，试着播放一首支持歌词的歌曲。
-            </div>
-          </div>
-        </div>
-
+        <div class="lyrics-container"><div id="lyrics-inner" class="lyrics-inner"><div id="lyrics-empty" class="lyrics-empty" data-i18n="lyricsEmpty">歌词会在这里与音乐同步呼吸。</div></div></div>
         <audio id="audio" preload="metadata"></audio>
       </section>
 
-      <!-- 右：播放列表 -->
       <section class="panel playlist-panel ripple-target">
-        <div class="panel-header">
-          <div class="panel-title">
-            <span class="icon">📜</span>
-            <span data-i18n="playlistTitle">播放列表</span>
-          </div>
-          <div class="playlist-tabs ripple-target">
-            <div class="playlist-tab active" data-tab="results" data-i18n="tabResults">搜索结果</div>
-            <div class="playlist-tab" data-tab="favorites" data-i18n="tabFavorites">我的收藏</div>
-            <div class="playlist-tab" data-tab="playlists" data-i18n="tabCustomLists">自建歌单</div>
-          </div>
-        </div>
-
+        <div class="panel-header playlist-panel-header"><div class="playlist-header-content"><div class="panel-title"><span class="icon">≡</span><span data-i18n="playlistTitle">音乐库</span></div><div class="playlist-tabs ripple-target"><div class="playlist-tab active" data-tab="results" data-i18n="tabResults">结果</div><div class="playlist-tab" data-tab="favorites" data-i18n="tabFavorites">收藏</div><div class="playlist-tab" data-tab="playlists" data-i18n="tabCustomLists">歌单</div></div></div><button id="library-toggle" class="library-toggle ripple-target" type="button" aria-expanded="false" title="展开音乐库"><span class="library-toggle-icon">‹</span><span class="library-toggle-text">音乐库</span></button></div>
         <div class="playlist-main">
           <div class="playlist-bar">
-            <div class="playlist-top-row">
-              <span id="playlist-info" class="playlist-info"></span>
-              <div class="playmode-row">
-                <button class="playmode-btn active ripple-target" data-mode="list" title="列表循环">🔁</button>
-                <button class="playmode-btn ripple-target" data-mode="single" title="单曲循环">🔂</button>
-                <button class="playmode-btn ripple-target" data-mode="shuffle" title="随机播放">🔀</button>
-              </div>
-            </div>
-            <div id="playlist-select-row" class="playlist-select-row" style="display:none;">
-              <div class="playlist-select-tools">
-                <select id="playlist-select"></select>
-                <button id="add-current-btn" class="btn btn-secondary btn-icon ripple-target" title="把当前歌曲加入歌单">＋</button>
-                <button id="delete-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="deletePlaylist">删除歌单</button>
-              </div>
-              <div class="playlist-file-actions">
-                <button id="new-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="newPlaylist">新建歌单</button>
-                <button id="import-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="importPlaylist">导入歌单</button>
-                <button id="export-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="exportPlaylist">导出歌单</button>
-                <input id="import-playlist-input" type="file" accept="application/json,.json" style="display:none;" />
-              </div>
-            </div>
+            <div class="playlist-top-row"><span id="playlist-info" class="playlist-info"></span><div class="playmode-row"><button class="playmode-btn active ripple-target" data-mode="list" title="列表循环">↻</button><button class="playmode-btn ripple-target" data-mode="single" title="单曲循环">1</button><button class="playmode-btn ripple-target" data-mode="shuffle" title="随机播放">⌁</button></div></div>
+            <div id="playlist-select-row" class="playlist-select-row" style="display:none"><div class="playlist-select-tools"><select id="playlist-select"></select><button id="add-current-btn" class="btn btn-secondary btn-icon ripple-target" title="加入歌单">＋</button><button id="delete-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="deletePlaylist">删除</button></div><div class="playlist-file-actions"><button id="new-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="newPlaylist">新建</button><button id="import-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="importPlaylist">导入</button><button id="export-playlist-btn" class="btn btn-ghost ripple-target" data-i18n="exportPlaylist">导出</button><input id="import-playlist-input" type="file" accept="application/json,.json" style="display:none"></div></div>
           </div>
           <div id="playlist-list" class="playlist-list"></div>
         </div>
       </section>
     </main>
 
-    <nav class="mobile-nav" aria-label="手机端主导航">
-      <button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="search" aria-label="搜索">
-        <span class="mobile-nav-icon">🔍</span>
-        <span data-i18n="mobileNavSearch">搜索</span>
-      </button>
-      <button class="mobile-nav-btn active ripple-target" type="button" data-mobile-panel="player" aria-label="播放器" aria-current="page">
-        <span class="mobile-nav-icon">🎧</span>
-        <span data-i18n="mobileNavPlayer">播放</span>
-      </button>
-      <button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="playlist" aria-label="歌单">
-        <span class="mobile-nav-icon">📜</span>
-        <span data-i18n="mobileNavPlaylist">歌单</span>
-      </button>
-    </nav>
-
-    <footer>
-      <span data-i18n="footerText">本站仅作为学习演示，音乐版权归各平台与原作者所有。</span>
-    </footer>
+    <nav class="mobile-nav" aria-label="手机端主导航"><button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="search"><span class="mobile-nav-icon">⌕</span><span data-i18n="mobileNavSearch">发现</span></button><button class="mobile-nav-btn active ripple-target" type="button" data-mobile-panel="player" aria-current="page"><span class="mobile-nav-icon">◉</span><span data-i18n="mobileNavPlayer">播放</span></button><button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="playlist"><span class="mobile-nav-icon">≡</span><span data-i18n="mobileNavPlaylist">音乐库</span></button></nav>
+    <footer><span data-i18n="footerText">仅用于学习演示，音乐版权归平台及原作者所有。</span></footer>
   </div>
 
-  <!-- 歌单弹窗 -->
-  <div id="playlist-modal" class="modal-backdrop">
-    <div class="modal ripple-target">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <div class="modal-title-icon">🎵</div>
-          <span data-i18n="modalNewPlaylistTitle">新建歌单</span>
-        </div>
-        <button id="playlist-close" class="modal-close-btn">×</button>
-      </div>
-      <p class="modal-desc" data-i18n="modalNewPlaylistDesc">给你的歌单取一个可爱的名字吧～</p>
-      <input id="playlist-name-input" type="text" placeholder="例如：通勤歌单 / 宝可梦歌单" />
-      <div class="modal-actions">
-        <button id="playlist-cancel-btn" class="btn btn-ghost ripple-target" data-i18n="modalCancel">取消</button>
-        <button id="playlist-confirm-btn" class="btn btn-secondary ripple-target" data-i18n="modalConfirm">确定</button>
-      </div>
-    </div>
-  </div>
+  <div id="playlist-modal" class="modal-backdrop"><div class="modal ripple-target"><div class="modal-header"><div class="modal-title-wrap"><div class="modal-title-icon">♫</div><span data-i18n="modalNewPlaylistTitle">新建歌单</span></div><button id="playlist-close" class="modal-close-btn">×</button></div><p class="modal-desc" data-i18n="modalNewPlaylistDesc">给这组音乐一个名字。</p><input id="playlist-name-input" type="text" placeholder="例如：夜间公路"><div class="modal-actions"><button id="playlist-cancel-btn" class="btn btn-ghost ripple-target" data-i18n="modalCancel">取消</button><button id="playlist-confirm-btn" class="btn btn-secondary ripple-target" data-i18n="modalConfirm">确定</button></div></div></div>
 
-  <!-- 快捷键说明弹窗 -->
-  <div id="shortcut-modal" class="modal-backdrop">
-    <div class="modal ripple-target">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <div class="modal-title-icon">⌨️</div>
-          <span data-i18n="shortcutPanelTitle">快捷键说明</span>
-        </div>
-        <button id="shortcut-close" class="modal-close-btn">×</button>
-      </div>
-      <p class="modal-desc" data-i18n="shortcutPanelDesc">
-        使用键盘可以更加方便地控制nie的音乐站：
-      </p>
-      <div class="shortcut-grid">
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutPlayPause">播放 / 暂停</div>
-          <div class="shortcut-key"><kbd>Space</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutSeek">快退 / 快进 5 秒</div>
-          <div class="shortcut-key"><kbd>←</kbd><kbd>→</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutVolume">音量加 / 减</div>
-          <div class="shortcut-key"><kbd>↑</kbd><kbd>↓</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutPrevNext">上一首 / 下一首</div>
-          <div class="shortcut-key"><kbd>P</kbd><kbd>N</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutFav">收藏 / 取消收藏</div>
-          <div class="shortcut-key"><kbd>F</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutLyricsFX">切换歌词炫酷效果</div>
-          <div class="shortcut-key"><kbd>L</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutMute">静音 / 取消静音</div>
-          <div class="shortcut-key"><kbd>M</kbd></div>
-        </div>
-        <div class="shortcut-card">
-          <div class="shortcut-label" data-i18n="shortcutFocusSearch">聚焦搜索框</div>
-          <div class="shortcut-key"><kbd>/</kbd></div>
-        </div>
-      </div>
-      <p class="modal-desc" style="margin-top:10px;" data-i18n="shortcutCloseModal">
-        提示：按 Esc 可以关闭弹窗。
-      </p>
-    </div>
-  </div>
-
+  <div id="shortcut-modal" class="modal-backdrop"><div class="modal ripple-target"><div class="modal-header"><div class="modal-title-wrap"><div class="modal-title-icon">⌨</div><span data-i18n="shortcutPanelTitle">快捷键</span></div><button id="shortcut-close" class="modal-close-btn">×</button></div><p class="modal-desc" data-i18n="shortcutPanelDesc">无需离开键盘即可控制播放。</p><div class="shortcut-grid"><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutPlayPause">播放 / 暂停</div><div class="shortcut-key"><kbd>Space</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutSeek">快退 / 快进</div><div class="shortcut-key"><kbd>←</kbd><kbd>→</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutVolume">音量</div><div class="shortcut-key"><kbd>↑</kbd><kbd>↓</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutPrevNext">上一首 / 下一首</div><div class="shortcut-key"><kbd>P</kbd><kbd>N</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutFav">收藏</div><div class="shortcut-key"><kbd>F</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutLyricsFX">歌词效果</div><div class="shortcut-key"><kbd>L</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutMute">静音</div><div class="shortcut-key"><kbd>M</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutFocusSearch">搜索</div><div class="shortcut-key"><kbd>/</kbd></div></div></div><p class="modal-desc" style="margin-top:10px" data-i18n="shortcutCloseModal">按 Esc 关闭。</p></div></div>
   <div id="toast"></div>
-
-  <script>
-  (function(){
+<script>
+(function(){
     const translations = {
       zh: {
-        appTitle:"xiaolang的音乐站",
-        authorLabel:"作者：Nie + GPT 5.6",
-        shortcutHint:"快捷键：Space 播放/暂停 · ←/→ 跳转 · ↑/↓ 音量 · N/P 切歌 · F 收藏 · L 切换歌词效果",
+        appTitle:"Nie Music · Spatial Player",
+        authorLabel:"封面色彩驱动的沉浸式播放器",
+        shortcutHint:"Space 播放/暂停 · ←/→ 跳转 · N/P 切歌 · F 收藏",
         shortcutPanelTitle:"快捷键说明",
         shortcutPanelDesc:"使用键盘可以更加方便地控制nie的音乐站：",
         shortcutPlayPause:"播放 / 暂停",
@@ -1969,30 +374,30 @@
         shortcutMute:"静音 / 取消静音",
         shortcutFocusSearch:"聚焦搜索框",
         shortcutCloseModal:"提示：按 Esc 可以关闭弹窗。",
-        mobileNavSearch:"搜索",
+        mobileNavSearch:"发现",
         mobileNavPlayer:"播放",
-        mobileNavPlaylist:"歌单",
-        searchTitle:"歌曲搜索",
-        searchSubtitle:"支持网易云 / QQ / 酷我 / JOOX",
+        mobileNavPlaylist:"音乐库",
+        searchTitle:"发现音乐",
+        searchSubtitle:"网易云 / QQ / 酷我 / JOOX",
         searchButton:"搜索",
         perSourceCount:"每个源加载",
         perSourceCountTail:"首结果",
         loadMore:"加载更多",
-        searchStatusIdle:"尚未搜索，试试输入“林俊杰”？",
+        searchStatusIdle:"输入关键词，开始一段新的聆听。",
         searchStatusSearching:"正在搜索中…",
         searchStatusDone:"搜索完成。",
         searchStatusNoSource:"请至少选择一个音乐源。",
         playerTitle:"正在播放",
-        playerSubtitle:"歌词动态高亮 · 炫酷霓虹",
-        coverHint:"搜索并播放一首歌吧！",
-        playerStatusIdle:"空闲",
+        playerSubtitle:"封面色彩驱动 · 同步歌词",
+        coverHint:"选择一首歌，让色彩开始流动。",
+        playerStatusIdle:"待机",
         playerStatusLoading:"加载音源中…",
         playerStatusPlaying:"播放中",
         playerStatusPaused:"已暂停",
-        lyricsEmpty:"暂无歌词，试着播放一首支持歌词的歌曲。",
+        lyricsEmpty:"歌词会在这里与音乐同步呼吸。",
         lyricsFullscreen:"完整歌词",
         lyricsExitFullscreen:"退出完整歌词",
-        playlistTitle:"播放列表",
+        playlistTitle:"音乐库",
         tabResults:"搜索结果",
         tabFavorites:"我的收藏",
         tabCustomLists:"自建歌单",
@@ -2041,8 +446,8 @@
         modalCancel:"取消"
       },
       en: {
-        appTitle:"Nie Music Station",
-        authorLabel:"Author: Nie nie",
+        appTitle:"Nie Music · Spatial Player",
+        authorLabel:"Artwork-driven immersive music player",
         shortcutHint:"Shortcuts: Space Play/Pause · ←/→ Seek · ↑/↓ Volume · N/P Track · F Fav · L Lyrics FX",
         shortcutPanelTitle:"Keyboard Shortcuts",
         shortcutPanelDesc:"Control Nie Music Station more easily with your keyboard:",
@@ -2055,10 +460,10 @@
         shortcutMute:"Mute / unmute",
         shortcutFocusSearch:"Focus on search box",
         shortcutCloseModal:"Tip: press Esc to close dialogs.",
-        mobileNavSearch:"Search",
+        mobileNavSearch:"Discover",
         mobileNavPlayer:"Player",
         mobileNavPlaylist:"Library",
-        searchTitle:"Search",
+        searchTitle:"Discover",
         searchSubtitle:"Supports Netease / QQ / Kuwo / JOOX",
         searchButton:"Search",
         perSourceCount:"Per source",
@@ -2069,16 +474,16 @@
         searchStatusDone:"Search completed.",
         searchStatusNoSource:"Please select at least one music source.",
         playerTitle:"Now Playing",
-        playerSubtitle:"Dynamic neon lyrics visualizer",
-        coverHint:"Search and play a song!",
-        playerStatusIdle:"Idle",
+        playerSubtitle:"Artwork colors · Synced lyrics",
+        coverHint:"Choose a song and let its colors flow.",
+        playerStatusIdle:"Standby",
         playerStatusLoading:"Loading audio…",
         playerStatusPlaying:"Playing",
         playerStatusPaused:"Paused",
         lyricsEmpty:"No lyrics yet. Try a song with LRC lyrics.",
         lyricsFullscreen:"Full lyrics",
         lyricsExitFullscreen:"Exit full lyrics",
-        playlistTitle:"Playlists",
+        playlistTitle:"Library",
         tabResults:"Default",
         tabFavorites:"Favorites",
         tabCustomLists:"Playlists",
@@ -2149,6 +554,8 @@
       searchInProgress:false,
       noMoreResults:false,
       lyricsAlt:false,
+      lyricsFontSize:17,
+      libraryCollapsed:true,
       muted:false
     };
 
@@ -2466,58 +873,219 @@
 
     // ===================== 各平台搜索 =====================
 
-    // 网易云搜索：qijieya meting search
-    async function searchNetease(kw, page, num){
-      const requestLimit=Math.max(1,page||1)*Math.max(1,num||10);
-      const url=`https://api.qijieya.cn/meting/?type=search&id=${encodeURIComponent(kw)}&limit=${encodeURIComponent(requestLimit)}&server=netease`;
-      let added=0;
+    // 网易云搜索：迟言 API（列表请求不传 n，选择歌曲时再传 n）
+    const CY_NETEASE_ENDPOINT='https://cyapi.top/API/netease.php';
+    const CY_NETEASE_API_KEY='bc01615f034c60e77e43bc0305b3c2ee944414f740083c9421631e6a797bc84c';
+    const CY_HOT_COMMENT_ENDPOINT='https://cyapi.top/API/wyrp.php';
 
-      function pickQueryParam(rawUrl, key){
-        if(!rawUrl)return '';
-        try{
-          return new URL(rawUrl, window.location.href).searchParams.get(key) || '';
-        }catch(e){
-          const m=String(rawUrl).match(new RegExp('[?&]'+key+'=([^&]+)'));
-          return m ? decodeURIComponent(m[1]) : '';
+    function cyFirst(obj, keys, fallback=''){
+      if(!obj || typeof obj!=='object')return fallback;
+      for(const key of keys){
+        const value=obj[key];
+        if(value!==undefined && value!==null && String(value).trim()!=='')return value;
+      }
+      return fallback;
+    }
+
+    function cyArray(payload){
+      if(Array.isArray(payload))return payload;
+      if(!payload || typeof payload!=='object')return [];
+      for(const key of ['data','result','results','list','songs','items']){
+        const value=payload[key];
+        if(Array.isArray(value))return value;
+        if(value && typeof value==='object'){
+          for(const nested of ['data','list','songs','items']){
+            if(Array.isArray(value[nested]))return value[nested];
+          }
         }
       }
+      return Object.entries(payload).filter(([key])=>/^\d+$/.test(key)).map(([,value])=>value);
+    }
 
+    async function cyRequest(url){
+      const res=await fetch(url,{headers:{Accept:'application/json,text/plain,*/*'}});
+      const text=await res.text();
+      if(!res.ok)throw new Error('CY API HTTP '+res.status);
+      try{return JSON.parse(text);}catch(e){return text.trim();}
+    }
+
+
+    function cyNormalizeMediaUrl(value, kind='media'){
+      if(value==null)return '';
+      const decoder=document.createElement('textarea');
+      decoder.innerHTML=String(value);
+      let url=decoder.value.trim()
+        .replace(/^[±\s"'`]+|[±\s"'`]+$/g,'')
+        .replace(/^(?:img|pic|cover|url)\s*=\s*/i,'')
+        .replace(/\\\//g,'/')
+        .replace(/&amp;/g,'&');
+      if(!url)return '';
+      const embedded=url.match(/https?:\/\/[^\s±"'<>]+/i);
+      if(embedded)url=embedded[0];
+      if(/^\/\//.test(url))url='https:'+url;
+      if(/^http:\/\/[^/]*music\.126\.net\//i.test(url))url=url.replace(/^http:/i,'https:');
+      if(kind==='image' && /music\.126\.net\//i.test(url)){
+        url=url.replace(/[?&]param=\d+y\d+/ig,'').replace(/[?&]$/,'');
+        url+=(url.includes('?')?'&':'?')+'param=1000y1000';
+      }
+      return url;
+    }
+
+    function cyNeteaseImageCandidates(value){
+      const normalized=cyNormalizeMediaUrl(value,'image');
+      if(!normalized)return [];
+      if(!/music\.126\.net\//i.test(normalized))return [normalized];
+      const base=normalized.replace(/[?&]param=\d+y\d+/ig,'').replace(/[?&]$/,'');
+      const sized=[1000,800,500].map(size=>base+(base.includes('?')?'&':'?')+`param=${size}y${size}`);
+      const hosts=['p1','p2','p3','p4'];
+      const variants=[];
+      for(const url of sized){
+        variants.push(url);
+        if(/https:\/\/p[1-4]\.music\.126\.net/i.test(url)){
+          hosts.forEach(host=>variants.push(url.replace(/https:\/\/p[1-4]\.music\.126\.net/i,`https://${host}.music.126.net`)));
+        }
+      }
+      variants.push(base);
+      return [...new Set(variants)];
+    }
+
+    function cyLoadImageWithFallback(img,value,onSuccess,onFailure){
+      if(!img)return;
+      const candidates=cyNeteaseImageCandidates(value);
+      let index=0;
+      const fail=()=>{
+        index+=1;
+        if(index<candidates.length){img.src=candidates[index];return;}
+        img.onerror=null;img.onload=null;
+        if(onFailure)onFailure();
+      };
+      if(!candidates.length){if(onFailure)onFailure();return;}
+      img.decoding='async';
+      img.referrerPolicy='no-referrer';
+      img.onload=()=>{img.onerror=null;if(onSuccess)onSuccess(img.src);};
+      img.onerror=fail;
+      img.src=candidates[0];
+    }
+
+    function cyParseNeteaseDetailText(raw){
+      const text=String(raw||'').replace(/\u00a0/g,' ').trim();
+      if(!text)return {};
+      const field=(labels)=>{
+        const names=labels.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+        const m=text.match(new RegExp('(?:^|\\n)\\s*(?:'+names+')\\s*[:：]\\s*([^\\r\\n]+)','i'));
+        return m?m[1].trim():'';
+      };
+      const coverMatch=text.match(/(?:^|[\r\n±])\s*(?:img|pic|cover)\s*=\s*(https?:\/\/[^±\r\n\s]+)(?=±|\r?\n|\s|$)/i) || text.match(/https?:\/\/p[1-4]\.music\.126\.net\/[^±\r\n\s]+/i);
+      const lyricMatch=text.match(/(?:^|\n)\s*\[歌词\]\s*\r?\n([\s\S]*)$/i);
+      return {
+        cover:cyNormalizeMediaUrl(coverMatch?(coverMatch[1]||coverMatch[0]):'','image'),
+        title:field(['歌名','歌曲','歌曲名称','name','title','song']),
+        artist:field(['歌手','歌手名称','artist','singer']),
+        album:field(['专辑','专辑名称','album']),
+        duration:field(['时长','duration','time']),
+        audioUrl:cyNormalizeMediaUrl(field(['链接','播放链接','歌曲链接','播放地址','url']),'audio'),
+        lrc:lyricMatch?lyricMatch[1].trim():''
+      };
+    }
+
+    function cyParseTextList(text){
+      if(!text)return [];
+      return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map((line,idx)=>{
+        const cleaned=line.replace(/^\s*(?:\[?\d+\]?|\d+[.、)])\s*/,'').trim();
+        const parts=cleaned.split(/\s*(?:-|—|–|\|)\s*/);
+        return {index:idx+1,title:parts[0]||cleaned,artist:parts.slice(1).join(' - '),raw:line};
+      });
+    }
+
+    function cyNormalizeNeteaseList(payload){
+      let list=cyArray(payload);
+      if(!list.length && typeof payload==='string')return cyParseTextList(payload);
+      if(!list.length && payload && typeof payload==='object'){
+        for(const key of ['data','result','list','msg','message']){
+          if(typeof payload[key]==='string' && payload[key].trim())return cyParseTextList(payload[key]);
+        }
+      }
+      return list.map((item,idx)=>{
+        if(typeof item==='string')return cyParseTextList(item)[0]||{index:idx+1,title:item,artist:''};
+        const it=item||{};
+        return {
+          index:Number(cyFirst(it,['n','num','index','序号'],idx+1))||idx+1,
+          id:String(cyFirst(it,['id','songid','songId','歌曲ID'],'')),
+          title:String(cyFirst(it,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],'搜索结果 '+(idx+1))),
+          artist:String(cyFirst(it,['artist','artistsname','artistname','singer','singername','author','歌手','歌手名称'],'未知歌手')),
+          album:String(cyFirst(it,['album','albumname','专辑','专辑名称'],'')),
+          cover:cyNormalizeMediaUrl(cyFirst(it,['pic','picurl','pic_url','cover','coverurl','cover_url','image','img','封面','歌曲封面'],''),'image'),
+          audioUrl:cyNormalizeMediaUrl(cyFirst(it,['url','music_url','play_url','playurl','src','link','音乐链接','播放地址','歌曲链接'],'') ,'audio'),
+          lrc:cyFirst(it,['lrc','lyric','lyrics','歌词','歌词内容'],''),
+          raw:it
+        };
+      }).filter(item=>item.title);
+    }
+
+    function cyFlatten(payload){
+      if(typeof payload==='string')return {rawText:payload};
+      if(!payload || typeof payload!=='object')return {};
+      for(const key of ['data','result','song','music']){
+        if(typeof payload[key]==='string' && payload[key].trim()){
+          try{return Object.assign({},payload,cyFlatten(JSON.parse(payload[key])));}catch(e){return Object.assign({},payload,{rawText:payload[key]});}
+        }
+      }
+      const arr=cyArray(payload);
+      if(arr.length===1 && arr[0] && typeof arr[0]==='object')return Object.assign({},payload,arr[0]);
+      for(const key of ['data','result','song','music']){
+        if(payload[key] && !Array.isArray(payload[key]) && typeof payload[key]==='object')return Object.assign({},payload,payload[key]);
+      }
+      return payload;
+    }
+
+    function cyApplyNeteaseDetail(track,payload){
+      const d=cyFlatten(payload);
+      const rawText=d.rawText||((typeof payload==='string')?payload:'');
+      const parsed=cyParseNeteaseDetailText(rawText);
+      const cover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','pic_url','cover','coverurl','cover_url','image','img','封面','歌曲封面'],parsed.cover||track.cover||''),'image');
+      const rawLink=String(cyFirst(d,['link'],''));
+      const mediaLink=/(?:\.(?:mp3|flac|m4a|aac|ogg)(?:\?|$)|\/jdymusic\/|m\d+\.music\.126\.net)/i.test(rawLink)?rawLink:'';
+      const audioUrl=cyNormalizeMediaUrl(cyFirst(d,['url','music_url','play_url','playurl','src','音乐链接','播放地址','歌曲链接'],parsed.audioUrl||mediaLink||track.audioUrl||''),'audio');
+      Object.assign(track,{
+        songid:String(cyFirst(d,['id','songid','songId','歌曲ID'],track.songid||'')),
+        title:String(cyFirst(d,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],parsed.title||track.title)),
+        artist:String(cyFirst(d,['artist','artistsname','artistname','singer','singername','author','歌手','歌手名称'],parsed.artist||track.artist)),
+        album:String(cyFirst(d,['album','albumname','专辑','专辑名称'],parsed.album||track.album||'')),
+        durationText:String(cyFirst(d,['duration','time','时长'],parsed.duration||track.durationText||'')),
+        cover,
+        audioUrl,
+        lrc:cyFirst(d,['lrc','lyric','lyrics','歌词','歌词内容'],parsed.lrc||track.lrc||''),
+        lrcUrl:null,
+        detailsLoaded:Boolean(audioUrl)
+      });
+    }
+
+    async function searchNetease(kw,page,num){
+      const requestLimit=Math.max(1,page||1)*Math.max(1,num||10);
+      const url=new URL(CY_NETEASE_ENDPOINT);
+      url.searchParams.set('apikey',CY_NETEASE_API_KEY);
+      url.searchParams.set('msg',kw);
+      url.searchParams.set('num',String(requestLimit));
+      url.searchParams.set('type','json');
+      let added=0;
       try{
-        const res=await fetch(url);
-        const json=await res.json();
-        if(!Array.isArray(json))return 0;
-
-        json.forEach((it, idx)=>{
-          const songId = pickQueryParam(it.url, 'id') || `${kw}-${idx+1}`;
-          const uid=`netease-${songId}`;
+        const payload=await cyRequest(url);
+        const list=cyNormalizeNeteaseList(payload);
+        list.forEach((it,idx)=>{
+          const n=it.index||idx+1;
+          const uid='netease-'+(it.id||kw+'-'+n);
           if(state.trackMap.has(uid))return;
-
           const track={
-            uid,
-            source:'netease',
-            displayIndex:idx+1,
-            keyword:kw,
-
-            songid:songId,
-            title:it.name||'',
-            artist:it.artist||'',
-            album:'',
-
-            cover:it.pic||null,
-            audioUrl:it.url||null,
-            lrc:null,
-            lrcUrl:it.lrc||null,
-
-            detailsLoaded:false,
-            quality:null,
-            qualityLabel:null
+            uid,source:'netease',displayIndex:n,keyword:kw,neteaseIndex:n,
+            songid:it.id||'',title:it.title||'',artist:it.artist||'',album:it.album||'',
+            cover:it.cover||null,audioUrl:it.audioUrl||null,lrc:it.lrc||null,lrcUrl:null,
+            detailsLoaded:false,quality:null,qualityLabel:null
           };
           state.trackMap.set(uid,track);
           state.searchResults.push(track);
           added++;
         });
-
-      }catch(e){console.error('netease(qijieya meting)',e);}
+      }catch(e){console.error('netease(cyapi) search',e);}
       return added;
     }
 
@@ -2748,47 +1316,34 @@
 
     // ===================== 各平台详情 =====================
 
-    // 网易云详情：搜索结果已返回播放、封面、歌词接口，这里只补全缓存歌曲和歌词内容
+    // 网易云详情：使用同一关键词和列表序号 n 获取播放地址、封面与歌词
     async function fetchNeteaseDetails(track){
-      if(track.songid){
-        if(!track.audioUrl){
-          track.audioUrl=`https://api.qijieya.cn/meting/?server=netease&type=url&id=${encodeURIComponent(track.songid)}`;
-        }
-        if(!track.lrcUrl){
-          track.lrcUrl=`https://api.qijieya.cn/meting/?server=netease&type=lrc&id=${encodeURIComponent(track.songid)}`;
+      const makeUrl=(typeValue)=>{
+        const url=new URL(CY_NETEASE_ENDPOINT);
+        url.searchParams.set('apikey',CY_NETEASE_API_KEY);
+        url.searchParams.set('msg',track.keyword || ((track.title||'')+' '+(track.artist||'')).trim());
+        url.searchParams.set('num',String(Math.max(state.perSourceCurrentLimit.netease||state.perSourceLimit||10,track.neteaseIndex||track.displayIndex||1)));
+        url.searchParams.set('n',String(track.neteaseIndex||track.displayIndex||1));
+        if(typeValue)url.searchParams.set('type',typeValue);
+        return url;
+      };
+      const firstPayload=await cyRequest(makeUrl('json'));
+      cyApplyNeteaseDetail(track,firstPayload);
+      // 部分节点即使 type=json 仍只返回精简数据；缺少封面或歌词时，再读取原始文本格式。
+      if(!track.cover || !track.lrc || !track.audioUrl){
+        try{
+          const fallbackPayload=await cyRequest(makeUrl(''));
+          cyApplyNeteaseDetail(track,fallbackPayload);
+        }catch(fallbackError){
+          console.warn('netease text detail fallback',fallbackError);
         }
       }
-
       if(track.audioUrl){
         const q=inferQualityFromUrl(track.audioUrl);
         track.quality=q.tag;
         track.qualityLabel=q.label;
       }
-
-      if(!track.lrc && track.lrcUrl){
-        try{
-          const lr=await fetch(track.lrcUrl);
-          const contentType=(lr.headers.get('content-type')||'').toLowerCase();
-          if(contentType.includes('json')){
-            const lj=await lr.json();
-            track.lrc =
-              (typeof lj === 'string' ? lj : null) ||
-              lj?.lrc ||
-              lj?.lyric ||
-              lj?.data?.lrc ||
-              lj?.data?.lyric ||
-              (typeof lj?.data === 'string' ? lj.data : null) ||
-              track.lrc ||
-              null;
-          }else{
-            track.lrc=await lr.text();
-          }
-        }catch(e){
-          console.warn('netease(qijieya meting) lyric fetch failed', e);
-        }
-      }
-
-      track.detailsLoaded=true;
+      track.detailsLoaded=Boolean(track.audioUrl);
     }
 
     // QQ 详情：根据搜索时的关键词 + song_mid(mid) 拿 url + lrc（tang API）
@@ -2988,12 +1543,205 @@
     }
 
     async function ensureTrackDetails(track){
-      if(track.detailsLoaded && track.audioUrl && (track.lrc || !track.lrcUrl)) return;
+      if(track.detailsLoaded && track.audioUrl && (track.lrc || !track.lrcUrl) && (track.source!=='netease' || (track.cover && track.lrc))) return;
       dom.playerStatus.textContent=t('playerStatusLoading');
       if(track.source==='netease') await fetchNeteaseDetails(track);
       else if(track.source==='kuwo') await fetchKuwoDetails(track);
       else if(track.source==='joox') await fetchJooxDetails(track);
       else await fetchQQDetails(track);
+    }
+
+    // ===================== 封面取色 / 网易云热评 =====================
+
+    function themeHashPalette(seed){
+      let hash=0;
+      for(const ch of String(seed||'Nie Music'))hash=(hash*31+ch.charCodeAt(0))>>>0;
+      const hue=hash%360;
+      return {
+        primary:themeHslToRgb(hue,66,61),
+        secondary:themeHslToRgb((hue+72)%360,66,62),
+        highlight:themeHslToRgb((hue+156)%360,76,72)
+      };
+    }
+
+    function themeHslToRgb(h,s,l){
+      s/=100;l/=100;
+      const c=(1-Math.abs(2*l-1))*s;
+      const x=c*(1-Math.abs((h/60)%2-1));
+      const m=l-c/2;
+      let r=0,g=0,b=0;
+      if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+      return {r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)};
+    }
+
+    function themeAverage(colors){
+      const sum=colors.reduce((a,c)=>({r:a.r+c.r,g:a.g+c.g,b:a.b+c.b}),{r:0,g:0,b:0});
+      const n=Math.max(1,colors.length);
+      return {r:Math.round(sum.r/n),g:Math.round(sum.g/n),b:Math.round(sum.b/n)};
+    }
+
+    function themeDistance(a,b){return Math.hypot(a.r-b.r,a.g-b.g,a.b-b.b);}
+
+    function extractCoverPalette(img){
+      const canvas=document.createElement('canvas');
+      canvas.width=canvas.height=48;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(img,0,0,48,48);
+      const px=ctx.getImageData(0,0,48,48).data;
+      const colors=[];
+      for(let i=0;i<px.length;i+=16){
+        const r=px[i],g=px[i+1],b=px[i+2],a=px[i+3];
+        if(a<180)continue;
+        const max=Math.max(r,g,b),min=Math.min(r,g,b),sat=max-min,light=(max+min)/2;
+        if(light<22||light>238)continue;
+        colors.push({r,g,b,sat,light});
+      }
+      if(colors.length<5)throw new Error('not enough colors');
+      const p=themeAverage([...colors].sort((a,b)=>b.sat-a.sat).slice(0,Math.max(8,colors.length*.18)));
+      const h=themeAverage([...colors].sort((a,b)=>b.light-a.light).slice(0,Math.max(8,colors.length*.12)));
+      const pool=colors.filter(c=>themeDistance(c,p)>75);
+      const q=themeAverage((pool.length?pool:[...colors]).sort((a,b)=>b.sat-a.sat).slice(0,Math.max(8,colors.length*.15)));
+      return {primary:p,secondary:q,highlight:h};
+    }
+
+    function applyThemePalette(palette,coverUrl){
+      const root=document.documentElement;
+      root.style.setProperty('--album-primary',`${palette.primary.r} ${palette.primary.g} ${palette.primary.b}`);
+      root.style.setProperty('--album-secondary',`${palette.secondary.r} ${palette.secondary.g} ${palette.secondary.b}`);
+      root.style.setProperty('--album-highlight',`${palette.highlight.r} ${palette.highlight.g} ${palette.highlight.b}`);
+      root.style.setProperty('--cover-art',coverUrl?`url("${String(coverUrl).replace(/"/g,'%22')}")`:'none');
+      const meta=document.querySelector('meta[name="theme-color"]');
+      if(meta)meta.content=`rgb(${palette.primary.r},${palette.primary.g},${palette.primary.b})`;
+    }
+
+    function updateThemeFromTrack(track){
+      if(track?.cover)track.cover=cyNormalizeMediaUrl(track.cover,'image');
+      const seed=(track?.cover||'')+(track?.title||'')+(track?.artist||'');
+      if(!track?.cover){applyThemePalette(themeHashPalette(seed),null);return;}
+      applyThemePalette(themeHashPalette(seed),track.cover);
+      const sampler=new Image();
+      sampler.crossOrigin='anonymous';
+      sampler.onload=()=>{
+        try{applyThemePalette(extractCoverPalette(sampler),track.cover);}catch(e){}
+      };
+      sampler.src=track.cover;
+    }
+
+    let currentHotCommentTrack=null;
+    let hotCommentPlayed=false;
+
+    function updateHotCommentAction(label){
+      if(!dom.hotCommentAction)return;
+      dom.hotCommentAction.textContent=label || (hotCommentPlayed?'再次点击 · 换一条':'点击播放并匹配歌词');
+    }
+
+    function cyMatchText(value){
+      return String(value||'').toLowerCase().replace(/[\s·•・—–_\-()（）\[\]【】'"“”‘’.,，。!?！？:：/\\]+/g,'');
+    }
+
+    function cyNeteaseMatchScore(item,title,artist){
+      const it=cyMatchText(item.title), ia=cyMatchText(item.artist);
+      const tt=cyMatchText(title), ta=cyMatchText(artist);
+      let score=0;
+      if(it===tt)score+=120;
+      else if(it.includes(tt)||tt.includes(it))score+=78;
+      if(ta && ia===ta)score+=54;
+      else if(ta && (ia.includes(ta)||ta.includes(ia)))score+=34;
+      if(item.album && cyMatchText(item.album).includes(tt))score+=4;
+      return score;
+    }
+
+    async function resolveHotCommentWithNetease(track){
+      const query=((track.title||'')+' '+(track.artist||'')).trim();
+      if(!query)return track;
+      const searchUrl=new URL(CY_NETEASE_ENDPOINT);
+      searchUrl.searchParams.set('apikey',CY_NETEASE_API_KEY);
+      searchUrl.searchParams.set('msg',query);
+      searchUrl.searchParams.set('num','15');
+      searchUrl.searchParams.set('type','json');
+      const payload=await cyRequest(searchUrl);
+      const list=cyNormalizeNeteaseList(payload)
+        .map((item,index)=>Object.assign({},item,{index:item.index||index+1,score:cyNeteaseMatchScore(item,track.title,track.artist)}))
+        .sort((a,b)=>b.score-a.score || a.index-b.index);
+      const candidates=list.length?list.slice(0,4):[];
+      const preserved={audioUrl:track.audioUrl,cover:track.cover,title:track.title,artist:track.artist,album:track.album};
+      for(const candidate of candidates){
+        const probe=Object.assign({},track,{
+          keyword:query,neteaseIndex:candidate.index,displayIndex:candidate.index,
+          songid:candidate.id||track.songid,title:candidate.title||track.title,artist:candidate.artist||track.artist,
+          album:candidate.album||track.album,cover:candidate.cover||track.cover,audioUrl:candidate.audioUrl||track.audioUrl,
+          lrc:candidate.lrc||null,detailsLoaded:false
+        });
+        try{
+          await fetchNeteaseDetails(probe);
+          Object.assign(track,probe);
+          track.title=preserved.title||probe.title;
+          track.artist=preserved.artist||probe.artist;
+          track.audioUrl=probe.audioUrl||preserved.audioUrl;
+          track.cover=probe.cover||preserved.cover;
+          track.album=probe.album||preserved.album||'网易云热评';
+          if(track.lrc)break;
+        }catch(error){
+          console.warn('hot comment lyric candidate failed',candidate,error);
+        }
+      }
+      track.audioUrl=track.audioUrl||preserved.audioUrl;
+      track.cover=track.cover||preserved.cover;
+      track.detailsLoaded=Boolean(track.audioUrl);
+      return track;
+    }
+
+    async function loadHotComment(){
+      if(!dom.hotCommentText)return;
+      hotCommentPlayed=false;
+      currentHotCommentTrack=null;
+      updateHotCommentAction();
+      dom.hotCommentText.textContent='正在加载一条热评…';
+      if(dom.hotCommentLike)dom.hotCommentLike.textContent='';
+      try{
+        const payload=await cyRequest(CY_HOT_COMMENT_ENDPOINT);
+        const d=cyFlatten(payload);
+        const text=String(cyFirst(d,['comment','content','hotComment','text','热评','评论内容'],typeof payload==='string'?payload:'愿你在音乐里遇见自己。'));
+        const user=String(cyFirst(d,['nickname','nick','user','username','author','评论者','用户'],'网易云用户'));
+        const song=String(cyFirst(d,['song','name','title','歌曲','歌曲名称'],'网易云音乐'));
+        const singer=String(cyFirst(d,['singer','artist','artistname','歌手'],'未知歌手'));
+        const cover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','cover','img','image','封面'],''),'image');
+        const audioUrl=cyNormalizeMediaUrl(cyFirst(d,['url','music_url','play_url','播放链接','歌曲链接'],''),'audio');
+        const liked=Number(cyFirst(d,['liked','like','likes','likedCount','点赞'],0))||0;
+        const pageUrl=String(cyFirst(d,['link','pageUrl','songLink','歌曲页面'],''));
+        dom.hotCommentText.textContent=text;
+        dom.hotCommentUser.textContent='— '+user;
+        dom.hotCommentSong.textContent=singer && singer!=='未知歌手' ? song+' · '+singer : song;
+        if(dom.hotCommentLike)dom.hotCommentLike.textContent=liked?'♥ '+liked.toLocaleString() : '';
+        if(dom.hotCommentCover){
+          cyLoadImageWithFallback(dom.hotCommentCover,cover,
+            ()=>{dom.hotCommentCover.style.visibility='visible';},
+            ()=>{dom.hotCommentCover.style.visibility='hidden';});
+        }
+        currentHotCommentTrack={
+          uid:'hot-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),source:'netease',
+          title:song,artist:singer,album:'网易云热评',cover,audioUrl,lrc:null,lrcUrl:null,
+          pageUrl,detailsLoaded:false,quality:null,qualityLabel:null,keyword:(song+' '+singer).trim(),neteaseIndex:1
+        };
+      }catch(e){
+        console.warn('hot comment api failed',e);
+        dom.hotCommentText.textContent='音乐响起时，时间会暂时忘记向前走。';
+        dom.hotCommentUser.textContent='— Nie Music';
+        dom.hotCommentSong.textContent='离线文案';
+        if(dom.hotCommentCover)dom.hotCommentCover.style.visibility='hidden';
+      }
+    }
+
+    async function handleHotCommentCardClick(){
+      if(!hotCommentPlayed && currentHotCommentTrack){
+        hotCommentPlayed=true;
+        updateHotCommentAction('正在搜索并匹配歌词…');
+        try{await resolveHotCommentWithNetease(currentHotCommentTrack);}catch(error){console.warn('hot comment search match',error);}
+        updateHotCommentAction('再次点击 · 换一条');
+        await playTrack(currentHotCommentTrack,{type:'hot-comment',index:0});
+        return;
+      }
+      await loadHotComment();
     }
 
     // ===================== 歌词处理 =====================
@@ -3156,6 +1904,7 @@
       const tr=state.currentTrack;
       const active=isFavorite(tr);
       dom.favBtn.classList.toggle('btn-fav-active',active);
+      dom.favBtn.textContent=active?'♥':'♡';
     }
 
     async function playTrack(track,context){
@@ -3189,14 +1938,26 @@
           dom.trackQualityPill.style.display = 'none';
         }
 
+        track.cover=cyNormalizeMediaUrl(track.cover,'image');
+        track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
         if(track.cover){
-          dom.coverImg.src=track.cover;
-          dom.coverImg.style.display='block';
-          dom.coverPlaceholder.style.display='none';
+          cyLoadImageWithFallback(dom.coverImg,track.cover,
+            (resolvedUrl)=>{
+              track.cover=resolvedUrl;
+              dom.coverImg.style.display='block';
+              dom.coverPlaceholder.style.display='none';
+              updateThemeFromTrack(track);
+            },
+            ()=>{
+              dom.coverImg.style.display='none';
+              dom.coverPlaceholder.style.display='flex';
+            });
         }else{
+          dom.coverImg.removeAttribute('src');
           dom.coverImg.style.display='none';
           dom.coverPlaceholder.style.display='flex';
         }
+        updateThemeFromTrack(track);
       };
 
       dom.playerStatus.textContent=t('playerStatusLoading');
@@ -3676,6 +2437,14 @@
       dom.searchStatus=$('search-status');
       dom.searchCount=$('search-count');
       dom.searchMiniList=$('search-mini-list');
+      dom.hotCommentCard=$('hot-comment-card');
+      dom.hotCommentRefresh=$('hot-comment-refresh');
+      dom.hotCommentText=$('hot-comment-text');
+      dom.hotCommentUser=$('hot-comment-user');
+      dom.hotCommentSong=$('hot-comment-song');
+      dom.hotCommentCover=$('hot-comment-cover');
+      dom.hotCommentLike=$('hot-comment-like');
+      dom.hotCommentAction=$('hot-comment-action');
 
       dom.coverImg=$('cover-img');
       dom.coverPlaceholder=document.querySelector('.cover-placeholder');
@@ -3699,6 +2468,9 @@
       dom.lyricsInner=$('lyrics-inner');
       dom.lyricsContainer=document.querySelector('.lyrics-container');
       dom.lyricsFullBtn=$('lyrics-full-btn');
+      dom.lyricsSizeDown=$('lyrics-size-down');
+      dom.lyricsSizeUp=$('lyrics-size-up');
+      dom.lyricsSizeValue=$('lyrics-size-value');
 
       dom.playlistMain=document.querySelector('.playlist-main');
       dom.playlistList=$('playlist-list');
@@ -3711,6 +2483,7 @@
       dom.importPlaylistInput=$('import-playlist-input');
       dom.exportPlaylistBtn=$('export-playlist-btn');
       dom.addCurrentBtn=$('add-current-btn');
+      dom.libraryToggle=$('library-toggle');
 
       dom.playlistModal=$('playlist-modal');
       dom.playlistNameInput=$('playlist-name-input');
@@ -3783,6 +2556,28 @@
     }
 
 
+    const LYRICS_FONT_STORAGE_KEY='nie-music-lyrics-font-size';
+    const LIBRARY_COLLAPSED_STORAGE_KEY='nie-music-library-collapsed';
+
+    function applyLyricsFontSize(value,showMessage=false){
+      const size=Math.max(13,Math.min(28,Number(value)||17));
+      state.lyricsFontSize=size;
+      document.documentElement.style.setProperty('--lyrics-font-size',size+'px');
+      if(dom.lyricsSizeValue)dom.lyricsSizeValue.textContent=String(size);
+      try{localStorage.setItem(LYRICS_FONT_STORAGE_KEY,String(size));}catch(e){}
+      if(showMessage)showToast('歌词字号 '+size+'px');
+    }
+
+    function setLibraryCollapsed(collapsed,persist=true){
+      state.libraryCollapsed=Boolean(collapsed);
+      document.body.classList.toggle('library-collapsed',state.libraryCollapsed);
+      if(dom.libraryToggle){
+        dom.libraryToggle.setAttribute('aria-expanded',state.libraryCollapsed?'false':'true');
+        dom.libraryToggle.title=state.libraryCollapsed?'展开音乐库':'折叠音乐库';
+      }
+      if(persist){try{localStorage.setItem(LIBRARY_COLLAPSED_STORAGE_KEY,state.libraryCollapsed?'1':'0');}catch(e){}}
+    }
+
     function setPlaymodeUI(){
       document.querySelectorAll('.playmode-btn').forEach(btn=>{
         btn.classList.toggle('active',btn.dataset.mode===state.playMode);
@@ -3809,6 +2604,10 @@
       document.querySelectorAll('.source-chip input').forEach(cb=>{
         cb.addEventListener('change',()=>{state.enabledSources[cb.dataset.source]=cb.checked;});
       });
+
+      if(dom.hotCommentRefresh)dom.hotCommentRefresh.addEventListener('click',e=>{e.stopPropagation();loadHotComment();});
+      if(dom.hotCommentCard)dom.hotCommentCard.addEventListener('click',()=>handleHotCommentCardClick());
+      if(dom.hotCommentCard)dom.hotCommentCard.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();handleHotCommentCardClick();}});
 
       dom.limitSelect.addEventListener('change',()=>{
         state.perSourceLimit=parseInt(dom.limitSelect.value,10)||10;
@@ -3852,6 +2651,9 @@
       dom.favBtn.addEventListener('click',toggleFavoriteCurrent);
       dom.downloadBtn.addEventListener('click',handleDownloadCurrent);
       dom.lyricsFullBtn.addEventListener('click',()=>setLyricsFullscreen(!isLyricsFullscreen()));
+      if(dom.lyricsSizeDown)dom.lyricsSizeDown.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize-1,true));
+      if(dom.lyricsSizeUp)dom.lyricsSizeUp.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize+1,true));
+      if(dom.libraryToggle)dom.libraryToggle.addEventListener('click',()=>setLibraryCollapsed(!state.libraryCollapsed));
       ['pointerdown','touchstart','wheel'].forEach(eventName=>{
         dom.lyricsContainer.addEventListener(eventName,()=>pauseLyricsAutoFollow(),{passive:true});
       });
@@ -3991,6 +2793,10 @@
       setupDOM();
       try{const lg=localStorage.getItem('pikachu-music-lang'); if(lg)state.language=lg;}catch(e){}
       loadLibraryFromStorage();
+      try{const storedSize=Number(localStorage.getItem(LYRICS_FONT_STORAGE_KEY));if(storedSize)state.lyricsFontSize=storedSize;}catch(e){}
+      try{const storedCollapsed=localStorage.getItem(LIBRARY_COLLAPSED_STORAGE_KEY);if(storedCollapsed!==null)state.libraryCollapsed=storedCollapsed!=='0';}catch(e){}
+      applyLyricsFontSize(state.lyricsFontSize);
+      setLibraryCollapsed(state.libraryCollapsed,false);
       setupParticles();
       setupRipple();
       setupEvents();
@@ -4000,10 +2806,12 @@
       renderPlaylistList();
       setPlaymodeUI();
       dom.audio.volume=parseFloat(dom.volumeSlider.value);
+      applyThemePalette(themeHashPalette('Nie Music'),null);
+      loadHotComment();
     }
 
     document.addEventListener('DOMContentLoaded',init);
   })();
-  </script>
+</script>
 </body>
 </html>
