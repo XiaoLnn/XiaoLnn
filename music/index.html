@@ -1138,22 +1138,30 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 </style>
 
 
-<style id="requested-mobile-dock-v9-final">
-/* 手机端：进度条位于专辑图右侧；播放控件在进度条下方水平居中。 */
+<style id="requested-mobile-dock-v10-aligned">
+/* 手机端播放坞：左侧专辑图；右侧上方进度条、下方居中播放控件。 */
 @media (max-width:860px){
   .layout > .player-panel.mobile-active{
-    grid-template-columns:12px 72px minmax(0,1fr) 12px;
-    grid-template-rows:52px auto minmax(0,2fr) minmax(118px,1fr);
-    column-gap:10px;
+    grid-template-columns:12px 84px minmax(0,1fr) 12px;
+    grid-template-rows:52px auto minmax(0,2fr) 104px;
+    column-gap:12px;
   }
 
+  /* 专辑图固定在播放坞左侧，并与右侧两行内容整体居中对齐。 */
   .player-panel .cover-wrapper{
     grid-column:2;
     grid-row:4;
     align-self:center;
     justify-self:start;
+    width:84px;
+    height:84px;
+    max-width:none;
+    margin:0;
+    aspect-ratio:1;
+    border-radius:17px;
   }
 
+  /* 进度条位于专辑图右侧上方，稍微下移。 */
   .player-panel .progress-row{
     grid-column:3;
     grid-row:4;
@@ -1162,8 +1170,11 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
     width:100%;
     margin:12px 0 0;
     padding:0;
+    grid-template-columns:38px minmax(0,1fr) 38px;
+    gap:8px;
   }
 
+  /* 播放控件位于进度条下方并水平居中，稍微上移。 */
   .player-panel .control-row{
     grid-column:3;
     grid-row:4;
@@ -1171,22 +1182,44 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
     justify-self:stretch;
     width:100%;
     margin:0;
-    padding:0 0 9px;
+    padding:0 0 3px;
     justify-content:center;
-    transform:none;
+    transform:translateY(-2px);
   }
 
   .player-panel .control-main{
     width:100%;
-    justify-content:center;
+    max-width:290px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-evenly;
+    gap:0;
   }
 }
 
 @media (max-width:390px){
   .layout > .player-panel.mobile-active{
-    grid-template-columns:10px 64px minmax(0,1fr) 10px;
-    grid-template-rows:52px auto minmax(0,2fr) minmax(110px,1fr);
-    column-gap:8px;
+    grid-template-columns:10px 76px minmax(0,1fr) 10px;
+    grid-template-rows:52px auto minmax(0,2fr) 96px;
+    column-gap:9px;
+  }
+
+  .player-panel .cover-wrapper{
+    width:76px;
+    height:76px;
+    border-radius:15px;
+  }
+
+  .player-panel .progress-row{
+    margin-top:10px;
+    grid-template-columns:34px minmax(0,1fr) 34px;
+    gap:6px;
+  }
+
+  .player-panel .control-row{
+    padding-bottom:1px;
+    transform:translateY(-1px);
   }
 }
 </style>
