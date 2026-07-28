@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>Nie Music · Spatial Player</title>
+  <title>Nie Music · Apple Cover Fusion</title>
   <meta name="description" content="封面色彩驱动的空间音频感 · 聚合音乐播放器，支持网易云、QQ音乐、酷我和JOOX。">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -274,6 +274,87 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 @media(max-width:390px){.cover-wrapper{width:min(66vw,285px)}.track-title{font-size:22px}.lyrics-size-control span{display:none}.lyrics-size-control button{width:30px}}
 </style>
 
+
+<style id="apple-cover-fusion-v2">
+:root{
+  --album-deep:24 28 42;
+  --album-muted:82 94 132;
+  --album-contrast:#fff;
+}
+body::before{
+  background:
+    radial-gradient(ellipse at 50% -8%,rgb(var(--album-primary)/.72),transparent 36%),
+    radial-gradient(circle at 94% 22%,rgb(var(--album-secondary)/.44),transparent 30%),
+    radial-gradient(circle at 8% 88%,rgb(var(--album-highlight)/.28),transparent 32%),
+    linear-gradient(155deg,rgb(var(--album-deep)/.98),#08090c 56%,rgb(var(--album-deep)/.86));
+  filter:saturate(1.18) contrast(1.05);
+}
+.app::before{opacity:.42;filter:blur(96px) saturate(1.42) brightness(.52);transform:scale(1.14)}
+header{background:linear-gradient(180deg,rgb(var(--album-deep)/.76),rgba(18,19,23,.68));border-color:rgb(var(--album-highlight)/.12)}
+.layout{grid-template-columns:minmax(250px,276px) minmax(620px,1fr) minmax(310px,344px);gap:12px}
+body.library-collapsed .layout{grid-template-columns:minmax(250px,276px) minmax(660px,1fr) 56px}
+.panel{border-color:rgb(var(--album-highlight)/.10);box-shadow:0 24px 80px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.055)}
+.search-panel{background:linear-gradient(180deg,rgb(var(--album-deep)/.78),rgba(18,19,23,.76))}
+.search-row:focus-within{box-shadow:0 0 0 3px rgb(var(--album-highlight)/.16),inset 0 0 0 1px rgb(var(--album-highlight)/.48)}
+.source-chip:has(input:checked){background:rgb(var(--album-primary)/.19);box-shadow:inset 0 0 0 1px rgb(var(--album-highlight)/.12)}
+.hot-comment-cover{visibility:hidden}.hot-comment-card{background:linear-gradient(145deg,rgb(var(--album-primary)/.28),rgb(var(--album-secondary)/.13) 52%,rgba(15,16,20,.74));box-shadow:inset 0 1px rgb(var(--album-highlight)/.10)}
+.search-results-mini{padding:2px 1px 8px}
+.search-mini-item{grid-template-columns:38px minmax(0,1fr) auto;gap:10px;min-height:54px;padding:7px;border-radius:13px}
+.search-mini-item:hover{background:rgb(var(--album-primary)/.13)}
+.mini-cover,.track-cover{display:block;object-fit:cover;background:linear-gradient(145deg,rgb(var(--album-primary)/.34),rgb(var(--album-secondary)/.18));box-shadow:0 7px 20px rgba(0,0,0,.22)}
+.mini-cover{width:38px;height:38px;border-radius:9px}.mini-cover.is-empty,.track-cover.is-empty{opacity:.66}
+.mini-artist.is-loading{color:rgb(var(--album-highlight)/.70)}
+.player-panel{position:relative;isolation:isolate;background:linear-gradient(180deg,rgb(var(--album-primary)/.14),rgb(var(--album-deep)/.68) 34%,rgba(15,16,20,.78));overflow:hidden}
+.player-panel::before{content:"";position:absolute;inset:-18%;z-index:0;background-image:var(--cover-art);background-size:cover;background-position:center;filter:blur(72px) saturate(1.55) brightness(.54);opacity:.26;transform:scale(1.05);transition:background-image .65s ease,opacity .45s ease;pointer-events:none}
+.player-panel> *{position:relative;z-index:1}
+.player-panel-header{background:linear-gradient(180deg,rgb(var(--album-deep)/.28),transparent)}
+.player-top{grid-template-columns:minmax(250px,360px) minmax(290px,1fr);gap:clamp(34px,4vw,68px);padding:26px clamp(28px,3vw,50px) 18px}
+.cover-wrapper{max-width:360px;border-radius:22px;box-shadow:0 34px 76px rgba(0,0,0,.43),0 0 0 1px rgb(var(--album-highlight)/.12),0 28px 72px rgb(var(--album-primary)/.20)}
+.cover-wrapper img{transition:opacity .32s ease,transform .65s var(--ease)}.cover-wrapper:hover img{transform:scale(1.018)}
+.track-title{font-size:clamp(29px,2.8vw,48px)}
+.track-artist{color:rgba(255,255,255,.76)}
+.source-pill,.lossless-pill{background:rgb(var(--album-primary)/.18);box-shadow:inset 0 0 0 1px rgb(var(--album-highlight)/.08)}
+.control-main .btn-icon{background:rgb(var(--album-primary)/.18)}
+.control-main .play-btn{background:var(--album-contrast);color:rgb(var(--album-deep));box-shadow:0 12px 34px rgb(var(--album-primary)/.24)}
+.progress-bar{background:linear-gradient(90deg,rgb(var(--album-highlight)),#fff)}
+.volume-slider{accent-color:rgb(var(--album-highlight))}
+.lyrics-container{background:linear-gradient(180deg,rgb(var(--album-deep)/.16),rgba(0,0,0,.18));box-shadow:inset 0 1px rgb(var(--album-highlight)/.055)}
+.lyrics-line.active{color:#fff;text-shadow:0 0 24px rgb(var(--album-primary)/.48),0 0 46px rgb(var(--album-highlight)/.20)}
+.playlist-panel{background:linear-gradient(180deg,rgb(var(--album-deep)/.86),rgba(20,21,25,.88));border-color:rgb(var(--album-highlight)/.10)}
+.playlist-panel-header{background:linear-gradient(180deg,rgb(var(--album-primary)/.09),transparent)}
+.playlist-tabs{background:rgba(255,255,255,.065)}.playlist-tab.active{background:rgb(var(--album-primary)/.28);box-shadow:inset 0 0 0 1px rgb(var(--album-highlight)/.08)}
+.playlist-main{padding:0 10px 10px}.playlist-bar{background:linear-gradient(180deg,rgb(var(--album-deep)/.97),rgb(var(--album-deep)/.88));border-radius:0 0 14px 14px}
+.track-item{grid-template-columns:40px minmax(0,1fr) auto;gap:9px;padding:7px 6px;border-radius:12px}
+.track-item:hover{background:rgb(var(--album-primary)/.12)}.track-item.playing{background:rgb(var(--album-primary)/.22)}
+.track-cover{width:40px;height:40px;border-radius:10px}.track-meta-title{font-size:11px}.track-meta-sub{font-size:8px;margin-top:4px}
+.track-actions{opacity:.25;transition:.18s}.track-item:hover .track-actions,.track-item.playing .track-actions{opacity:1}.track-actions .btn-icon{width:27px;height:27px;font-size:10px;background:rgba(255,255,255,.08)}
+body.library-collapsed .playlist-panel{border-radius:20px;background:linear-gradient(180deg,rgb(var(--album-primary)/.18),rgb(var(--album-deep)/.80));box-shadow:inset 0 1px rgb(var(--album-highlight)/.08)}
+body.library-collapsed .playlist-panel-header{padding:8px 0}
+body.library-collapsed .library-toggle{width:38px;min-height:118px;border-radius:16px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgb(var(--album-highlight)/.07)}
+body.library-collapsed .library-toggle:hover{background:rgb(var(--album-primary)/.22)}
+body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-spacing:.2em}
+@media(min-width:1600px){.cover-wrapper{max-width:378px}.player-top{grid-template-columns:minmax(270px,378px) minmax(320px,1fr)}}
+@media(max-width:1380px) and (min-width:861px){
+  .layout{grid-template-columns:238px minmax(520px,1fr) minmax(300px,330px)}
+  body.library-collapsed .layout{grid-template-columns:238px minmax(590px,1fr) 54px}
+  .player-top{grid-template-columns:minmax(230px,320px) minmax(240px,1fr);gap:32px;padding:24px 27px 17px}.cover-wrapper{max-width:320px}
+}
+@media(max-width:1120px) and (min-width:861px){
+  .layout{grid-template-columns:232px minmax(500px,1fr) 54px}
+  body:not(.library-collapsed) .playlist-panel{width:330px;background:linear-gradient(180deg,rgb(var(--album-deep)/.96),rgba(18,19,23,.96))}
+  .player-top{grid-template-columns:minmax(215px,292px) minmax(235px,1fr)}.cover-wrapper{max-width:292px}
+}
+@media(max-width:860px){
+  body::before{background:radial-gradient(circle at 50% 0,rgb(var(--album-primary)/.64),transparent 38%),radial-gradient(circle at 92% 42%,rgb(var(--album-secondary)/.30),transparent 34%),linear-gradient(180deg,rgb(var(--album-deep)),#090a0d 68%)}
+  .player-panel::before{opacity:.32;filter:blur(64px) saturate(1.5) brightness(.5)}
+  .player-top{padding:10px 15px 7px;gap:13px}.cover-wrapper{width:min(61vw,286px);max-width:286px;border-radius:21px;box-shadow:0 25px 62px rgba(0,0,0,.44),0 22px 56px rgb(var(--album-primary)/.18)}
+  .track-title{font-size:23px}.track-artist{font-size:11px}.lyrics-container{background:rgba(0,0,0,.16)}
+  .search-mini-item{grid-template-columns:42px minmax(0,1fr) auto}.mini-cover{width:42px;height:42px;border-radius:10px}
+  .track-actions{opacity:1}.playlist-panel{background:linear-gradient(180deg,rgb(var(--album-deep)/.86),rgba(18,19,23,.90))}
+}
+@media(max-width:390px){.cover-wrapper{width:min(58vw,250px);max-width:250px}.track-title{font-size:21px}}
+</style>
+
 </head>
 
 <body>
@@ -282,7 +363,7 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
     <header class="ripple-target">
       <div class="logo-area">
         <div class="pikachu-box ripple-target"><span class="brand-mark">N</span><img src="pikachu.gif" alt="Nie Music" class="pikachu-img" onerror="this.style.display='none'"></div>
-        <div class="title-text"><h1 data-i18n="appTitle">Nie Music · Spatial Player</h1><p data-i18n="authorLabel">空间音频感 · 聚合音乐播放器</p></div>
+        <div class="title-text"><h1 data-i18n="appTitle">Nie Music · Cover Fusion Stable</h1><p data-i18n="authorLabel">空间音频感 · 聚合音乐播放器</p></div>
       </div>
       <div class="header-controls">
         <div class="shortcut-hint" data-i18n="shortcutHint">Space 播放/暂停 · ←/→ 跳转 · N/P 切歌 · F 收藏</div>
@@ -361,7 +442,7 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 (function(){
     const translations = {
       zh: {
-        appTitle:"Nie Music · Spatial Player",
+        appTitle:"Nie Music · Cover Fusion Stable",
         authorLabel:"封面色彩驱动的沉浸式播放器",
         shortcutHint:"Space 播放/暂停 · ←/→ 跳转 · N/P 切歌 · F 收藏",
         shortcutPanelTitle:"快捷键说明",
@@ -447,7 +528,7 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         modalCancel:"取消"
       },
       en: {
-        appTitle:"Nie Music · Spatial Player",
+        appTitle:"Nie Music · Cover Fusion Stable",
         authorLabel:"Artwork-driven immersive music player",
         shortcutHint:"Shortcuts: Space Play/Pause · ←/→ Seek · ↑/↓ Volume · N/P Track · F Fav · L Lyrics FX",
         shortcutPanelTitle:"Keyboard Shortcuts",
@@ -888,6 +969,66 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       return fallback;
     }
 
+    function cyUsableText(value){
+      const text=String(value??'').trim();
+      return Boolean(text && !/^(?:未知歌手|unknown(?: artist)?|null|undefined|\[object Object\]|暂无)$/i.test(text));
+    }
+
+    function cyNormalizeArtist(value){
+      if(value==null)return '';
+      if(Array.isArray(value)){
+        return [...new Set(value.map(cyNormalizeArtist).filter(cyUsableText))].join(' / ');
+      }
+      if(typeof value==='object'){
+        for(const key of ['name','artistName','artist_name','artistname','singerName','singer_name','singername','title','歌手','歌手名称']){
+          const found=cyNormalizeArtist(value[key]);
+          if(cyUsableText(found))return found;
+        }
+        for(const key of ['artists','artist','ar','singers','singer']){
+          const found=cyNormalizeArtist(value[key]);
+          if(cyUsableText(found))return found;
+        }
+        return '';
+      }
+      const text=String(value).replace(/^\s*歌手\s*[:：]\s*/,'').trim();
+      return cyUsableText(text)?text:'';
+    }
+
+    function cyPickArtist(obj, fallback=''){
+      if(obj && typeof obj==='object'){
+        for(const key of ['artist','artists','artistsname','artistName','artist_name','artistname','ar','singer','singers','singerName','singer_name','singername','author','歌手','歌手名称']){
+          const found=cyNormalizeArtist(obj[key]);
+          if(cyUsableText(found))return found;
+        }
+      }
+      return cyNormalizeArtist(fallback);
+    }
+
+    function cyPreferText(...values){
+      for(const value of values){
+        if(cyUsableText(value))return String(value).trim();
+      }
+      return '';
+    }
+
+    function cyFindDeep(payload, predicate, depth=0){
+      if(depth>5 || payload==null)return '';
+      if(typeof payload==='string')return predicate(payload)?payload:'';
+      if(Array.isArray(payload)){
+        for(const item of payload){const hit=cyFindDeep(item,predicate,depth+1);if(hit)return hit;}
+        return '';
+      }
+      if(typeof payload==='object'){
+        for(const [key,value] of Object.entries(payload)){
+          if(typeof value==='string' && predicate(value,key))return value;
+        }
+        for(const value of Object.values(payload)){
+          const hit=cyFindDeep(value,predicate,depth+1);if(hit)return hit;
+        }
+      }
+      return '';
+    }
+
     function cyArray(payload){
       if(Array.isArray(payload))return payload;
       if(!payload || typeof payload!=='object')return [];
@@ -912,60 +1053,163 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 
 
     function cyNormalizeMediaUrl(value, kind='media'){
-      if(value==null)return '';
-      const decoder=document.createElement('textarea');
-      decoder.innerHTML=String(value);
-      let url=decoder.value.trim()
-        .replace(/^[±\s"'`]+|[±\s"'`]+$/g,'')
-        .replace(/^(?:img|pic|cover|url)\s*=\s*/i,'')
-        .replace(/\\\//g,'/')
-        .replace(/&amp;/g,'&');
-      if(!url)return '';
-      const embedded=url.match(/https?:\/\/[^\s±"'<>]+/i);
-      if(embedded)url=embedded[0];
+      const visited=new Set();
+      const pick=(input,depth=0)=>{
+        if(input==null||depth>6)return '';
+        if(typeof URL!=='undefined'&&input instanceof URL)return input.href;
+        if(Array.isArray(input)){
+          for(const item of input){const found=pick(item,depth+1);if(found)return found;}
+          return '';
+        }
+        if(typeof input==='object'){
+          if(visited.has(input))return '';
+          visited.add(input);
+          const imageKeys=['pic','picUrl','picurl','pic_url','cover','coverUrl','coverurl','cover_url','image','img','album_pic','albumPic','singer_pic','singerPic','src','url','data'];
+          const audioKeys=['url','src','audioUrl','audio_url','music_url','play_url','playurl','song_play_url','file','data'];
+          const keys=kind==='image'?imageKeys:(kind==='audio'?audioKeys:[...audioKeys,...imageKeys]);
+          for(const key of keys){
+            if(Object.prototype.hasOwnProperty.call(input,key)){
+              const found=pick(input[key],depth+1);if(found)return found;
+            }
+          }
+          for(const nested of Object.values(input)){
+            const found=pick(nested,depth+1);if(found)return found;
+          }
+          return '';
+        }
+        let raw=String(input).trim();
+        if(!raw||/^\[object\s+Object\]$/i.test(raw))return '';
+        if((raw.startsWith('{')&&raw.endsWith('}'))||(raw.startsWith('[')&&raw.endsWith(']'))){
+          try{const found=pick(JSON.parse(raw),depth+1);if(found)return found;}catch(e){}
+        }
+        const decoder=document.createElement('textarea');
+        decoder.innerHTML=raw;
+        let url=decoder.value.trim()
+          .replace(/^[±\s"'`]+|[±\s"'`]+$/g,'')
+          .replace(/^(?:img|pic|cover|url)\s*=\s*/i,'')
+          .replace(/\\\//g,'/')
+          .replace(/&amp;/g,'&');
+        const embedded=url.match(/https?:\/\/[^\s±"'<>]+/i)||url.match(/\/\/[^\s±"'<>]+/i);
+        if(embedded)url=embedded[0];
+        return url.replace(/[±，。；;]+$/g,'').trim();
+      };
+      let url=pick(value);
+      if(!url||/^\[object\s+Object\]$/i.test(url))return '';
       if(/^\/\//.test(url))url='https:'+url;
-      if(/^http:\/\/[^/]*music\.126\.net\//i.test(url))url=url.replace(/^http:/i,'https:');
-      if(kind==='image' && /music\.126\.net\//i.test(url)){
+      if(!/^(?:https?:|data:image\/|blob:)/i.test(url))return '';
+      // HTTPS 页面不允许继续使用 HTTP 图片或音频；统一在进入 DOM 前升级。
+      if(/^http:\/\//i.test(url)&&(location.protocol==='https:'||kind==='image'||/(?:music\.126\.net|qqmusic\.qq\.com|gtimg\.cn|qq\.com)/i.test(url))){
+        url=url.replace(/^http:/i,'https:');
+      }
+      if(kind==='image'&&/music\.126\.net\//i.test(url)){
         url=url.replace(/[?&]param=\d+y\d+/ig,'').replace(/[?&]$/,'');
-        url+=(url.includes('?')?'&':'?')+'param=1000y1000';
+        url+=(url.includes('?')?'&':'?')+'param=800y800';
       }
       return url;
     }
 
-    function cyNeteaseImageCandidates(value){
-      const normalized=cyNormalizeMediaUrl(value,'image');
-      if(!normalized)return [];
-      if(!/music\.126\.net\//i.test(normalized))return [normalized];
-      const base=normalized.replace(/[?&]param=\d+y\d+/ig,'').replace(/[?&]$/,'');
-      const sized=[1000,800,500].map(size=>base+(base.includes('?')?'&':'?')+`param=${size}y${size}`);
-      const hosts=['p1','p2','p3','p4'];
-      const variants=[];
-      for(const url of sized){
-        variants.push(url);
-        if(/https:\/\/p[1-4]\.music\.126\.net/i.test(url)){
-          hosts.forEach(host=>variants.push(url.replace(/https:\/\/p[1-4]\.music\.126\.net/i,`https://${host}.music.126.net`)));
-        }
-      }
-      variants.push(base);
-      return [...new Set(variants)];
+    function cyQQCoverUrl(albumMid,size=500,host='y.qq.com'){
+      const mid=String(albumMid||'').trim();
+      if(!mid||/^\[object\s+Object\]$/i.test(mid))return '';
+      const safeSize=[800,500,300].includes(Number(size))?Number(size):500;
+      return `https://${host}/music/photo_new/T002R${safeSize}x${safeSize}M000${encodeURIComponent(mid)}.jpg?max_age=2592000`;
     }
 
-    function cyLoadImageWithFallback(img,value,onSuccess,onFailure){
+    function cyImageCandidates(value,track={}){
+      const raw=[];
+      const push=input=>{
+        const normalized=cyNormalizeMediaUrl(input,'image');
+        if(normalized)raw.push(normalized);
+      };
+      push(value);
+      (track.coverCandidates||[]).forEach(push);
+      if(track.source==='qq'){
+        const albumMid=String(track.albumMid||track.album_mid||'').trim();
+        if(albumMid){
+          [500,800,300].forEach(size=>{
+            push(cyQQCoverUrl(albumMid,size,'y.qq.com'));
+            push(cyQQCoverUrl(albumMid,size,'y.gtimg.cn'));
+          });
+        }
+        const singerMid=String(track.singerMid||track.singer_mid||'').trim();
+        if(singerMid){
+          [500,300].forEach(size=>{
+            push(`https://y.qq.com/music/photo_new/T001R${size}x${size}M000${encodeURIComponent(singerMid)}.jpg?max_age=2592000`);
+            push(`https://y.gtimg.cn/music/photo_new/T001R${size}x${size}M000${encodeURIComponent(singerMid)}.jpg?max_age=2592000`);
+          });
+        }
+      }
+      const variants=[];
+      for(const normalized of raw){
+        if(/music\.126\.net\//i.test(normalized)){
+          const base=normalized.replace(/[?&]param=\d+y\d+/ig,'').replace(/[?&]$/,'');
+          for(const size of [800,500,300]){
+            const sized=base+(base.includes('?')?'&':'?')+`param=${size}y${size}`;
+            variants.push(sized);
+            if(/https:\/\/p[1-4]\.music\.126\.net/i.test(sized)){
+              ['p1','p2','p3','p4'].forEach(host=>variants.push(sized.replace(/https:\/\/p[1-4]\.music\.126\.net/i,`https://${host}.music.126.net`)));
+            }
+          }
+          variants.push(base);
+          continue;
+        }
+        if(/(?:y\.qq\.com|y\.gtimg\.cn)\/music\/photo_new\//i.test(normalized)){
+          const httpsUrl=normalized.replace(/^http:/i,'https:');
+          [500,800,300].forEach(size=>variants.push(httpsUrl.replace(/R\d+x\d+M000/i,`R${size}x${size}M000`)));
+          variants.push(httpsUrl.replace('https://y.gtimg.cn/','https://y.qq.com/'));
+          variants.push(httpsUrl.replace('https://y.qq.com/','https://y.gtimg.cn/'));
+          continue;
+        }
+        variants.push(normalized);
+      }
+      return [...new Set(variants.filter(url=>url&&!/^.*\[object(?:%20|\s)Object\].*$/i.test(url)))];
+    }
+
+    function cyNeteaseImageCandidates(value){
+      return cyImageCandidates(value,{source:'netease'});
+    }
+
+    function cyLoadImageWithFallback(img,value,onSuccess,onFailure,track={}){
       if(!img)return;
-      const candidates=cyNeteaseImageCandidates(value);
+      const candidates=cyImageCandidates(value,track);
+      const requestToken=`cover-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      img.dataset.coverRequest=requestToken;
+      img.removeAttribute('crossorigin');
+      img.removeAttribute('referrerpolicy');
+      img.decoding='async';
+      img.loading=img.id==='cover-img'?'eager':'lazy';
       let index=0;
-      const fail=()=>{
-        index+=1;
-        if(index<candidates.length){img.src=candidates[index];return;}
-        img.onerror=null;img.onload=null;
+      const isCurrent=()=>img.dataset.coverRequest===requestToken;
+      const finishFailure=()=>{
+        if(!isCurrent())return;
+        img.onload=null;img.onerror=null;
+        img.removeAttribute('src');
+        delete img.dataset.resolvedCover;
         if(onFailure)onFailure();
       };
-      if(!candidates.length){if(onFailure)onFailure();return;}
-      img.decoding='async';
-      img.referrerPolicy='no-referrer';
-      img.onload=()=>{img.onerror=null;if(onSuccess)onSuccess(img.src);};
-      img.onerror=fail;
-      img.src=candidates[0];
+      const attempt=()=>{
+        if(!isCurrent())return;
+        if(index>=candidates.length){finishFailure();return;}
+        const candidate=candidates[index++];
+        const probe=new Image();
+        probe.decoding='async';
+        probe.onload=()=>{
+          if(!isCurrent())return;
+          img.onload=()=>{
+            if(!isCurrent())return;
+            img.onload=null;img.onerror=null;
+            img.dataset.resolvedCover=candidate;
+            if(onSuccess)onSuccess(candidate);
+          };
+          img.onerror=()=>{if(isCurrent())attempt();};
+          img.src=candidate;
+        };
+        probe.onerror=()=>{if(isCurrent())attempt();};
+        // 不设置 crossOrigin：图片显示不需要 CORS，避免 QQ/网易云被 Canvas/CORS 误伤。
+        probe.src=candidate;
+      };
+      if(!candidates.length){finishFailure();return;}
+      attempt();
     }
 
     function cyParseNeteaseDetailText(raw){
@@ -973,15 +1217,17 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       if(!text)return {};
       const field=(labels)=>{
         const names=labels.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
-        const m=text.match(new RegExp('(?:^|\\n)\\s*(?:'+names+')\\s*[:：]\\s*([^\\r\\n]+)','i'));
+        const m=text.match(new RegExp('(?:^|\\n)\\s*(?:'+names+')\\s*[:：=]\\s*([^\\r\\n±]+)','i'));
         return m?m[1].trim():'';
       };
-      const coverMatch=text.match(/(?:^|[\r\n±])\s*(?:img|pic|cover)\s*=\s*(https?:\/\/[^±\r\n\s]+)(?=±|\r?\n|\s|$)/i) || text.match(/https?:\/\/p[1-4]\.music\.126\.net\/[^±\r\n\s]+/i);
+      const coverMatch=text.match(/(?:^|[\r\n±])\s*(?:img|pic|cover)\s*=\s*(https?:\/\/[^±\r\n\s]+)(?=±|\r?\n|\s|$)/i)
+        || text.match(/封面(?:链接)?(?:为|[:：=])\s*(https?:\/\/p[1-4]\.music\.126\.net\/[^±\r\n\s]+)/i)
+        || text.match(/https?:\/\/p[1-4]\.music\.126\.net\/[^±\r\n\s]+/i);
       const lyricMatch=text.match(/(?:^|\n)\s*\[歌词\]\s*\r?\n([\s\S]*)$/i);
       return {
         cover:cyNormalizeMediaUrl(coverMatch?(coverMatch[1]||coverMatch[0]):'','image'),
         title:field(['歌名','歌曲','歌曲名称','name','title','song']),
-        artist:field(['歌手','歌手名称','artist','singer']),
+        artist:cyNormalizeArtist(field(['歌手','歌手名称','artist','singer'])),
         album:field(['专辑','专辑名称','album']),
         duration:field(['时长','duration','time']),
         audioUrl:cyNormalizeMediaUrl(field(['链接','播放链接','歌曲链接','播放地址','url']),'audio'),
@@ -993,8 +1239,10 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       if(!text)return [];
       return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map((line,idx)=>{
         const cleaned=line.replace(/^\s*(?:\[?\d+\]?|\d+[.、)])\s*/,'').trim();
-        const parts=cleaned.split(/\s*(?:-|—|–|\|)\s*/);
-        return {index:idx+1,title:parts[0]||cleaned,artist:parts.slice(1).join(' - '),raw:line};
+        const labeled=cleaned.match(/(?:歌名|歌曲)\s*[:：]\s*(.+?)(?:\s+(?:歌手|演唱)\s*[:：]\s*(.+))?$/i);
+        if(labeled)return {index:idx+1,title:labeled[1].trim(),artist:cyNormalizeArtist(labeled[2]||''),raw:line};
+        const parts=cleaned.split(/\s*(?:\s+-\s+|—|–|\||--|－)\s*/).filter(Boolean);
+        return {index:idx+1,title:parts[0]||cleaned,artist:cyNormalizeArtist(parts.slice(1).join(' / ')),raw:line};
       });
     }
 
@@ -1007,15 +1255,24 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         }
       }
       return list.map((item,idx)=>{
-        if(typeof item==='string')return cyParseTextList(item)[0]||{index:idx+1,title:item,artist:''};
+        if(typeof item==='string'){
+          const detail=cyParseNeteaseDetailText(item);
+          if(detail.title)return Object.assign({index:idx+1,id:''},detail,{raw:item});
+          return cyParseTextList(item)[0]||{index:idx+1,title:item,artist:''};
+        }
         const it=item||{};
+        const albumObj=it.album && typeof it.album==='object'?it.album:{};
+        const artist=cyPickArtist(it,'');
+        const title=String(cyFirst(it,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],'搜索结果 '+(idx+1))).trim();
+        const directCover=cyFirst(it,['pic','picurl','picUrl','pic_url','cover','coverurl','coverUrl','cover_url','image','img','封面','歌曲封面'],'');
+        const nestedCover=cyFirst(albumObj,['picUrl','picurl','pic','cover','image'],cyFirst(it,['al'],{})?.picUrl||'');
         return {
           index:Number(cyFirst(it,['n','num','index','序号'],idx+1))||idx+1,
           id:String(cyFirst(it,['id','songid','songId','歌曲ID'],'')),
-          title:String(cyFirst(it,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],'搜索结果 '+(idx+1))),
-          artist:String(cyFirst(it,['artist','artistsname','artistname','singer','singername','author','歌手','歌手名称'],'未知歌手')),
-          album:String(cyFirst(it,['album','albumname','专辑','专辑名称'],'')),
-          cover:cyNormalizeMediaUrl(cyFirst(it,['pic','picurl','pic_url','cover','coverurl','cover_url','image','img','封面','歌曲封面'],''),'image'),
+          title,
+          artist,
+          album:String(cyFirst(it,['albumname','albumName','专辑','专辑名称'],cyFirst(albumObj,['name','title'],''))),
+          cover:cyNormalizeMediaUrl(directCover||nestedCover,'image'),
           audioUrl:cyNormalizeMediaUrl(cyFirst(it,['url','music_url','play_url','playurl','src','link','音乐链接','播放地址','歌曲链接'],'') ,'audio'),
           lrc:cyFirst(it,['lrc','lyric','lyrics','歌词','歌词内容'],''),
           raw:it
@@ -1041,24 +1298,48 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 
     function cyApplyNeteaseDetail(track,payload){
       const d=cyFlatten(payload);
-      const rawText=d.rawText||((typeof payload==='string')?payload:'');
+      const embeddedText=cyFindDeep(payload,(value)=>/±\s*(?:img|pic|cover)\s*=|\[歌词\]|(?:^|\n)\s*歌名\s*[:：]/i.test(value));
+      const rawText=d.rawText||embeddedText||((typeof payload==='string')?payload:'');
       const parsed=cyParseNeteaseDetailText(rawText);
-      const cover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','pic_url','cover','coverurl','cover_url','image','img','封面','歌曲封面'],parsed.cover||track.cover||''),'image');
+      const deepCover=cyFindDeep(payload,(value,key)=>/music\.126\.net\/.*\.(?:jpe?g|png|webp)/i.test(value)||(/^(?:pic|cover|img|image)/i.test(key||'')&&/https?:\/\//i.test(value)));
+      const directCover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','picUrl','pic_url','cover','coverurl','coverUrl','cover_url','image','img','封面','歌曲封面'],''),'image');
+      const cover=directCover||parsed.cover||cyNormalizeMediaUrl(deepCover,'image')||cyNormalizeMediaUrl(track.cover,'image');
       const rawLink=String(cyFirst(d,['link'],''));
       const mediaLink=/(?:\.(?:mp3|flac|m4a|aac|ogg)(?:\?|$)|\/jdymusic\/|m\d+\.music\.126\.net)/i.test(rawLink)?rawLink:'';
-      const audioUrl=cyNormalizeMediaUrl(cyFirst(d,['url','music_url','play_url','playurl','src','音乐链接','播放地址','歌曲链接'],parsed.audioUrl||mediaLink||track.audioUrl||''),'audio');
+      const deepAudio=cyFindDeep(payload,(value,key)=>/(?:\.(?:mp3|flac|m4a|aac|ogg)(?:\?|$)|\/jdymusic\/|m\d+\.music\.126\.net)/i.test(value)&&!/^(?:pic|cover|img|image)/i.test(key||''));
+      const audioUrl=cyNormalizeMediaUrl(cyFirst(d,['url','music_url','play_url','playurl','src','音乐链接','播放地址','歌曲链接'],parsed.audioUrl||mediaLink||deepAudio||track.audioUrl||''),'audio');
+      const detailArtist=cyPickArtist(d,parsed.artist);
       Object.assign(track,{
         songid:String(cyFirst(d,['id','songid','songId','歌曲ID'],track.songid||'')),
-        title:String(cyFirst(d,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],parsed.title||track.title)),
-        artist:String(cyFirst(d,['artist','artistsname','artistname','singer','singername','author','歌手','歌手名称'],parsed.artist||track.artist)),
-        album:String(cyFirst(d,['album','albumname','专辑','专辑名称'],parsed.album||track.album||'')),
+        title:cyPreferText(cyFirst(d,['name','title','song','songname','song_name','歌曲','歌曲名称','歌名'],''),parsed.title,track.title),
+        artist:cyPreferText(detailArtist,parsed.artist,track.artist),
+        album:cyPreferText(cyFirst(d,['albumname','albumName','专辑','专辑名称'],typeof d.album==='string'?d.album:''),parsed.album,track.album),
         durationText:String(cyFirst(d,['duration','time','时长'],parsed.duration||track.durationText||'')),
-        cover,
-        audioUrl,
+        cover:cover||track.cover||'',
+        audioUrl:audioUrl||track.audioUrl||'',
         lrc:cyFirst(d,['lrc','lyric','lyrics','歌词','歌词内容'],parsed.lrc||track.lrc||''),
         lrcUrl:null,
-        detailsLoaded:Boolean(audioUrl)
+        detailsLoaded:Boolean(audioUrl||track.audioUrl)
       });
+    }
+
+    async function primeNeteaseMetadata(tracks,searchToken){
+      const queue=tracks.filter(track=>!cyUsableText(track.artist)||!track.cover).slice(0,12);
+      let cursor=0;
+      const worker=async()=>{
+        while(cursor<queue.length){
+          const track=queue[cursor++];
+          try{
+            await fetchNeteaseDetails(track);
+            if(searchToken!==state.searchKeyword)continue;
+            renderMiniSearchList();
+            renderPlaylistList();
+            if(state.currentTrack?.uid===track.uid)updateThemeFromTrack(track);
+          }catch(error){console.warn('netease metadata hydrate',track.title,error);}
+          await new Promise(resolve=>setTimeout(resolve,90));
+        }
+      };
+      await Promise.all([worker(),worker()]);
     }
 
     async function searchNetease(kw,page,num){
@@ -1069,6 +1350,7 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       url.searchParams.set('num',String(requestLimit));
       url.searchParams.set('type','json');
       let added=0;
+      const created=[];
       try{
         const payload=await cyRequest(url);
         const list=cyNormalizeNeteaseList(payload);
@@ -1078,99 +1360,57 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
           if(state.trackMap.has(uid))return;
           const track={
             uid,source:'netease',displayIndex:n,keyword:kw,neteaseIndex:n,
-            songid:it.id||'',title:it.title||'',artist:it.artist||'',album:it.album||'',
+            songid:it.id||'',title:it.title||'',artist:cyNormalizeArtist(it.artist),album:it.album||'',
             cover:it.cover||null,audioUrl:it.audioUrl||null,lrc:it.lrc||null,lrcUrl:null,
-            detailsLoaded:false,quality:null,qualityLabel:null
+            detailsLoaded:false,quality:null,qualityLabel:null,metadataLoading:!cyUsableText(it.artist)||!it.cover
           };
           state.trackMap.set(uid,track);
           state.searchResults.push(track);
+          created.push(track);
           added++;
         });
+        if(created.length)primeNeteaseMetadata(created,kw).catch(error=>console.warn('netease metadata queue',error));
       }catch(e){console.error('netease(cyapi) search',e);}
       return added;
     }
 
+    // QQ 搜索：
+
     // QQ 搜索：使用 tang 的 QQ 音乐搜索 API（只拿列表，不拿 url）
     async function searchQQ(kw, limit) {
-    // 新接口：返回直接是数组（或有些情况下可能包一层 data，下面做了兼容）
-    const url =
-        `https://tang.api.s01s.cn/music_open_api.php` +
-        `?msg=${encodeURIComponent(kw)}` +
-        `&type=json`;
-
-    let added = 0;
-
-    try {
-        const res = await fetch(url);
-        const json = await res.json();
-
-        // 兼容：既支持直接数组，也支持 { data: [...] } 这种包装
-        const data = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
-        if (!Array.isArray(data) || data.length === 0) return 0;
-
-        // 按 limit 截断
-        const list = data.slice(0, limit || data.length);
-
-        list.forEach((it, idx) => {
-        // 新接口里唯一标识是 song_mid
-        const mid = it.song_mid;
-        if (!mid) return;
-
-        const uid = `qq-${mid}`;
-        if (state.trackMap.has(uid)) return;
-
-        const indexInList = idx + 1; // 1-based：作为 qqIndex / displayIndex
-
-        const track = {
-            uid,
-            source: 'qq',
-
-            // 用于交错显示的排序
-            displayIndex: indexInList,
-
-            // 记录检索关键词（详情再请求要用同一个 msg）
-            keyword: kw,
-            qqSearchKey: kw,
-
-            // 这首在 QQ 搜索结果里的序号，用作 n（如果你后续详情接口仍需要 n）
-            qqIndex: indexInList,
-
-            // 元信息
-            qqId: mid,
-            songid: mid, // 保留旧字段名以防别处用到
-            songMid: mid, // 可选：更语义化的字段
-
-            title: it.song_title || '',
-            artist: it.singer_name || '',
-            album: '',
-
-            cover: null, // 新接口没给封面
-
-            // 搜索阶段没有 url 和 lrc
-            audioUrl: null,
-            lrc: null,
-            lrcUrl: null,
-
-            detailsLoaded: false,
-
-            quality: null,
-            qualityLabel: null,
-
-            // 新接口返回 pay（如“付费”）
-            qqQualityText: it.pay || null,
-            pay: it.pay || null
-        };
-
-        state.trackMap.set(uid, track);
-        state.searchResults.push(track);
-        added++;
+      const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(kw)}&type=json`;
+      let added=0;
+      try {
+        const res=await fetch(url);
+        const json=await res.json();
+        const data=Array.isArray(json)?json:(Array.isArray(json?.data)?json.data:(Array.isArray(json?.result)?json.result:[]));
+        if(!data.length)return 0;
+        data.slice(0,limit||data.length).forEach((it,idx)=>{
+          const mid=String(cyFirst(it,['song_mid','songmid','mid','songId','songid'],'')).trim();
+          if(!mid)return;
+          const uid=`qq-${mid}`;
+          if(state.trackMap.has(uid))return;
+          const albumMid=String(cyFirst(it,['album_mid','albummid','albumMid'],'')).trim();
+          const singerMid=String(cyFirst(it,['singer_mid','singermid','singerMid'],Array.isArray(it.singer)?cyFirst(it.singer[0]||{},['mid','singer_mid'],''):'' )).trim();
+          const directCover=cyFirst(it,['album_pic','albumPic','pic','picurl','cover','image','singer_pic'],'');
+          const cover=cyNormalizeMediaUrl(directCover||cyQQCoverUrl(albumMid,800),'image');
+          const track={
+            uid,source:'qq',displayIndex:idx+1,keyword:kw,qqSearchKey:kw,qqIndex:idx+1,
+            qqId:mid,songid:mid,songMid:mid,albumMid,singerMid,
+            title:cyPreferText(cyFirst(it,['song_title','song_name','name','title'],'') ,'QQ音乐'),
+            artist:cyPickArtist(it,''),
+            album:cyPreferText(cyFirst(it,['album_name','album_title','album','albumname'],'')),
+            cover:cover||null,coverCandidates:[directCover,cyQQCoverUrl(albumMid,800),cyQQCoverUrl(albumMid,500)].filter(Boolean),
+            audioUrl:null,lrc:null,lrcUrl:null,detailsLoaded:false,quality:null,qualityLabel:null,
+            qqQualityText:it.pay||null,pay:it.pay||null
+          };
+          state.trackMap.set(uid,track);state.searchResults.push(track);added++;
         });
-    } catch (e) {
-        console.error('qq search (tang)', e);
+      }catch(e){console.error('qq search (tang)',e);}
+      return added;
     }
 
-    return added;
-    }
+    // 酷我搜索
 
     // 酷我搜索
     async function searchKuwo(kw, limit){
@@ -1349,90 +1589,43 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 
     // QQ 详情：根据搜索时的关键词 + song_mid(mid) 拿 url + lrc（tang API）
     async function fetchQQDetails(track) {
-    // 优先用搜索时用过的关键词，保证和原始排序一致
-    const msg =
-        (track.qqSearchKey || track.keyword || '').trim() ||
-        ((track.title || '') + ' ' + (track.artist || '')).trim();
-
-    // 新接口用 mid：优先 qqId/songMid/songid
-    const mid =
-        (track.qqId || track.songMid || track.songid || '').toString().trim();
-
-    if (!mid) return;
-
-    const url =
-        `https://tang.api.s01s.cn/music_open_api.php` +
-        `?msg=${encodeURIComponent(msg)}` +
-        `&type=json` +
-        `&mid=${encodeURIComponent(mid)}`;
-
-    // 选择一个“最好”的播放链接（你也可以按需改优先级）
-    function pickBestPlayUrl(d) {
-        // lossless
-        if (d.song_play_url_sq) return { url: d.song_play_url_sq, tag: 'lossless', label: 'LOSSLESS', text: `SQ ${d.kbps_sq || ''}`.trim() };
-        if (d.song_play_url_pq) return { url: d.song_play_url_pq, tag: 'lossless', label: 'LOSSLESS', text: `PQ ${d.kbps_pq || ''}`.trim() };
-
-        // other variants
-        if (d.song_play_url_accom) return { url: d.song_play_url_accom, tag: 'hq', label: 'HQ', text: `ACCOM ${d.kbps_accom || ''}`.trim() };
-        if (d.song_play_url_hq) return { url: d.song_play_url_hq, tag: 'hq', label: 'HQ', text: `HQ ${d.kbps_hq || ''}`.trim() };
-
-        if (d.song_play_url_standard) return { url: d.song_play_url_standard, tag: 'standard', label: 'STD', text: `STD ${d.kbps_standard || ''}`.trim() };
-        if (d.song_play_url_fq) return { url: d.song_play_url_fq, tag: 'low', label: 'LOW', text: `FQ ${d.kbps_fq || ''}`.trim() };
-
-        // fallback
-        if (d.song_play_url) return { url: d.song_play_url, tag: null, label: null, text: null };
-
-        return { url: null, tag: null, label: null, text: null };
-    }
-
-    try {
-        const res = await fetch(url);
-        const d = await res.json();
-
-        // 基本校验：必须是对象且有 song_mid
-        if (!d || typeof d !== 'object' || !d.song_mid) {
-        throw new Error('qq detail error (invalid response)');
-        }
-
-        // 更新基础信息
-        track.title   = d.song_title || d.song_name || track.title;
-        track.artist  = d.singer_name || track.artist;
-        track.album   = d.album_name || d.album_title || track.album || '';
-        track.cover   = d.album_pic || d.singer_pic || track.cover;
-        track.pageUrl = d.song_h5_url || track.pageUrl;
-
-        // 播放链接（按优先级挑一个）
-        const best = pickBestPlayUrl(d);
-        track.audioUrl = best.url || track.audioUrl;
-
-        // 歌词
-        track.lrc = d.song_lyric || d.lyric || track.lrc;
-
-        // 文本信息（你原来用 qqQualityText，这里塞 vip + kbps/size 等）
-        track.qqQualityText =
-        best.text ||
-        (d.vip ? `VIP:${d.vip}` : null) ||
-        track.qqQualityText;
-
-        // quality / label：先用我们自己的选择，再用你已有 inferQualityFromUrl 兜底
-        if (best.tag && best.label) {
-        track.quality = best.tag;
-        track.qualityLabel = best.label;
-        }
-
-        if (track.audioUrl) {
-        const q = inferQualityFromUrl(track.audioUrl);
-        if (q && q.label) {
-            track.quality = q.tag;
-            track.qualityLabel = q.label;
-        }
-        }
-
-        track.detailsLoaded = true;
-    } catch (e) {
-        console.error('qq detail (tang)', e);
-        // 失败的话不要把 detailsLoaded 置 true，下次还有机会重试
-    }
+      const msg=(track.qqSearchKey||track.keyword||'').trim()||((track.title||'')+' '+(track.artist||'')).trim();
+      const mid=String(track.qqId||track.songMid||track.songid||'').trim();
+      if(!mid)return;
+      const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(msg)}&type=json&mid=${encodeURIComponent(mid)}`;
+      function pickBestPlayUrl(d){
+        if(d.song_play_url_sq)return {url:d.song_play_url_sq,tag:'lossless',label:'LOSSLESS',text:`SQ ${d.kbps_sq||''}`.trim()};
+        if(d.song_play_url_pq)return {url:d.song_play_url_pq,tag:'lossless',label:'LOSSLESS',text:`PQ ${d.kbps_pq||''}`.trim()};
+        if(d.song_play_url_accom)return {url:d.song_play_url_accom,tag:'hq',label:'HQ',text:`ACCOM ${d.kbps_accom||''}`.trim()};
+        if(d.song_play_url_hq)return {url:d.song_play_url_hq,tag:'hq',label:'HQ',text:`HQ ${d.kbps_hq||''}`.trim()};
+        if(d.song_play_url_standard)return {url:d.song_play_url_standard,tag:'standard',label:'STD',text:`STD ${d.kbps_standard||''}`.trim()};
+        if(d.song_play_url_fq)return {url:d.song_play_url_fq,tag:'low',label:'LOW',text:`FQ ${d.kbps_fq||''}`.trim()};
+        if(d.song_play_url)return {url:d.song_play_url,tag:null,label:null,text:null};
+        return {url:null,tag:null,label:null,text:null};
+      }
+      try{
+        const res=await fetch(url);
+        const payload=await res.json();
+        const d=Array.isArray(payload)?(payload.find(x=>String(x.song_mid||x.songmid||'')===mid)||payload[0]||{}):(payload?.data&&!Array.isArray(payload.data)?payload.data:payload);
+        if(!d||typeof d!=='object')throw new Error('qq detail error (invalid response)');
+        track.albumMid=String(cyFirst(d,['album_mid','albummid','albumMid'],track.albumMid||'')).trim();
+        track.singerMid=String(cyFirst(d,['singer_mid','singermid','singerMid'],track.singerMid||'')).trim();
+        track.title=cyPreferText(cyFirst(d,['song_title','song_name','name','title'],''),track.title);
+        track.artist=cyPreferText(cyPickArtist(d,''),track.artist);
+        track.album=cyPreferText(cyFirst(d,['album_name','album_title','album','albumname'],''),track.album);
+        const directCover=cyFirst(d,['album_pic','albumPic','pic','picurl','cover','image','singer_pic','singerPic'],'');
+        const generated=cyQQCoverUrl(track.albumMid,800);
+        track.coverCandidates=[directCover,generated,cyQQCoverUrl(track.albumMid,500),...(track.coverCandidates||[])].filter(Boolean);
+        track.cover=cyNormalizeMediaUrl(directCover||generated||track.cover,'image');
+        track.pageUrl=d.song_h5_url||track.pageUrl;
+        const best=pickBestPlayUrl(d);
+        track.audioUrl=cyNormalizeMediaUrl(best.url||track.audioUrl,'audio');
+        track.lrc=d.song_lyric||d.lyric||track.lrc;
+        track.qqQualityText=best.text||(d.vip?`VIP:${d.vip}`:null)||track.qqQualityText;
+        if(best.tag&&best.label){track.quality=best.tag;track.qualityLabel=best.label;}
+        if(track.audioUrl){const q=inferQualityFromUrl(track.audioUrl);if(q&&q.label){track.quality=q.tag;track.qualityLabel=q.label;}}
+        track.detailsLoaded=Boolean(track.audioUrl);
+      }catch(e){console.error('qq detail (tang)',e);}
     }
 
     async function fetchKuwoDetails(track){
@@ -1605,14 +1798,25 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       return {primary:p,secondary:q,highlight:h};
     }
 
+    function themeMix(color,target,amount){
+      return {r:Math.round(color.r+(target.r-color.r)*amount),g:Math.round(color.g+(target.g-color.g)*amount),b:Math.round(color.b+(target.b-color.b)*amount)};
+    }
+
     function applyThemePalette(palette,coverUrl){
       const root=document.documentElement;
-      root.style.setProperty('--album-primary',`${palette.primary.r} ${palette.primary.g} ${palette.primary.b}`);
-      root.style.setProperty('--album-secondary',`${palette.secondary.r} ${palette.secondary.g} ${palette.secondary.b}`);
-      root.style.setProperty('--album-highlight',`${palette.highlight.r} ${palette.highlight.g} ${palette.highlight.b}`);
+      const primary=palette.primary,secondary=palette.secondary,highlight=themeMix(palette.highlight,{r:255,g:255,b:255},.18);
+      const deep=themeMix(primary,{r:7,g:8,b:12},.76);
+      const muted=themeMix(primary,{r:125,g:132,b:154},.48);
+      root.style.setProperty('--album-primary',`${primary.r} ${primary.g} ${primary.b}`);
+      root.style.setProperty('--album-secondary',`${secondary.r} ${secondary.g} ${secondary.b}`);
+      root.style.setProperty('--album-highlight',`${highlight.r} ${highlight.g} ${highlight.b}`);
+      root.style.setProperty('--album-deep',`${deep.r} ${deep.g} ${deep.b}`);
+      root.style.setProperty('--album-muted',`${muted.r} ${muted.g} ${muted.b}`);
       root.style.setProperty('--cover-art',coverUrl?`url("${String(coverUrl).replace(/"/g,'%22')}")`:'none');
+      const luma=(primary.r*299+primary.g*587+primary.b*114)/1000;
+      root.style.setProperty('--album-contrast',luma>170?'#111216':'#ffffff');
       const meta=document.querySelector('meta[name="theme-color"]');
-      if(meta)meta.content=`rgb(${palette.primary.r},${palette.primary.g},${palette.primary.b})`;
+      if(meta)meta.content=`rgb(${deep.r},${deep.g},${deep.b})`;
     }
 
     function updateThemeFromTrack(track){
@@ -1620,12 +1824,17 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       const seed=(track?.cover||'')+(track?.title||'')+(track?.artist||'');
       if(!track?.cover){applyThemePalette(themeHashPalette(seed),null);return;}
       applyThemePalette(themeHashPalette(seed),track.cover);
+      let sampleUrl='';
+      try{
+        const parsed=new URL(track.cover,location.href);
+        if(parsed.protocol==='data:'||parsed.protocol==='blob:'||parsed.origin===location.origin)sampleUrl=parsed.href;
+      }catch(e){}
+      // 外站封面只用于展示与模糊背景，不再设置 crossOrigin 做 Canvas 取色。
+      // QQ/网易云 CDN 通常不返回 ACAO；强行取色会产生 CORS 报错并造成封面闪退错觉。
+      if(!sampleUrl)return;
       const sampler=new Image();
-      sampler.crossOrigin='anonymous';
-      sampler.onload=()=>{
-        try{applyThemePalette(extractCoverPalette(sampler),track.cover);}catch(e){}
-      };
-      sampler.src=track.cover;
+      sampler.onload=()=>{try{applyThemePalette(extractCoverPalette(sampler),track.cover);}catch(e){}};
+      sampler.src=sampleUrl;
     }
 
     let currentHotCommentTrack=null;
@@ -1653,7 +1862,8 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
     }
 
     async function resolveHotCommentWithNetease(track){
-      const query=((track.title||'')+' '+(track.artist||'')).trim();
+      const originalArtist=cyNormalizeArtist(track.artist);
+      const query=((track.title||'')+' '+originalArtist).trim();
       if(!query)return track;
       const searchUrl=new URL(CY_NETEASE_ENDPOINT);
       searchUrl.searchParams.set('apikey',CY_NETEASE_API_KEY);
@@ -1662,41 +1872,43 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
       searchUrl.searchParams.set('type','json');
       const payload=await cyRequest(searchUrl);
       const list=cyNormalizeNeteaseList(payload)
-        .map((item,index)=>Object.assign({},item,{index:item.index||index+1,score:cyNeteaseMatchScore(item,track.title,track.artist)}))
-        .sort((a,b)=>b.score-a.score || a.index-b.index);
-      const candidates=list.length?list.slice(0,4):[];
-      const preserved={audioUrl:track.audioUrl,cover:track.cover,title:track.title,artist:track.artist,album:track.album};
-      for(const candidate of candidates){
+        .map((item,index)=>Object.assign({},item,{index:item.index||index+1,score:cyNeteaseMatchScore(item,track.title,originalArtist)}))
+        .sort((a,b)=>b.score-a.score||a.index-b.index);
+      const preserved={audioUrl:track.audioUrl,cover:track.cover,title:track.title,artist:originalArtist,album:track.album};
+      let best=null;
+      for(const candidate of list.slice(0,6)){
         const probe=Object.assign({},track,{
           keyword:query,neteaseIndex:candidate.index,displayIndex:candidate.index,
-          songid:candidate.id||track.songid,title:candidate.title||track.title,artist:candidate.artist||track.artist,
-          album:candidate.album||track.album,cover:candidate.cover||track.cover,audioUrl:candidate.audioUrl||track.audioUrl,
+          songid:candidate.id||track.songid,title:candidate.title||track.title,artist:cyPreferText(candidate.artist,originalArtist),
+          album:candidate.album||track.album,cover:candidate.cover||track.cover,audioUrl:candidate.audioUrl||null,
           lrc:candidate.lrc||null,detailsLoaded:false
         });
         try{
           await fetchNeteaseDetails(probe);
-          Object.assign(track,probe);
-          track.title=preserved.title||probe.title;
-          track.artist=preserved.artist||probe.artist;
-          track.audioUrl=probe.audioUrl||preserved.audioUrl;
-          track.cover=probe.cover||preserved.cover;
-          track.album=probe.album||preserved.album||'网易云热评';
-          if(track.lrc)break;
-        }catch(error){
-          console.warn('hot comment lyric candidate failed',candidate,error);
-        }
+          const detailScore=cyNeteaseMatchScore(probe,preserved.title,preserved.artist)+(probe.lrc?30:0)+(probe.cover?12:0);
+          if(!best||detailScore>best.score)best={score:detailScore,probe};
+          if(detailScore>=190&&probe.lrc&&probe.cover)break;
+        }catch(error){console.warn('hot comment lyric candidate failed',candidate,error);}
+      }
+      if(best){
+        const probe=best.probe;
+        Object.assign(track,probe);
+        track.title=cyPreferText(preserved.title,probe.title);
+        track.artist=cyPreferText(probe.artist,preserved.artist);
+        track.audioUrl=probe.audioUrl||preserved.audioUrl;
+        track.cover=probe.cover||preserved.cover;
+        track.album=cyPreferText(probe.album,preserved.album,'网易云热评');
       }
       track.audioUrl=track.audioUrl||preserved.audioUrl;
       track.cover=track.cover||preserved.cover;
+      track.artist=cyPreferText(track.artist,preserved.artist);
       track.detailsLoaded=Boolean(track.audioUrl);
       return track;
     }
 
     async function loadHotComment(){
       if(!dom.hotCommentText)return;
-      hotCommentPlayed=false;
-      currentHotCommentTrack=null;
-      updateHotCommentAction();
+      hotCommentPlayed=false;currentHotCommentTrack=null;updateHotCommentAction();
       dom.hotCommentText.textContent='正在加载一条热评…';
       if(dom.hotCommentLike)dom.hotCommentLike.textContent='';
       try{
@@ -1705,30 +1917,27 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         const text=String(cyFirst(d,['comment','content','hotComment','text','热评','评论内容'],typeof payload==='string'?payload:'愿你在音乐里遇见自己。'));
         const user=String(cyFirst(d,['nickname','nick','user','username','author','评论者','用户'],'网易云用户'));
         const song=String(cyFirst(d,['song','name','title','歌曲','歌曲名称'],'网易云音乐'));
-        const singer=String(cyFirst(d,['singer','artist','artistname','歌手'],'未知歌手'));
-        const cover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','cover','img','image','封面'],''),'image');
+        const singer=cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer','artist','artistname','歌手'],''));
+        const cover=cyNormalizeMediaUrl(cyFirst(d,['pic','picurl','picUrl','cover','img','image','封面'],''),'image');
         const audioUrl=cyNormalizeMediaUrl(cyFirst(d,['url','music_url','play_url','播放链接','歌曲链接'],''),'audio');
         const liked=Number(cyFirst(d,['liked','like','likes','likedCount','点赞'],0))||0;
         const pageUrl=String(cyFirst(d,['link','pageUrl','songLink','歌曲页面'],''));
-        dom.hotCommentText.textContent=text;
-        dom.hotCommentUser.textContent='— '+user;
-        dom.hotCommentSong.textContent=singer && singer!=='未知歌手' ? song+' · '+singer : song;
-        if(dom.hotCommentLike)dom.hotCommentLike.textContent=liked?'♥ '+liked.toLocaleString() : '';
-        if(dom.hotCommentCover){
-          cyLoadImageWithFallback(dom.hotCommentCover,cover,
-            ()=>{dom.hotCommentCover.style.visibility='visible';},
-            ()=>{dom.hotCommentCover.style.visibility='hidden';});
-        }
         currentHotCommentTrack={
           uid:'hot-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),source:'netease',
           title:song,artist:singer,album:'网易云热评',cover,audioUrl,lrc:null,lrcUrl:null,
           pageUrl,detailsLoaded:false,quality:null,qualityLabel:null,keyword:(song+' '+singer).trim(),neteaseIndex:1
         };
+        dom.hotCommentText.textContent=text;dom.hotCommentUser.textContent='— '+user;
+        dom.hotCommentSong.textContent=singer?song+' · '+singer:song;
+        if(dom.hotCommentLike)dom.hotCommentLike.textContent=liked?'♥ '+liked.toLocaleString():'';
+        if(dom.hotCommentCover){
+          cyLoadImageWithFallback(dom.hotCommentCover,cover,
+            ()=>{dom.hotCommentCover.style.visibility='visible';},
+            ()=>{dom.hotCommentCover.style.visibility='hidden';},currentHotCommentTrack);
+        }
       }catch(e){
         console.warn('hot comment api failed',e);
-        dom.hotCommentText.textContent='音乐响起时，时间会暂时忘记向前走。';
-        dom.hotCommentUser.textContent='— Nie Music';
-        dom.hotCommentSong.textContent='离线文案';
+        dom.hotCommentText.textContent='音乐响起时，时间会暂时忘记向前走。';dom.hotCommentUser.textContent='— Nie Music';dom.hotCommentSong.textContent='离线文案';
         if(dom.hotCommentCover)dom.hotCommentCover.style.visibility='hidden';
       }
     }
@@ -1738,6 +1947,8 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         hotCommentPlayed=true;
         updateHotCommentAction('正在搜索并匹配歌词…');
         try{await resolveHotCommentWithNetease(currentHotCommentTrack);}catch(error){console.warn('hot comment search match',error);}
+        if(dom.hotCommentSong)dom.hotCommentSong.textContent=currentHotCommentTrack.artist?currentHotCommentTrack.title+' · '+currentHotCommentTrack.artist:currentHotCommentTrack.title;
+        if(dom.hotCommentCover&&currentHotCommentTrack.cover)cyLoadImageWithFallback(dom.hotCommentCover,currentHotCommentTrack.cover,()=>{dom.hotCommentCover.style.visibility='visible';},()=>{},currentHotCommentTrack);
         updateHotCommentAction('再次点击 · 换一条');
         await playTrack(currentHotCommentTrack,{type:'hot-comment',index:0});
         return;
@@ -1915,7 +2126,7 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
 
       const applyUI=()=>{
         dom.trackTitle.textContent=track.title||'';
-        dom.trackArtist.textContent=track.artist||'';
+        dom.trackArtist.textContent=cyNormalizeArtist(track.artist)||'正在匹配歌曲信息…';
 
         const sk=track.source;
         const key=sk==='netease'?'sourceNetease':
@@ -1950,9 +2161,11 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
               updateThemeFromTrack(track);
             },
             ()=>{
-              dom.coverImg.style.display='none';
-              dom.coverPlaceholder.style.display='flex';
-            });
+              if(dom.coverImg.dataset.coverRequest){
+                dom.coverImg.style.display='none';
+                dom.coverPlaceholder.style.display='flex';
+              }
+            },track);
         }else{
           dom.coverImg.removeAttribute('src');
           dom.coverImg.style.display='none';
@@ -1973,6 +2186,8 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         applyUI();
         state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
         renderLyrics();
+        if(!track.audioUrl){showToast(t('toastPlayError'));dom.playerStatus.textContent=t('playerStatusIdle');return;}
+        track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
         if(!track.audioUrl){showToast(t('toastPlayError'));dom.playerStatus.textContent=t('playerStatusIdle');return;}
         dom.audio.src=track.audioUrl;
         await dom.audio.play();
@@ -2136,40 +2351,27 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
     // ===================== 搜索结果 / 播放列表渲染 =====================
 
     function renderMiniSearchList(){
-      const wrap=dom.searchMiniList;
-      wrap.innerHTML='';
+      const wrap=dom.searchMiniList;wrap.innerHTML='';
       const out=getInterleavedSearchList();
       out.forEach((track,i)=>{
-        const item=document.createElement('div');
-        item.className='search-mini-item ripple-target';
-        const meta=document.createElement('div');
-        meta.className='mini-meta-main';
-        const tt=document.createElement('div');
-        tt.className='mini-title'; tt.textContent=track.title||'Unknown';
-        const ar=document.createElement('div');
-        ar.className='mini-artist'; ar.textContent=track.artist||'';
+        const item=document.createElement('div');item.className='search-mini-item ripple-target';
+        const cover=document.createElement('img');cover.className='mini-cover is-empty';cover.alt='';
+        cyLoadImageWithFallback(cover,track.cover,()=>cover.classList.remove('is-empty'),()=>cover.classList.add('is-empty'),track);
+        const meta=document.createElement('div');meta.className='mini-meta-main';
+        const tt=document.createElement('div');tt.className='mini-title';tt.textContent=track.title||'Unknown';
+        const ar=document.createElement('div');ar.className='mini-artist';
+        const artist=cyNormalizeArtist(track.artist);
+        ar.textContent=artist||(track.source==='netease'?'正在获取歌手…':'暂无歌手信息');
+        if(!artist&&track.source==='netease')ar.classList.add('is-loading');
         meta.appendChild(tt);meta.appendChild(ar);
-        const right=document.createElement('div');
-        right.className='mini-right';
-        const badge=document.createElement('div');
-        badge.className='mini-badge'; badge.textContent='#'+(i+1);
-        const src=document.createElement('div');
-        src.className='mini-source';
-        const dot=document.createElement('span');
-        dot.className='source-dot '+track.source;
-        const key=track.source==='netease'?'sourceNetease':
-                 track.source==='qq'?'sourceQQ':
-                 track.source==='joox'?'sourceJoox':'sourceKuwo';
-        const txt=document.createElement('span');
-        txt.textContent=t(key);
-        src.appendChild(dot);src.appendChild(txt);
-        right.appendChild(badge);right.appendChild(src);
-        item.appendChild(meta);item.appendChild(right);
-        item.addEventListener('click',()=>{
-          const visible=getInterleavedSearchList();
-          const idx=visible.findIndex(x=>x.uid===track.uid);
-          playFromList('results',idx);
-        });
+        const right=document.createElement('div');right.className='mini-right';
+        const badge=document.createElement('div');badge.className='mini-badge';badge.textContent='#'+(i+1);
+        const src=document.createElement('div');src.className='mini-source';
+        const dot=document.createElement('span');dot.className='source-dot '+track.source;
+        const key=track.source==='netease'?'sourceNetease':track.source==='qq'?'sourceQQ':track.source==='joox'?'sourceJoox':'sourceKuwo';
+        const txt=document.createElement('span');txt.textContent=t(key);src.appendChild(dot);src.appendChild(txt);right.appendChild(badge);right.appendChild(src);
+        item.appendChild(cover);item.appendChild(meta);item.appendChild(right);
+        item.addEventListener('click',()=>{const visible=getInterleavedSearchList();const idx=visible.findIndex(x=>x.uid===track.uid);playFromList('results',idx);});
         wrap.appendChild(item);
       });
     }
@@ -2218,15 +2420,16 @@ body.lyrics-fullscreen .player-panel{background:linear-gradient(180deg,rgb(var(-
         item.className='track-item ripple-target';
         if(state.currentTrack && state.currentTrack.uid===track.uid) item.classList.add('playing');
 
-        const index=document.createElement('div');
-        index.className='track-index'; index.textContent=idx+1;
+        const index=document.createElement('img');
+        index.className='track-cover is-empty';index.alt='';
+        cyLoadImageWithFallback(index,track.cover,()=>index.classList.remove('is-empty'),()=>index.classList.add('is-empty'),track);
 
         const meta=document.createElement('div');
         const title=document.createElement('div');
         title.className='track-meta-title'; title.textContent=track.title||'Unknown';
         const sub=document.createElement('div');
         sub.className='track-meta-sub';
-        const aSpan=document.createElement('span'); aSpan.textContent=track.artist||'';
+        const aSpan=document.createElement('span'); aSpan.textContent=cyNormalizeArtist(track.artist)||(track.source==='netease'?'正在获取歌手…':'');
         const sSpan=document.createElement('span');
         const dot=document.createElement('span'); dot.className='source-dot '+track.source;
         const key=track.source==='netease'?'sourceNetease':
