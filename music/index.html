@@ -1136,6 +1136,61 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
   .player-panel .play-btn .transport-icon{width:46px;height:46px}
 }
 </style>
+
+
+<style id="requested-mobile-dock-v9-final">
+/* 手机端：进度条位于专辑图右侧；播放控件在进度条下方水平居中。 */
+@media (max-width:860px){
+  .layout > .player-panel.mobile-active{
+    grid-template-columns:12px 72px minmax(0,1fr) 12px;
+    grid-template-rows:52px auto minmax(0,2fr) minmax(118px,1fr);
+    column-gap:10px;
+  }
+
+  .player-panel .cover-wrapper{
+    grid-column:2;
+    grid-row:4;
+    align-self:center;
+    justify-self:start;
+  }
+
+  .player-panel .progress-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:start;
+    justify-self:stretch;
+    width:100%;
+    margin:12px 0 0;
+    padding:0;
+  }
+
+  .player-panel .control-row{
+    grid-column:3;
+    grid-row:4;
+    align-self:end;
+    justify-self:stretch;
+    width:100%;
+    margin:0;
+    padding:0 0 9px;
+    justify-content:center;
+    transform:none;
+  }
+
+  .player-panel .control-main{
+    width:100%;
+    justify-content:center;
+  }
+}
+
+@media (max-width:390px){
+  .layout > .player-panel.mobile-active{
+    grid-template-columns:10px 64px minmax(0,1fr) 10px;
+    grid-template-rows:52px auto minmax(0,2fr) minmax(110px,1fr);
+    column-gap:8px;
+  }
+}
+</style>
+
 </head>
 
 <body>
