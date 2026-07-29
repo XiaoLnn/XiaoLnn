@@ -1814,6 +1814,40 @@ body.lyrics-fullscreen .player-panel .lyrics-line-assist{
 }
 </style>
 
+
+
+<style id="requested-desktop-cover-controls-alignment-v15-equal-gap">
+/*
+  桌面端封面/播放控件横向等距：
+  1. 封面和播放控件共用同一个水平位移变量；
+  2. 位移值由下方脚本按“封面上方间距 = 封面左侧间距”自动计算；
+  3. 保留原有播放控件与进度条的纵向对齐关系。
+*/
+@media (min-width:861px){
+  :root{--desktop-cover-axis-shift:0px}
+
+  .player-panel .cover-wrapper{
+    position:relative;
+    left:var(--desktop-cover-axis-shift);
+  }
+
+  .player-panel .control-row{
+    position:relative;
+    left:var(--desktop-cover-axis-shift);
+  }
+}
+
+@media (min-width:1121px){
+  .player-panel .control-row{transform:translateY(-59px)}
+  .player-panel .progress-row{transform:translateY(-13px)}
+}
+
+@media (min-width:861px) and (max-width:1120px){
+  .player-panel .control-row{transform:translateY(-46px)}
+  .player-panel .progress-row{transform:translateY(-10px)}
+}
+</style>
+
 </head>
 
 <body>
@@ -5106,6 +5140,68 @@ body.lyrics-fullscreen .player-panel .lyrics-line-assist{
   }
 
   scheduleViewportSync();
+})();
+</script>
+
+<script id="desktop-cover-gap-equalizer-v15">
+(function(){
+  const desktopMedia=window.matchMedia('(min-width: 861px)');
+  const root=document.documentElement;
+  let raf=0;
+
+  function applyEqualGap(){
+    raf=0;
+
+    if(!desktopMedia.matches){
+      root.style.removeProperty('--desktop-cover-axis-shift');
+      return;
+    }
+
+    const panel=document.querySelector('.player-panel');
+    const header=document.querySelector('.player-panel > .panel-header');
+    const cover=document.querySelector('.player-panel .cover-wrapper');
+    const controls=document.querySelector('.player-panel .control-row');
+    if(!panel || !header || !cover || !controls)return;
+
+    /* 先回到未平移位置，再读取基础间距，避免重复计算时累加位移。 */
+    root.style.setProperty('--desktop-cover-axis-shift','0px');
+
+    const panelRect=panel.getBoundingClientRect();
+    const headerRect=header.getBoundingClientRect();
+    const coverRect=cover.getBoundingClientRect();
+
+    const topGap=Math.max(0,coverRect.top-headerRect.bottom);
+    const leftGap=coverRect.left-panelRect.left;
+    const shift=topGap-leftGap;
+
+    /* 封面与播放控件使用同一位移，因此会一起水平左移并保持垂直中轴。 */
+    root.style.setProperty('--desktop-cover-axis-shift',shift.toFixed(2)+'px');
+  }
+
+  function scheduleEqualGap(){
+    if(raf)cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(applyEqualGap);
+  }
+
+  window.addEventListener('load',scheduleEqualGap,{once:true});
+  window.addEventListener('resize',scheduleEqualGap,{passive:true});
+  window.addEventListener('orientationchange',scheduleEqualGap,{passive:true});
+
+  if(desktopMedia.addEventListener){
+    desktopMedia.addEventListener('change',scheduleEqualGap);
+  }else if(desktopMedia.addListener){
+    desktopMedia.addListener(scheduleEqualGap);
+  }
+
+  if('ResizeObserver' in window){
+    const panel=document.querySelector('.player-panel');
+    if(panel)new ResizeObserver(scheduleEqualGap).observe(panel);
+  }
+
+  /* 播放列表展开/收起会改变播放器宽度，监听 class 变化后重新对齐。 */
+  new MutationObserver(scheduleEqualGap).observe(document.body,{attributes:true,attributeFilter:['class']});
+
+  scheduleEqualGap();
 })();
 </script>
 
