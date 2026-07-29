@@ -1224,6 +1224,596 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 }
 </style>
 
+
+
+<style id="lyrics-script-assist-interaction-v11">
+/* Apple Music 风格歌词工具：简/繁在上，“译”在下；桌面端和手机端统一显示。 */
+.lyrics-language-tools{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:28px 28px;
+  grid-template-rows:22px 22px;
+  gap:3px;
+  padding:2px;
+  border-radius:12px;
+  background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+}
+.lyrics-script-btn,.lyrics-assist-btn{
+  appearance:none;
+  border:0;
+  outline:0;
+  min-width:0;
+  padding:0;
+  border-radius:8px;
+  background:transparent;
+  color:rgba(245,245,247,.58);
+  font-size:10px;
+  font-weight:650;
+  line-height:1;
+  cursor:pointer;
+  transition:background .18s var(--ease),color .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease);
+}
+.lyrics-script-btn:hover,.lyrics-assist-btn:hover{color:#fff;background:rgba(255,255,255,.10)}
+.lyrics-script-btn:active,.lyrics-assist-btn:active{transform:scale(.94)}
+.lyrics-script-btn.active,.lyrics-assist-btn.active{
+  color:#111114;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.20);
+}
+.lyrics-assist-btn{grid-column:1 / -1;font-size:11px}
+
+/* 主歌词 + 辅助歌词（中文显示拼音，英文显示中文翻译）。 */
+.player-panel .lyrics-line{
+  position:relative;
+  user-select:none;
+  -webkit-user-select:none;
+  cursor:default;
+  border-radius:12px;
+  padding:3px 8px;
+  transition:background .18s var(--ease),transform .32s var(--ease),color .32s var(--ease),opacity .18s var(--ease);
+}
+.player-panel .lyrics-line.is-seekable{cursor:pointer}
+.player-panel .lyrics-line.is-seekable:hover{background:rgba(255,255,255,.055)}
+.player-panel .lyrics-line.is-seekable:active{transform:scale(.985)}
+.player-panel .lyrics-line:focus-visible{outline:2px solid rgb(var(--album-highlight)/.54);outline-offset:2px}
+.lyrics-line-main{display:block}
+.lyrics-line-assist{
+  display:block;
+  min-height:1em;
+  margin-top:4px;
+  color:rgba(245,245,247,.42);
+  font-size:.58em;
+  font-weight:500;
+  line-height:1.35;
+  letter-spacing:.005em;
+  text-shadow:none;
+}
+.lyrics-line-assist[hidden]{display:none!important}
+.lyrics-line.active .lyrics-line-assist{color:rgba(255,255,255,.70)}
+.lyrics-line-assist.is-loading{opacity:.56;font-style:italic}
+
+/* 手机端有搜索结果时隐藏热评卡；没有结果时照常展示。 */
+@media(max-width:860px){
+  .search-panel.has-search-results .hot-comment-card{display:none!important}
+  .search-panel.has-search-results .search-results-mini{flex:1 1 auto;min-height:0}
+  .player-panel-header .panel-header-actions{gap:5px;overflow:visible}
+  .player-panel-header .lyrics-size-control{flex:0 0 auto}
+  .lyrics-language-tools{grid-template-columns:26px 26px;grid-template-rows:21px 21px;gap:2px;border-radius:11px}
+  .lyrics-script-btn,.lyrics-assist-btn{font-size:9px}
+  .lyrics-assist-btn{font-size:10px}
+  .player-panel .lyrics-line{padding:3px 5px}
+}
+@media(max-width:430px){
+  .player-panel-header .chip{display:none!important}
+  .player-panel-header .panel-header-actions{justify-content:flex-end!important}
+  .lyrics-size-control span{display:none}
+}
+
+/* 修复完整歌词模式在自定义网格布局下出现空白：保持正常可滚动、可点击的页面交互。 */
+body.lyrics-fullscreen{overflow:hidden!important}
+body.lyrics-fullscreen .mobile-nav{opacity:0;pointer-events:none}
+body.lyrics-fullscreen .player-panel{
+  position:fixed!important;
+  inset:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))!important;
+  z-index:2600!important;
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
+  min-height:0!important;
+  width:auto!important;
+  height:auto!important;
+  overflow:hidden!important;
+  border-radius:26px!important;
+  background:linear-gradient(180deg,rgb(var(--album-primary)/.14),rgba(13,13,15,.96))!important;
+}
+body.lyrics-fullscreen .player-panel > .panel-header{
+  display:flex!important;
+  flex:0 0 58px!important;
+  width:100%!important;
+  min-height:58px!important;
+}
+body.lyrics-fullscreen .player-panel .player-top{display:none!important}
+body.lyrics-fullscreen .player-panel .lyrics-container{
+  position:relative!important;
+  display:block!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0 10px 10px!important;
+  padding:0 8px 24px!important;
+  overflow-y:auto!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  mask-image:linear-gradient(transparent 0,#000 7%,#000 94%,transparent 100%)!important;
+  -webkit-mask-image:linear-gradient(transparent 0,#000 7%,#000 94%,transparent 100%)!important;
+}
+body.lyrics-fullscreen .player-panel .lyrics-inner{
+  display:block!important;
+  max-width:860px!important;
+  min-height:100%!important;
+  margin:0 auto!important;
+  padding:16vh 10px 42vh!important;
+}
+body.lyrics-fullscreen .player-panel .lyrics-empty{
+  display:grid!important;
+  place-items:center!important;
+  min-height:100%!important;
+  padding:0!important;
+  opacity:1!important;
+  color:rgba(255,255,255,.72)!important;
+  font-size:14px!important;
+  line-height:1.6!important;
+}
+body.lyrics-fullscreen .player-panel .lyrics-inner:has(.lyrics-empty){
+  display:grid!important;
+  place-items:center!important;
+  height:100%!important;
+  min-height:100%!important;
+  padding:0 10px!important;
+}
+@media(max-width:860px){
+  body.lyrics-fullscreen .player-panel{border-radius:23px!important}
+  body.lyrics-fullscreen .player-panel > .panel-header{flex-basis:56px!important;min-height:56px!important}
+  body.lyrics-fullscreen .player-panel .lyrics-container{margin:0 5px 5px!important;padding-inline:3px!important}
+  body.lyrics-fullscreen .player-panel .lyrics-inner{padding:18vh 5px 46vh!important}
+  body.lyrics-fullscreen .player-panel .lyrics-line{font-size:calc(var(--lyrics-font-size) + 3px)!important;margin:12px 0!important}
+}
+</style>
+
+
+<style id="apple-music-lyrics-stability-v12">
+/* Apple Music 式歌词：苹果系统字体、原文/译文同轴对齐，简繁与翻译为独立控件。 */
+.player-panel,
+.player-panel .lyrics-container,
+.player-panel .cover-wrapper{
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+  transform:translateZ(0);
+}
+.player-panel .lyrics-inner,
+.player-panel .lyrics-line,
+.player-panel .lyrics-line-main,
+.player-panel .lyrics-line-assist{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;
+}
+.lyrics-language-tools{
+  display:flex!important;
+  align-items:center;
+  gap:6px!important;
+  padding:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.lyrics-script-switch{
+  display:flex;
+  align-items:center;
+  padding:2px;
+  border-radius:999px;
+  background:rgba(255,255,255,.075);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+}
+.lyrics-script-btn,
+.lyrics-assist-btn{
+  appearance:none;
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  min-width:34px;
+  padding:0;
+  border:0;
+  outline:0;
+  border-radius:999px;
+  background:transparent;
+  color:rgba(245,245,247,.62);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;
+  font-size:11px;
+  font-weight:650;
+  line-height:1;
+  cursor:pointer;
+  transition:background .16s var(--ease),color .16s var(--ease),transform .16s var(--ease),box-shadow .16s var(--ease);
+}
+.lyrics-script-btn:hover,
+.lyrics-assist-btn:hover{color:#fff;background:rgba(255,255,255,.10)}
+.lyrics-script-btn:active,
+.lyrics-assist-btn:active{transform:scale(.94)}
+.lyrics-script-btn.active{
+  color:#111114;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.20);
+}
+.lyrics-assist-btn{
+  grid-column:auto!important;
+  background:rgba(255,255,255,.075);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+}
+.lyrics-assist-btn.active{
+  color:#111114;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.20);
+}
+.player-panel .lyrics-line{
+  touch-action:pan-y;
+  text-align:inherit;
+  contain:layout style;
+}
+.player-panel .lyrics-line-main,
+.player-panel .lyrics-line-assist{
+  width:100%;
+  text-align:inherit;
+  overflow-wrap:anywhere;
+}
+.player-panel .lyrics-line-main{
+  font-weight:600;
+  letter-spacing:-.018em;
+}
+.player-panel .lyrics-line-assist{
+  min-height:0;
+  margin-top:5px;
+  color:rgba(245,245,247,.44);
+  font-size:.62em;
+  font-weight:500;
+  line-height:1.38;
+  letter-spacing:0;
+  text-shadow:none;
+}
+.player-panel .lyrics-line-assist[data-assist-kind="pinyin"]{
+  letter-spacing:.018em;
+  word-spacing:.10em;
+}
+.player-panel .lyrics-line.active .lyrics-line-assist{color:rgba(255,255,255,.72)}
+.player-panel .lyrics-line.is-scrub-preview{
+  color:#fff;
+  background:rgba(255,255,255,.075);
+  text-shadow:0 0 22px rgb(var(--album-highlight)/.28);
+}
+
+/* 封面可点击，弹出专辑图与歌曲信息。 */
+.cover-wrapper[role="button"]{cursor:pointer}
+.cover-wrapper[role="button"]:focus-visible{
+  outline:3px solid rgb(var(--album-highlight)/.55);
+  outline-offset:4px;
+}
+.cover-wrapper[role="button"]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  border-radius:inherit;
+  background:linear-gradient(180deg,transparent 58%,rgba(0,0,0,.22));
+  opacity:0;
+  transition:opacity .18s var(--ease);
+}
+.cover-wrapper[role="button"]:hover::before,
+.cover-wrapper[role="button"]:focus-visible::before{opacity:1}
+
+.album-info-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:4600;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:rgba(0,0,0,.48);
+  backdrop-filter:blur(28px) saturate(1.2);
+  -webkit-backdrop-filter:blur(28px) saturate(1.2);
+  transition:opacity .18s ease,visibility 0s linear .18s;
+}
+.album-info-backdrop.show{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition:opacity .18s ease,visibility 0s;
+}
+.album-info-card{
+  position:relative;
+  width:min(860px,94vw);
+  max-height:min(720px,90dvh);
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) minmax(260px,.92fr);
+  gap:clamp(24px,4vw,52px);
+  align-items:center;
+  padding:clamp(22px,3vw,36px);
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:30px;
+  background:linear-gradient(145deg,rgb(var(--album-deep)/.96),rgba(24,24,27,.96));
+  box-shadow:0 40px 120px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.07);
+  transform:translateY(10px) scale(.985);
+  transition:transform .22s var(--ease);
+}
+.album-info-backdrop.show .album-info-card{transform:translateY(0) scale(1)}
+.album-info-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  z-index:3;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:50%;
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  font-size:24px;
+  line-height:1;
+  cursor:pointer;
+}
+.album-info-art-wrap{
+  aspect-ratio:1;
+  width:100%;
+  overflow:hidden;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgb(var(--album-primary)/.34),rgb(var(--album-secondary)/.20));
+  box-shadow:0 30px 70px rgba(0,0,0,.44),0 0 50px rgb(var(--album-primary)/.16);
+}
+.album-info-cover{width:100%;height:100%;display:block;object-fit:cover}
+.album-info-copy{min-width:0}
+.album-info-eyebrow{
+  margin-bottom:10px;
+  color:rgba(255,255,255,.46);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.18em;
+}
+.album-info-copy h2{
+  margin:0;
+  font-size:clamp(30px,4vw,54px);
+  line-height:1.02;
+  letter-spacing:-.05em;
+}
+.album-info-copy>p{
+  margin:14px 0 24px;
+  color:rgba(255,255,255,.72);
+  font-size:16px;
+}
+.album-info-meta{display:grid;gap:10px;margin:0}
+.album-info-meta>div{
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+.album-info-meta dt{color:rgba(255,255,255,.42);font-size:11px}
+.album-info-meta dd{min-width:0;margin:0;color:#fff;font-size:12px;overflow-wrap:anywhere}
+
+/* 手机端面板始终保留在合成层，切换控件、字号、翻译和歌词滚动时不再经过 display:none 的空白帧。 */
+@media(max-width:860px){
+  .layout{
+    position:relative!important;
+    overflow:hidden!important;
+  }
+  .layout > .panel{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    display:flex!important;
+    opacity:0!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+    z-index:0!important;
+    transform:translate3d(0,0,0)!important;
+    transition:none!important;
+    will-change:opacity;
+  }
+  .layout > .player-panel{
+    display:grid!important;
+  }
+  .layout > .panel.mobile-active{
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+    z-index:2!important;
+  }
+  body.lyrics-fullscreen .layout > .player-panel,
+  body.lyrics-fullscreen .player-panel{
+    display:flex!important;
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+  }
+  .lyrics-script-btn,.lyrics-assist-btn{width:32px;height:32px;min-width:32px;font-size:10px}
+  .album-info-card{
+    width:min(520px,94vw);
+    grid-template-columns:1fr;
+    gap:20px;
+    padding:20px;
+    border-radius:24px;
+  }
+  .album-info-art-wrap{width:min(68vw,330px);justify-self:center;border-radius:21px}
+  .album-info-copy{text-align:center}
+  .album-info-copy h2{font-size:clamp(28px,8vw,42px)}
+  .album-info-copy>p{margin:10px 0 18px}
+  .album-info-meta{text-align:left}
+}
+@media(max-width:430px){
+  .lyrics-language-tools{gap:4px!important}
+  .lyrics-script-btn,.lyrics-assist-btn{width:30px;height:30px;min-width:30px;font-size:9px}
+}
+</style>
+
+
+<style id="apple-music-interaction-stability-v13">
+/*
+  交互稳定修正：
+  1. 禁止整块播放面板生成超大涟漪合成层；
+  2. 移除歌词区域容易触发 Chromium/WebView 闪白的 mask/强制 GPU 图层；
+  3. 歌词仍可滚动和点击跳转，但不显示滚动进度条或拖动背景条；
+  4. 歌曲本身的播放进度条保持不变。
+*/
+.player-panel,
+.player-panel .lyrics-container,
+.player-panel .cover-wrapper{
+  -webkit-backface-visibility:visible!important;
+  backface-visibility:visible!important;
+  transform:none!important;
+  will-change:auto!important;
+}
+.player-panel .lyrics-container{
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+  scrollbar-width:none!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.player-panel .lyrics-container::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
+body.lyrics-fullscreen .player-panel .lyrics-container{
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
+.player-panel .lyrics-line.is-scrub-preview{
+  background:transparent!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.layout > .panel{
+  will-change:auto!important;
+}
+.ripple-circle{
+  max-width:180px!important;
+  max-height:180px!important;
+  z-index:2!important;
+}
+/* 大面积背景只在歌曲真正切换时更新，不因普通点击触发过渡重绘。 */
+.player-panel::before,
+.app::before{
+  transition:background-image .01s linear,opacity .12s ease!important;
+}
+@media(max-width:860px){
+  .layout > .panel{
+    contain:layout paint;
+  }
+  .layout > .panel.mobile-active{
+    contain:layout paint;
+  }
+  .player-panel .lyrics-line{
+    contain:layout style!important;
+  }
+}
+</style>
+
+
+<style id="apple-music-lyrics-translation-alignment-v13">
+/* Apple Music 风格：主歌词与翻译使用同一套苹果系统字体和同一条对齐轴。 */
+:root{
+  --lyrics-primary-weight:600;
+  --lyrics-translation-size:.72em;
+  --lyrics-translation-weight:500;
+  --lyrics-translation-gap:.26em;
+}
+.player-panel .lyrics-line{
+  text-align:inherit!important;
+}
+.player-panel .lyrics-line-main,
+.player-panel .lyrics-line-assist{
+  display:block;
+  width:100%;
+  max-width:100%;
+  padding:0;
+  margin-left:0;
+  margin-right:0;
+  text-align:inherit!important;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif!important;
+  font-kerning:normal;
+  font-synthesis:none;
+  overflow-wrap:anywhere;
+}
+.player-panel .lyrics-line-main{
+  font-size:1em!important;
+  font-weight:var(--lyrics-primary-weight)!important;
+  line-height:1.42!important;
+  letter-spacing:-.018em!important;
+}
+.player-panel .lyrics-line-assist{
+  min-height:0!important;
+  margin-top:var(--lyrics-translation-gap)!important;
+  font-size:var(--lyrics-translation-size)!important;
+  font-weight:var(--lyrics-translation-weight)!important;
+  line-height:1.30!important;
+  letter-spacing:-.012em!important;
+  color:rgba(245,245,247,.46)!important;
+  text-shadow:none!important;
+  opacity:1;
+}
+.player-panel .lyrics-line-assist[data-assist-kind="translation"]{
+  font-family:inherit!important;
+  font-size:var(--lyrics-translation-size)!important;
+  font-weight:var(--lyrics-translation-weight)!important;
+  line-height:1.30!important;
+  letter-spacing:-.012em!important;
+  word-spacing:normal!important;
+  text-align:inherit!important;
+}
+.player-panel .lyrics-line-assist[data-assist-kind="pinyin"]{
+  font-family:inherit!important;
+  font-size:.68em!important;
+  line-height:1.30!important;
+  letter-spacing:.006em!important;
+  word-spacing:.08em!important;
+  text-align:inherit!important;
+}
+.player-panel .lyrics-line.active .lyrics-line-assist{
+  color:rgba(255,255,255,.74)!important;
+}
+.player-panel .lyrics-line-assist.is-loading{
+  font-style:normal!important;
+  opacity:.58!important;
+}
+body.lyrics-fullscreen .player-panel .lyrics-line-main,
+body.lyrics-fullscreen .player-panel .lyrics-line-assist{
+  text-align:inherit!important;
+}
+@media(max-width:860px){
+  :root{
+    --lyrics-translation-size:.74em;
+    --lyrics-translation-gap:.24em;
+  }
+  .player-panel .lyrics-line-main{line-height:1.40!important}
+  .player-panel .lyrics-line-assist{line-height:1.28!important}
+  .player-panel .lyrics-line-assist[data-assist-kind="pinyin"]{font-size:.70em!important}
+}
+</style>
+
 </head>
 
 <body>
@@ -1242,7 +1832,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
     </header>
 
     <main class="layout">
-      <section class="panel search-panel ripple-target">
+      <section class="panel search-panel">
         <div class="panel-header"><div class="panel-title"><span class="icon">⌕</span><span data-i18n="searchTitle">发现音乐</span></div><span class="chip" data-i18n="searchSubtitle">多平台聚合搜索</span></div>
         <div class="search-panel-content">
           <div class="search-row ripple-target"><span class="search-prefix">⌕</span><input id="search-input" class="input" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="搜索歌曲、歌手或专辑…"><button id="search-btn" class="btn ripple-target" data-i18n="searchButton">搜索</button></div>
@@ -1268,10 +1858,10 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         </div>
       </section>
 
-      <section class="panel player-panel ripple-target mobile-active">
-        <div class="panel-header player-panel-header"><div class="panel-title"><span class="icon">◉</span><span data-i18n="playerTitle">正在播放</span></div><div class="panel-header-actions"><span class="chip" data-i18n="playerSubtitle">封面色彩驱动 · 同步歌词</span><div class="lyrics-size-control" aria-label="歌词字体大小"><button id="lyrics-size-down" type="button" title="缩小歌词">A−</button><span id="lyrics-size-value">17</span><button id="lyrics-size-up" type="button" title="放大歌词">A+</button></div><button id="lyrics-full-btn" class="lyrics-full-btn ripple-target" type="button" aria-label="完整歌词" title="完整歌词">⛶</button></div></div>
+      <section class="panel player-panel mobile-active">
+        <div class="panel-header player-panel-header"><div class="panel-title"><span class="icon">◉</span><span data-i18n="playerTitle">正在播放</span></div><div class="panel-header-actions"><span class="chip" data-i18n="playerSubtitle">封面色彩驱动 · 同步歌词</span><div class="lyrics-size-control" aria-label="歌词字体大小"><button id="lyrics-size-down" type="button" title="缩小歌词">A−</button><span id="lyrics-size-value">17</span><button id="lyrics-size-up" type="button" title="放大歌词">A+</button></div><div class="lyrics-language-tools" aria-label="歌词文字工具"><div class="lyrics-script-switch" role="group" aria-label="简繁体转换"><button class="lyrics-script-btn active" type="button" data-lyric-script="simplified" aria-pressed="true" title="简体歌词">简</button><button class="lyrics-script-btn" type="button" data-lyric-script="traditional" aria-pressed="false" title="繁体歌词">繁</button></div><button id="lyrics-assist-btn" class="lyrics-assist-btn lyrics-translation-toggle" type="button" aria-pressed="false" title="歌词翻译或无调拼音">译</button></div><button id="lyrics-full-btn" class="lyrics-full-btn ripple-target" type="button" aria-label="完整歌词" title="完整歌词">⛶</button></div></div>
         <div class="player-top">
-          <div class="cover-wrapper"><img id="cover-img" src="" alt="歌曲封面"><div class="cover-placeholder"><div class="cover-disc"></div><div data-i18n="coverHint">选择一首歌，让色彩开始流动。</div></div></div>
+          <div id="cover-detail-trigger" class="cover-wrapper" role="button" tabindex="0" aria-label="查看专辑图和歌曲信息" title="查看专辑图和歌曲信息"><img id="cover-img" src="" alt="歌曲封面"><div class="cover-placeholder"><div class="cover-disc"></div><div data-i18n="coverHint">选择一首歌，让色彩开始流动。</div></div></div>
           <div class="player-main">
             <div class="track-title-row">
               <div class="track-text"><div id="track-title" class="track-title">暂未选择歌曲</div><div id="track-artist" class="track-artist">从左侧搜索，或点开一条热评</div><div class="track-tags"><span id="track-source-pill" class="source-pill" style="display:none"></span><span id="track-quality-pill" class="lossless-pill" style="display:none">LOSSLESS</span></div></div>
@@ -1287,7 +1877,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         <audio id="audio" preload="metadata"></audio>
       </section>
 
-      <section class="panel playlist-panel ripple-target">
+      <section class="panel playlist-panel">
         <div class="panel-header playlist-panel-header"><div class="playlist-header-content"><div class="panel-title"><span class="icon">≡</span><span data-i18n="playlistTitle">音乐库</span></div><div class="playlist-tabs ripple-target"><div class="playlist-tab active" data-tab="results" data-i18n="tabResults">结果</div><div class="playlist-tab" data-tab="favorites" data-i18n="tabFavorites">收藏</div><div class="playlist-tab" data-tab="playlists" data-i18n="tabCustomLists">歌单</div></div></div><button id="library-toggle" class="library-toggle ripple-target" type="button" aria-expanded="false" title="展开音乐库"><span class="library-toggle-icon">‹</span><span class="library-toggle-text">音乐库</span></button></div>
         <div class="playlist-main">
           <div class="playlist-bar">
@@ -1306,7 +1896,25 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
   <div id="playlist-modal" class="modal-backdrop"><div class="modal ripple-target"><div class="modal-header"><div class="modal-title-wrap"><div class="modal-title-icon">♫</div><span data-i18n="modalNewPlaylistTitle">新建歌单</span></div><button id="playlist-close" class="modal-close-btn">×</button></div><p class="modal-desc" data-i18n="modalNewPlaylistDesc">给这组音乐一个名字。</p><input id="playlist-name-input" type="text" placeholder="例如：夜间公路"><div class="modal-actions"><button id="playlist-cancel-btn" class="btn btn-ghost ripple-target" data-i18n="modalCancel">取消</button><button id="playlist-confirm-btn" class="btn btn-secondary ripple-target" data-i18n="modalConfirm">确定</button></div></div></div>
 
   <div id="shortcut-modal" class="modal-backdrop"><div class="modal ripple-target"><div class="modal-header"><div class="modal-title-wrap"><div class="modal-title-icon">⌨</div><span data-i18n="shortcutPanelTitle">快捷键</span></div><button id="shortcut-close" class="modal-close-btn">×</button></div><p class="modal-desc" data-i18n="shortcutPanelDesc">无需离开键盘即可控制播放。</p><div class="shortcut-grid"><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutPlayPause">播放 / 暂停</div><div class="shortcut-key"><kbd>Space</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutSeek">快退 / 快进</div><div class="shortcut-key"><kbd>←</kbd><kbd>→</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutVolume">音量</div><div class="shortcut-key"><kbd>↑</kbd><kbd>↓</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutPrevNext">上一首 / 下一首</div><div class="shortcut-key"><kbd>P</kbd><kbd>N</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutFav">收藏</div><div class="shortcut-key"><kbd>F</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutLyricsFX">歌词效果</div><div class="shortcut-key"><kbd>L</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutMute">静音</div><div class="shortcut-key"><kbd>M</kbd></div></div><div class="shortcut-card"><div class="shortcut-label" data-i18n="shortcutFocusSearch">搜索</div><div class="shortcut-key"><kbd>/</kbd></div></div></div><p class="modal-desc" style="margin-top:10px" data-i18n="shortcutCloseModal">按 Esc 关闭。</p></div></div>
+
+  <div id="album-info-modal" class="album-info-backdrop" aria-hidden="true">
+    <section class="album-info-card" role="dialog" aria-modal="true" aria-labelledby="album-info-title">
+      <button id="album-info-close" class="album-info-close" type="button" aria-label="关闭" title="关闭">×</button>
+      <div class="album-info-art-wrap"><img id="album-info-cover" class="album-info-cover" alt="专辑封面"></div>
+      <div class="album-info-copy">
+        <div class="album-info-eyebrow">ALBUM</div>
+        <h2 id="album-info-title">暂未选择歌曲</h2>
+        <p id="album-info-artist">—</p>
+        <dl class="album-info-meta">
+          <div><dt>专辑</dt><dd id="album-info-album">—</dd></div>
+          <div><dt>来源</dt><dd id="album-info-source">—</dd></div>
+          <div><dt>音质</dt><dd id="album-info-quality">—</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
   <div id="toast"></div>
+  <script src="https://unpkg.com/pinyin-pro@3.18.2/dist/index.js"></script>
 <script>
 (function(){
     const translations = {
@@ -1348,6 +1956,15 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         lyricsEmpty:"歌词会在这里与音乐同步呼吸。",
         lyricsFullscreen:"完整歌词",
         lyricsExitFullscreen:"退出完整歌词",
+        lyricsScriptSimplified:"简体歌词",
+        lyricsScriptTraditional:"繁体歌词",
+        lyricsAssist:"显示翻译 / 无调拼音",
+        lyricsAssistOff:"关闭翻译 / 无调拼音",
+        lyricSeekHint:"点击跳转到这一句",
+        toastLyricSeek:"已跳转到所选歌词",
+        translationLoading:"翻译中…",
+        translationUnavailable:"翻译暂不可用",
+        pinyinUnavailable:"拼音组件暂不可用",
         playlistTitle:"音乐库",
         tabResults:"搜索结果",
         tabFavorites:"我的收藏",
@@ -1434,6 +2051,15 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         lyricsEmpty:"No lyrics yet. Try a song with LRC lyrics.",
         lyricsFullscreen:"Full lyrics",
         lyricsExitFullscreen:"Exit full lyrics",
+        lyricsScriptSimplified:"Simplified lyrics",
+        lyricsScriptTraditional:"Traditional lyrics",
+        lyricsAssist:"Show translation / toneless pinyin",
+        lyricsAssistOff:"Hide translation / toneless pinyin",
+        lyricSeekHint:"Click to seek to this line",
+        toastLyricSeek:"Jumped to the selected lyric",
+        translationLoading:"Translating…",
+        translationUnavailable:"Translation unavailable",
+        pinyinUnavailable:"Pinyin unavailable",
         playlistTitle:"Library",
         tabResults:"Default",
         tabFavorites:"Favorites",
@@ -1506,11 +2132,23 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       noMoreResults:false,
       lyricsAlt:false,
       lyricsFontSize:17,
+      lyricScriptMode:'simplified',
+      lyricAssistEnabled:false,
+      lyricPresentationToken:0,
+      renderedLyricTrackUid:null,
       libraryCollapsed:true,
       muted:false
     };
 
     const LIBRARY_STORAGE_KEY = 'pikachu-music-library-v1';
+    const LYRIC_SCRIPT_STORAGE_KEY = 'nie-music-lyric-script';
+    const LYRIC_ASSIST_STORAGE_KEY = 'nie-music-lyric-assist';
+    const LYRIC_TRANSLATION_CACHE_KEY = 'nie-music-lyric-translation-cache-v1';
+
+    let openCCConverters=null;
+    let openCCLoadPromise=null;
+    let translationQueue=Promise.resolve();
+    const lyricTranslationCache=new Map();
 
     const dom = {};
     let audioLevel = 0;
@@ -1567,6 +2205,8 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       if(dom.playlistSelect) renderPlaylistOptions();
       updatePlaylistInfoLabel();
       updateLyricsFullscreenUI();
+      updateLyricsToolsUI();
+      if(dom.lyricsInner)refreshLyricPresentation();
     }
 
     // ========== 旧的质量映射函数，暂时保留（不再使用 API 的 quality 字段） ==========
@@ -2390,6 +3030,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         state.searchResults=[];
         state.trackMap.clear();
         state.noMoreResults=false;
+        syncMobileHotCommentVisibility();
       }
 
       const kw=state.searchKeyword;
@@ -2415,6 +3056,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.searchCount.textContent=state.searchResults.length.toString();
       renderMiniSearchList();
       renderPlaylistList();
+      syncMobileHotCommentVisibility();
       if(!state.currentTrack && state.searchResults.length){
         playFromList('results',0);
       }
@@ -2825,6 +3467,217 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       await loadHotComment();
     }
 
+
+    // ===================== 手机搜索卡片 / 歌词文字工具 =====================
+
+    function syncMobileHotCommentVisibility(){
+      const panel=document.querySelector('.search-panel');
+      if(!panel)return;
+      const hasResults=Boolean(state.searchKeyword.trim() && state.searchResults.length);
+      panel.classList.toggle('has-search-results',hasResults);
+    }
+
+    function containsChinese(text){
+      return /[\u3400-\u9fff\uf900-\ufaff]/.test(String(text||''));
+    }
+
+    function looksEnglish(text){
+      const value=String(text||'').replace(/\s+/g,' ').trim();
+      if(!value || containsChinese(value))return false;
+      const latin=(value.match(/[A-Za-z]/g)||[]).length;
+      return latin>=Math.max(2,Math.floor(value.length*.25));
+    }
+
+    const fallbackS2T={
+      '爱':'愛','这':'這','里':'裡','后':'後','发':'發','会':'會','为':'為','无':'無','说':'說','过':'過','还':'還','来':'來','时':'時','间':'間','边':'邊','远':'遠','见':'見','云':'雲','风':'風','听':'聽','乐':'樂','台':'臺','画':'畫','梦':'夢','叶':'葉','体':'體','国':'國','万':'萬','与':'與','亲':'親','开':'開','关':'關','长':'長','满':'滿','从':'從','进':'進','动':'動','静':'靜','声':'聲','归':'歸','尽':'盡','应':'應','灯':'燈','点':'點','烟':'煙','广':'廣','欢':'歡','伤':'傷','记':'記','让':'讓','对':'對','将':'將','脸':'臉','头':'頭','当':'當','总':'總','别':'別','离':'離','书':'書','写':'寫','岁':'歲','双':'雙','拥':'擁','泪':'淚','轻':'輕','随':'隨','黄':'黃','蓝':'藍','紧':'緊','问':'問','门':'門','飞':'飛','转':'轉','终':'終','线':'線','吗':'嗎','谁':'誰','样':'樣','许':'許','实':'實','现':'現','带':'帶','词':'詞','译':'譯','简':'簡','听':'聽'
+    };
+    const fallbackT2S=Object.fromEntries(Object.entries(fallbackS2T).map(([s,t])=>[t,s]));
+
+    function fallbackConvertScript(text,mode){
+      const map=mode==='traditional'?fallbackS2T:fallbackT2S;
+      return Array.from(String(text||'')).map(ch=>map[ch]||ch).join('');
+    }
+
+    async function ensureOpenCCConverters(){
+      if(openCCConverters)return openCCConverters;
+      if(!openCCLoadPromise){
+        openCCLoadPromise=import('https://cdn.jsdelivr.net/npm/opencc-wasm@0.13.0/dist/esm/index.js')
+          .then(mod=>{
+            const OpenCC=mod.default||mod;
+            openCCConverters={
+              simplified:OpenCC.Converter({config:'t2s'}),
+              traditional:OpenCC.Converter({config:'s2t'})
+            };
+            return openCCConverters;
+          })
+          .catch(error=>{
+            console.warn('OpenCC load failed, using lightweight fallback.',error);
+            return null;
+          });
+      }
+      return openCCLoadPromise;
+    }
+
+    async function convertLyricScript(text,mode=state.lyricScriptMode){
+      const value=String(text||'');
+      if(!containsChinese(value))return value;
+      try{
+        const converters=await ensureOpenCCConverters();
+        const converter=converters&&converters[mode];
+        if(converter)return await converter(value);
+      }catch(error){console.warn('OpenCC conversion failed',error);}
+      return fallbackConvertScript(value,mode);
+    }
+
+    function loadLyricTranslationCache(){
+      try{
+        const saved=JSON.parse(localStorage.getItem(LYRIC_TRANSLATION_CACHE_KEY)||'{}');
+        Object.entries(saved).slice(-300).forEach(([key,value])=>{
+          if(typeof value==='string'&&value)lyricTranslationCache.set(key,value);
+        });
+      }catch(error){}
+    }
+
+    function saveLyricTranslationCache(){
+      try{
+        const entries=Array.from(lyricTranslationCache.entries()).slice(-300);
+        localStorage.setItem(LYRIC_TRANSLATION_CACHE_KEY,JSON.stringify(Object.fromEntries(entries)));
+      }catch(error){}
+    }
+
+    function decodeHtmlEntities(value){
+      const node=document.createElement('textarea');
+      node.innerHTML=String(value||'');
+      return node.value;
+    }
+
+    function translateEnglishLine(text){
+      const value=String(text||'').trim();
+      if(!value)return Promise.resolve('');
+      if(lyricTranslationCache.has(value))return Promise.resolve(lyricTranslationCache.get(value));
+
+      const job=async()=>{
+        const url=new URL('https://api.mymemory.translated.net/get');
+        url.searchParams.set('q',value.slice(0,450));
+        url.searchParams.set('langpair','en|zh-CN');
+        const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});
+        if(!response.ok)throw new Error('translation http '+response.status);
+        const payload=await response.json();
+        const translated=decodeHtmlEntities(payload?.responseData?.translatedText||'').trim();
+        if(!translated || /^PLEASE SELECT/i.test(translated))throw new Error('empty translation');
+        lyricTranslationCache.set(value,translated);
+        saveLyricTranslationCache();
+        return translated;
+      };
+
+      const promise=translationQueue.then(job,job);
+      translationQueue=promise.catch(()=>{});
+      return promise;
+    }
+
+    function getChinesePinyin(text){
+      try{
+        if(window.pinyinPro&&typeof window.pinyinPro.pinyin==='function'){
+          const value=window.pinyinPro.pinyin(String(text||''),{toneType:'none'});
+          const toneMap={
+            'ā':'a','á':'a','ǎ':'a','à':'a',
+            'ē':'e','é':'e','ě':'e','è':'e',
+            'ī':'i','í':'i','ǐ':'i','ì':'i',
+            'ō':'o','ó':'o','ǒ':'o','ò':'o',
+            'ū':'u','ú':'u','ǔ':'u','ù':'u',
+            'ǖ':'ü','ǘ':'ü','ǚ':'ü','ǜ':'ü'
+          };
+          return String(value||'')
+            .replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g,ch=>toneMap[ch]||ch)
+            .replace(/\b([a-zA-Züv]+)[1-5]\b/g,'$1');
+        }
+      }catch(error){console.warn('pinyin failed',error);}
+      return '';
+    }
+
+    function updateLyricsToolsUI(){
+      document.querySelectorAll('.lyrics-script-btn').forEach(btn=>{
+        const active=btn.dataset.lyricScript===state.lyricScriptMode;
+        btn.classList.toggle('active',active);
+        btn.setAttribute('aria-pressed',active?'true':'false');
+        btn.title=t(btn.dataset.lyricScript==='traditional'?'lyricsScriptTraditional':'lyricsScriptSimplified');
+      });
+      if(dom.lyricsAssistBtn){
+        dom.lyricsAssistBtn.classList.toggle('active',state.lyricAssistEnabled);
+        dom.lyricsAssistBtn.setAttribute('aria-pressed',state.lyricAssistEnabled?'true':'false');
+        dom.lyricsAssistBtn.title=t(state.lyricAssistEnabled?'lyricsAssistOff':'lyricsAssist');
+      }
+    }
+
+    function setLyricScriptMode(mode){
+      if(mode!=='simplified'&&mode!=='traditional')mode='simplified';
+      state.lyricScriptMode=mode;
+      try{localStorage.setItem(LYRIC_SCRIPT_STORAGE_KEY,mode);}catch(error){}
+      updateLyricsToolsUI();
+      refreshLyricPresentation();
+    }
+
+    function toggleLyricAssist(){
+      state.lyricAssistEnabled=!state.lyricAssistEnabled;
+      try{localStorage.setItem(LYRIC_ASSIST_STORAGE_KEY,state.lyricAssistEnabled?'1':'0');}catch(error){}
+      updateLyricsToolsUI();
+      refreshLyricPresentation();
+    }
+
+    async function refreshLyricPresentation(){
+      if(!dom.lyricsInner)return;
+      const token=++state.lyricPresentationToken;
+      const nodes=Array.from(dom.lyricsInner.querySelectorAll('.lyrics-line[data-index]'));
+      updateLyricsToolsUI();
+
+      nodes.forEach(node=>{
+        const assist=node.querySelector('.lyrics-line-assist');
+        if(assist)assist.hidden=!state.lyricAssistEnabled;
+      });
+
+      await Promise.all(nodes.map(async node=>{
+        const index=Number(node.dataset.index);
+        const line=state.lyricLines[index];
+        if(!line)return;
+        const main=node.querySelector('.lyrics-line-main');
+        const assist=node.querySelector('.lyrics-line-assist');
+        const original=String(line.text||'');
+        const converted=await convertLyricScript(original);
+        if(token!==state.lyricPresentationToken||!node.isConnected)return;
+        if(main)main.textContent=converted;
+        if(!assist||!state.lyricAssistEnabled)return;
+
+        assist.hidden=false;
+        assist.classList.remove('is-loading');
+        assist.removeAttribute('data-assist-kind');
+        if(containsChinese(original)){
+          const py=getChinesePinyin(original);
+          assist.dataset.assistKind='pinyin';
+          assist.textContent=py||t('pinyinUnavailable');
+          return;
+        }
+        if(looksEnglish(original)){
+          assist.dataset.assistKind='translation';
+          assist.textContent=t('translationLoading');
+          assist.classList.add('is-loading');
+          try{
+            const translated=await translateEnglishLine(original);
+            const convertedTranslation=await convertLyricScript(translated);
+            if(token!==state.lyricPresentationToken||!node.isConnected)return;
+            assist.classList.remove('is-loading');
+            assist.textContent=convertedTranslation||t('translationUnavailable');
+          }catch(error){
+            if(token!==state.lyricPresentationToken||!node.isConnected)return;
+            assist.classList.remove('is-loading');
+            assist.textContent=t('translationUnavailable');
+          }
+          return;
+        }
+        assist.hidden=true;
+        assist.textContent='';
+      }));
+    }
+
     // ===================== 歌词处理 =====================
 
     function normalizeLyricText(raw){
@@ -2880,15 +3733,20 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 
     function renderLyrics(){
       const wrap=dom.lyricsInner;
-      wrap.innerHTML='';
-      state.currentLyricIndex=-1;
+      if(!wrap)return;
       const track=state.currentTrack;
+      const trackUid=track?.uid||null;
+      const preserveScroll=state.renderedLyricTrackUid===trackUid;
+      const previousScroll=dom.lyricsContainer?.scrollTop||0;
+      const fragment=document.createDocumentFragment();
+      state.currentLyricIndex=-1;
+
       const titleLine=document.createElement('div');
       titleLine.className='lyrics-title-line';
       if(track){
         titleLine.textContent=(track.title||'')+(track.artist?' - '+track.artist:'');
       }
-      wrap.appendChild(titleLine);
+      fragment.appendChild(titleLine);
 
       const arr=state.lyricLines;
       if(!arr.length){
@@ -2896,16 +3754,46 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         empty.id='lyrics-empty';
         empty.className='lyrics-empty';
         empty.textContent=t('lyricsEmpty');
-        wrap.appendChild(empty);
+        fragment.appendChild(empty);
+        wrap.replaceChildren(fragment);
+        state.renderedLyricTrackUid=trackUid;
+        updateLyricsToolsUI();
+        if(dom.lyricsContainer)dom.lyricsContainer.scrollTop=preserveScroll?previousScroll:0;
         return;
       }
+
       arr.forEach((ln,i)=>{
         const div=document.createElement('div');
         div.className='lyrics-line';
         div.dataset.index=i;
-        div.textContent=ln.text;
-        wrap.appendChild(div);
+
+        const timed=Number.isFinite(ln.time);
+        if(timed){
+          div.classList.add('is-seekable');
+          div.dataset.time=String(ln.time);
+          div.tabIndex=0;
+          div.setAttribute('role','button');
+          div.setAttribute('aria-label',t('lyricSeekHint')+' · '+ln.text);
+          div.title=t('lyricSeekHint');
+        }
+
+        const main=document.createElement('span');
+        main.className='lyrics-line-main';
+        main.dir='auto';
+        main.textContent=ln.text;
+        const assist=document.createElement('span');
+        assist.className='lyrics-line-assist';
+        assist.dir='auto';
+        assist.hidden=!state.lyricAssistEnabled;
+        div.appendChild(main);
+        div.appendChild(assist);
+        fragment.appendChild(div);
       });
+
+      wrap.replaceChildren(fragment);
+      state.renderedLyricTrackUid=trackUid;
+      if(dom.lyricsContainer)dom.lyricsContainer.scrollTop=preserveScroll?previousScroll:0;
+      refreshLyricPresentation();
     }
 
     let lyricAutoFollowPausedUntil=0;
@@ -2961,18 +3849,67 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.lyricsFullBtn.setAttribute('aria-expanded',expanded?'true':'false');
     }
 
+    let lyricsScrollBeforeFullscreen=0;
+
     function setLyricsFullscreen(expanded){
-      document.body.classList.toggle('lyrics-fullscreen',Boolean(expanded));
-      updateLyricsFullscreenUI();
-      if(expanded){
+      const shouldExpand=Boolean(expanded);
+      if(shouldExpand){
         activateMobilePanel('player');
-        setTimeout(()=>{
-          const active=dom.lyricsInner.querySelector('.lyrics-line.active');
-          if(active){
-            dom.lyricsContainer.scrollTop=Math.max(0,active.offsetTop-dom.lyricsContainer.clientHeight*0.42);
-          }
-        },40);
+        lyricsScrollBeforeFullscreen=dom.lyricsContainer?.scrollTop||0;
+        if(dom.lyricsInner&&!dom.lyricsInner.children.length)renderLyrics();
       }
+      document.body.classList.toggle('lyrics-fullscreen',shouldExpand);
+      updateLyricsFullscreenUI();
+      requestAnimationFrame(()=>{
+        if(!dom.lyricsContainer)return;
+        if(shouldExpand){
+          const active=dom.lyricsInner.querySelector('.lyrics-line.active');
+          dom.lyricsContainer.scrollTop=active
+            ? Math.max(0,active.offsetTop-dom.lyricsContainer.clientHeight*.42)
+            : Math.max(0,lyricsScrollBeforeFullscreen);
+        }else{
+          dom.lyricsContainer.scrollTop=Math.max(0,lyricsScrollBeforeFullscreen);
+        }
+      });
+    }
+
+    function getTrackSourceLabel(track){
+      const source=track?.source;
+      const key=source==='netease'?'sourceNetease':source==='qq'?'sourceQQ':source==='joox'?'sourceJoox':'sourceKuwo';
+      return source?t(key):'—';
+    }
+
+    function updateAlbumInfoModal(){
+      const track=state.currentTrack;
+      if(!track||!dom.albumInfoModal)return;
+      dom.albumInfoTitle.textContent=track.title||'—';
+      dom.albumInfoArtist.textContent=cyNormalizeArtist(track.artist)||'—';
+      dom.albumInfoAlbum.textContent=track.album||'—';
+      dom.albumInfoSource.textContent=getTrackSourceLabel(track);
+      dom.albumInfoQuality.textContent=track.qualityLabel||'—';
+      const cover=dom.coverImg?.currentSrc||dom.coverImg?.src||track.cover||'';
+      if(cover){
+        dom.albumInfoCover.src=cover;
+        dom.albumInfoCover.style.visibility='visible';
+      }else{
+        dom.albumInfoCover.removeAttribute('src');
+        dom.albumInfoCover.style.visibility='hidden';
+      }
+    }
+
+    function openAlbumInfoModal(){
+      if(!state.currentTrack){showToast(t('toastNoCurrentTrack'));return;}
+      updateAlbumInfoModal();
+      dom.albumInfoModal.classList.add('show');
+      dom.albumInfoModal.setAttribute('aria-hidden','false');
+      requestAnimationFrame(()=>dom.albumInfoClose?.focus({preventScroll:true}));
+    }
+
+    function closeAlbumInfoModal(){
+      if(!dom.albumInfoModal)return;
+      dom.albumInfoModal.classList.remove('show');
+      dom.albumInfoModal.setAttribute('aria-hidden','true');
+      dom.coverWrapper?.focus({preventScroll:true});
     }
 
     // ===================== 收藏 / 播放 =====================
@@ -3041,6 +3978,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
           dom.coverPlaceholder.style.display='flex';
         }
         updateThemeFromTrack(track);
+        if(dom.albumInfoModal?.classList.contains('show'))updateAlbumInfoModal();
       };
 
       dom.playerStatus.textContent=t('playerStatusLoading');
@@ -3250,6 +4188,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         item.addEventListener('click',()=>{const visible=getInterleavedSearchList();const idx=visible.findIndex(x=>x.uid===track.uid);playFromList('results',idx);});
         wrap.appendChild(item);
       });
+      syncMobileHotCommentVisibility();
     }
 
     function updatePlaylistInfoLabel(){
@@ -3483,28 +4422,38 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
     }
 
     function setupRipple(){
+      const interactiveSelector = [
+        'button',
+        '.btn',
+        '.track-item',
+        '.search-mini-item',
+        '.source-chip',
+        '.hot-comment-card',
+        '.mobile-nav-btn',
+        '.playlist-tab',
+        '.lang-btn'
+      ].join(',');
+
       document.addEventListener('pointerdown',e=>{
-        const target=e.target.closest('.ripple-target, .btn, .track-item, .search-mini-item');
-        if(!target)return;
+        // 歌词滑动、字号/翻译切换等交互不再把涟漪挂到整个播放面板上。
+        const target=e.target.closest(interactiveSelector);
+        if(!target || target.classList.contains('panel'))return;
+        if(e.pointerType==='mouse' && e.button!==0)return;
+
         const rect=target.getBoundingClientRect();
-        const x=e.clientX-rect.left, y=e.clientY-rect.top;
-        const max=Math.max(rect.width,rect.height);
+        if(!rect.width || !rect.height)return;
+        const x=e.clientX-rect.left;
+        const y=e.clientY-rect.top;
+        const diameter=Math.min(Math.max(rect.width,rect.height)*1.8,180);
 
         const outer=document.createElement('span');
         outer.className='ripple-circle';
-        outer.style.left=x+'px'; outer.style.top=y+'px';
-        outer.style.width=outer.style.height=(max*2)+'px';
-
-        const inner=document.createElement('span');
-        inner.className='ripple-circle-inner';
-        inner.style.left=x+'px'; inner.style.top=y+'px';
-        inner.style.width=inner.style.height=(max*1.4)+'px';
-
+        outer.style.left=x+'px';
+        outer.style.top=y+'px';
+        outer.style.width=outer.style.height=diameter+'px';
         target.appendChild(outer);
-        target.appendChild(inner);
-        setTimeout(()=>outer.remove(),800);
-        setTimeout(()=>inner.remove(),800);
-      });
+        setTimeout(()=>outer.remove(),700);
+      },{passive:true});
     }
 
     // ===================== DOM / 事件绑定 =====================
@@ -3527,6 +4476,7 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.hotCommentAction=$('hot-comment-action');
 
       dom.coverImg=$('cover-img');
+      dom.coverWrapper=$('cover-detail-trigger');
       dom.coverPlaceholder=document.querySelector('.cover-placeholder');
       dom.trackTitle=$('track-title');
       dom.trackArtist=$('track-artist');
@@ -3551,6 +4501,8 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.lyricsSizeDown=$('lyrics-size-down');
       dom.lyricsSizeUp=$('lyrics-size-up');
       dom.lyricsSizeValue=$('lyrics-size-value');
+      dom.lyricsAssistBtn=$('lyrics-assist-btn');
+      dom.lyricsScriptButtons=Array.from(document.querySelectorAll('.lyrics-script-btn'));
 
       dom.playlistMain=document.querySelector('.playlist-main');
       dom.playlistList=$('playlist-list');
@@ -3574,6 +4526,15 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.shortcutToggleBtn=$('shortcut-toggle-btn');
       dom.shortcutModal=$('shortcut-modal');
       dom.shortcutCloseBtn=$('shortcut-close');
+
+      dom.albumInfoModal=$('album-info-modal');
+      dom.albumInfoClose=$('album-info-close');
+      dom.albumInfoCover=$('album-info-cover');
+      dom.albumInfoTitle=$('album-info-title');
+      dom.albumInfoArtist=$('album-info-artist');
+      dom.albumInfoAlbum=$('album-info-album');
+      dom.albumInfoSource=$('album-info-source');
+      dom.albumInfoQuality=$('album-info-quality');
     }
 
 
@@ -3588,10 +4549,28 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       };
       if(!panels[name]) name='player';
       mobileActivePanel=name;
+      const mobile=window.matchMedia('(max-width: 860px)').matches;
 
-      Object.entries(panels).forEach(([key,panel])=>{
-        if(panel) panel.classList.toggle('mobile-active',key===name);
-      });
+      if(mobile){
+        // 先点亮目标面板，再隐藏其他面板，避免任何一帧没有活动页面。
+        const target=panels[name];
+        if(target)target.classList.add('mobile-active');
+        Object.entries(panels).forEach(([key,panel])=>{
+          if(!panel)return;
+          const active=key===name;
+          if(!active)panel.classList.remove('mobile-active');
+          panel.setAttribute('aria-hidden',active?'false':'true');
+          try{panel.inert=!active;}catch(error){}
+        });
+      }else{
+        Object.values(panels).forEach(panel=>{
+          if(!panel)return;
+          panel.classList.remove('mobile-active');
+          panel.setAttribute('aria-hidden','false');
+          try{panel.inert=false;}catch(error){}
+        });
+      }
+
       document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
         const active=btn.dataset.mobilePanel===name;
         btn.classList.toggle('active',active);
@@ -3621,11 +4600,14 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
 
       const syncLayout=()=>{
         document.body.classList.toggle('is-mobile-ui',media.matches);
+        syncMobileHotCommentVisibility();
         if(media.matches){
           activateMobilePanel(mobileActivePanel);
         }else{
           document.querySelectorAll('.layout > .panel').forEach(panel=>{
             panel.classList.remove('mobile-active');
+            panel.setAttribute('aria-hidden','false');
+            try{panel.inert=false;}catch(error){}
           });
         }
       };
@@ -3680,6 +4662,18 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
           searchAllSources(true);
         }
       });
+      dom.searchInput.addEventListener('input',()=>{
+        if(dom.searchInput.value.trim())return;
+        state.searchKeyword='';
+        state.searchResults=[];
+        state.trackMap.clear();
+        state.noMoreResults=false;
+        dom.searchStatus.textContent=t('searchStatusIdle');
+        dom.searchCount.textContent='0';
+        renderMiniSearchList();
+        renderPlaylistList();
+        syncMobileHotCommentVisibility();
+      });
 
       document.querySelectorAll('.source-chip input').forEach(cb=>{
         cb.addEventListener('change',()=>{state.enabledSources[cb.dataset.source]=cb.checked;});
@@ -3730,7 +4724,142 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       dom.nextBtn.addEventListener('click',()=>playNext('next'));
       dom.favBtn.addEventListener('click',toggleFavoriteCurrent);
       dom.downloadBtn.addEventListener('click',handleDownloadCurrent);
+      if(dom.coverWrapper){
+        dom.coverWrapper.addEventListener('click',openAlbumInfoModal);
+        dom.coverWrapper.addEventListener('keydown',event=>{
+          if(event.key==='Enter'||event.key===' '){
+            event.preventDefault();
+            openAlbumInfoModal();
+          }
+        });
+      }
+      if(dom.albumInfoClose)dom.albumInfoClose.addEventListener('click',closeAlbumInfoModal);
+      if(dom.albumInfoModal)dom.albumInfoModal.addEventListener('click',event=>{
+        if(event.target===dom.albumInfoModal)closeAlbumInfoModal();
+      });
       dom.lyricsFullBtn.addEventListener('click',()=>setLyricsFullscreen(!isLyricsFullscreen()));
+      dom.lyricsScriptButtons.forEach(btn=>btn.addEventListener('click',()=>setLyricScriptMode(btn.dataset.lyricScript)));
+      if(dom.lyricsAssistBtn)dom.lyricsAssistBtn.addEventListener('click',toggleLyricAssist);
+      let suppressNextLyricClick=false;
+      let lyricGesture=null;
+      let scrubPreviewIndex=-1;
+
+      const clearScrubPreview=()=>{
+        if(scrubPreviewIndex>=0){
+          dom.lyricsInner.querySelector(`.lyrics-line[data-index="${scrubPreviewIndex}"]`)?.classList.remove('is-scrub-preview');
+        }
+        scrubPreviewIndex=-1;
+      };
+
+      const setScrubPreview=(index)=>{
+        if(index===scrubPreviewIndex)return;
+        clearScrubPreview();
+        if(index<0)return;
+        const line=dom.lyricsInner.querySelector(`.lyrics-line.is-seekable[data-index="${index}"]`);
+        if(!line)return;
+        line.classList.add('is-scrub-preview');
+        scrubPreviewIndex=index;
+      };
+
+      const seekToLyricIndex=(index,{showMessage=true}={})=>{
+        const lyric=state.lyricLines[index];
+        if(!lyric||!Number.isFinite(lyric.time))return false;
+        const finiteDuration=Number.isFinite(dom.audio.duration)&&dom.audio.duration>0?dom.audio.duration:null;
+        const target=Math.max(0,finiteDuration?Math.min(finiteDuration,lyric.time):lyric.time);
+        try{dom.audio.currentTime=target;}catch(error){console.warn('lyric seek failed',error);return false;}
+        dom.currentTime.textContent=formatTime(target);
+        if(finiteDuration){
+          const ratio=Math.max(0,Math.min(1,target/finiteDuration));
+          dom.progressBar.style.transform='scaleX('+ratio+')';
+          dom.progressHandle.style.left=(dom.progressWrapper.clientWidth*ratio)+'px';
+        }
+        pauseLyricsAutoFollow(900);
+        updateLyricsHighlight(target);
+        if(showMessage)showToast(t('toastLyricSeek'));
+        return true;
+      };
+
+      const seekFromLyricElement=(element,options)=>{
+        const line=element?.closest?.('.lyrics-line.is-seekable[data-index]');
+        if(!line)return false;
+        return seekToLyricIndex(Number(line.dataset.index),options);
+      };
+
+      const closestTimedLyricToViewportCenter=()=>{
+        const boxRect=dom.lyricsContainer.getBoundingClientRect();
+        const targetY=boxRect.top+boxRect.height*.45;
+        let bestIndex=-1;
+        let bestDistance=Infinity;
+        dom.lyricsInner.querySelectorAll('.lyrics-line.is-seekable[data-index]').forEach(line=>{
+          const rect=line.getBoundingClientRect();
+          const distance=Math.abs((rect.top+rect.height/2)-targetY);
+          if(distance<bestDistance){
+            bestDistance=distance;
+            bestIndex=Number(line.dataset.index);
+          }
+        });
+        return bestIndex;
+      };
+
+      dom.lyricsInner.addEventListener('click',event=>{
+        if(suppressNextLyricClick){
+          suppressNextLyricClick=false;
+          return;
+        }
+        seekFromLyricElement(event.target);
+      });
+      dom.lyricsInner.addEventListener('keydown',event=>{
+        if((event.key==='Enter'||event.key===' ')&&seekFromLyricElement(event.target))event.preventDefault();
+      });
+
+      dom.lyricsContainer.addEventListener('pointerdown',event=>{
+        if(event.button!==undefined&&event.button!==0)return;
+        lyricGesture={
+          pointerId:event.pointerId,
+          startY:event.clientY,
+          startScrollTop:dom.lyricsContainer.scrollTop,
+          moved:false,
+          candidate:-1
+        };
+      },{passive:true});
+
+      const updateLyricGesturePreview=()=>{
+        if(!lyricGesture)return;
+        const index=closestTimedLyricToViewportCenter();
+        lyricGesture.candidate=index;
+        setScrubPreview(index);
+      };
+
+      dom.lyricsContainer.addEventListener('pointermove',event=>{
+        if(!lyricGesture||event.pointerId!==lyricGesture.pointerId)return;
+        const moved=Math.abs(event.clientY-lyricGesture.startY)>14||
+          Math.abs(dom.lyricsContainer.scrollTop-lyricGesture.startScrollTop)>10;
+        if(!moved)return;
+        lyricGesture.moved=true;
+        requestAnimationFrame(updateLyricGesturePreview);
+      },{passive:true});
+
+      dom.lyricsContainer.addEventListener('scroll',()=>{
+        if(lyricGesture?.moved)requestAnimationFrame(updateLyricGesturePreview);
+      },{passive:true});
+
+      const finishLyricGesture=(event)=>{
+        if(!lyricGesture)return;
+        if(event?.pointerId!==undefined&&event.pointerId!==lyricGesture.pointerId)return;
+        const {moved,candidate}=lyricGesture;
+        lyricGesture=null;
+        if(moved&&candidate>=0){
+          suppressNextLyricClick=true;
+          seekToLyricIndex(candidate,{showMessage:false});
+          setTimeout(()=>{suppressNextLyricClick=false;},280);
+        }
+        clearScrubPreview();
+      };
+
+      dom.lyricsContainer.addEventListener('pointerup',finishLyricGesture,{passive:true});
+      dom.lyricsContainer.addEventListener('pointercancel',finishLyricGesture,{passive:true});
+      dom.lyricsContainer.addEventListener('lostpointercapture',finishLyricGesture,{passive:true});
+
       if(dom.lyricsSizeDown)dom.lyricsSizeDown.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize-1,true));
       if(dom.lyricsSizeUp)dom.lyricsSizeUp.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize+1,true));
       if(dom.libraryToggle)dom.libraryToggle.addEventListener('click',()=>setLibraryCollapsed(!state.libraryCollapsed));
@@ -3833,6 +4962,10 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
         const shortcutOpen=dom.shortcutModal.classList.contains('show');
 
         if(e.key==='Escape'){
+          if(dom.albumInfoModal?.classList.contains('show')){
+            closeAlbumInfoModal();
+            return;
+          }
           if(isLyricsFullscreen()){
             setLyricsFullscreen(false);
             return;
@@ -3875,6 +5008,9 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       loadLibraryFromStorage();
       try{const storedSize=Number(localStorage.getItem(LYRICS_FONT_STORAGE_KEY));if(storedSize)state.lyricsFontSize=storedSize;}catch(e){}
       try{const storedCollapsed=localStorage.getItem(LIBRARY_COLLAPSED_STORAGE_KEY);if(storedCollapsed!==null)state.libraryCollapsed=storedCollapsed!=='0';}catch(e){}
+      try{const scriptMode=localStorage.getItem(LYRIC_SCRIPT_STORAGE_KEY);if(scriptMode==='simplified'||scriptMode==='traditional')state.lyricScriptMode=scriptMode;}catch(e){}
+      try{state.lyricAssistEnabled=localStorage.getItem(LYRIC_ASSIST_STORAGE_KEY)==='1';}catch(e){}
+      loadLyricTranslationCache();
       applyLyricsFontSize(state.lyricsFontSize);
       setLibraryCollapsed(state.libraryCollapsed,false);
       setupParticles();
@@ -3882,6 +5018,8 @@ body.library-collapsed .library-toggle-text{color:rgba(255,255,255,.58);letter-s
       setupEvents();
       setupMobileNavigation();
       setLanguage(state.language);
+      updateLyricsToolsUI();
+      syncMobileHotCommentVisibility();
       renderPlaylistOptions();
       renderPlaylistList();
       setPlaymodeUI();
