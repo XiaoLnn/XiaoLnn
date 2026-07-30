@@ -4,7 +4,7 @@ compatibility_date = "2026-07-30"
 workers_dev = true
 
 [vars]
-ALLOWED_ORIGINS = "http://localhost:8080,http://127.0.0.1:8080,https://xiaolnn.pages.dev/"
+ALLOWED_ORIGINS = "https://xiaolnn.pages.dev,http://localhost:8080,http://127.0.0.1:8080"
 METING_ENDPOINT = "https://api.qijieya.cn/meting/"
 
 [[d1_databases]]
