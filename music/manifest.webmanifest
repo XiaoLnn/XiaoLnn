@@ -1,0 +1,9 @@
+{
+  "name": "Nie Music 聚合音乐",
+  "short_name": "Nie Music",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0d",
+  "theme_color": "#0a0a0d",
+  "icons": [{"src":"./assets/icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
