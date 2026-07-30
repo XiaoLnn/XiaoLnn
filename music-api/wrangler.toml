@@ -1,17 +1,16 @@
-name = "nie-music-api"
+name = "nie-music-api-test"
 main = "src/index.js"
 compatibility_date = "2026-07-30"
 workers_dev = true
 
 [vars]
-# 逗号分隔；上线后建议只保留你的 GitHub Pages / 自定义域名。
-ALLOWED_ORIGINS = "http://localhost:8080,http://127.0.0.1:8080,https://YOUR_NAME.github.io"
+ALLOWED_ORIGINS = "http://localhost:8080,http://127.0.0.1:8080,https://xiaolnn.pages.dev/"
 METING_ENDPOINT = "https://api.qijieya.cn/meting/"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "nie-music"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_name = "nie-music-test"
+database_id = "ebfe295f-794a-4149-b608-107f4e962ae8"
 migrations_dir = "migrations"
 
 [secrets]
