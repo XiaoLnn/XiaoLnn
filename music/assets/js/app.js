@@ -583,6 +583,14 @@
       return (match?match[0]:raw).replace(/\*{2,}/g,'').replace(/[）)\]】,，。；;]+$/g,'');
     }
 
+    function sharedUrlParam(url,key){
+      const direct=url.searchParams.get(key);
+      if(direct)return direct;
+      const queryIndex=url.hash.indexOf('?');
+      if(queryIndex<0)return '';
+      return new URLSearchParams(url.hash.slice(queryIndex+1)).get(key)||'';
+    }
+
     function detectExternalPlaylist(value){
       const raw=String(value||'').trim();
       if(/^\d{4,}$/.test(raw)) return {platform:'netease',id:raw,url:raw};
@@ -591,11 +599,11 @@
       try{parsed=new URL(sharedUrl);}catch(error){return null;}
       const host=parsed.hostname.toLowerCase();
       if(host.includes('163.com')||host.includes('163cn.tv')){
-        const id=parsed.searchParams.get('id')||(parsed.pathname.match(/playlist\/(\d+)/i)||[])[1]||'';
+        const id=sharedUrlParam(parsed,'id')||(parsed.pathname.match(/playlist\/(\d+)/i)||[])[1]||'';
         return id?{platform:'netease',id,url:sharedUrl}:null;
       }
       if(host.includes('qq.com')){
-        const id=parsed.searchParams.get('id')||parsed.searchParams.get('disstid')||'';
+        const id=sharedUrlParam(parsed,'id')||sharedUrlParam(parsed,'disstid')||'';
         return {platform:'qq',id,url:sharedUrl};
       }
       return null;
