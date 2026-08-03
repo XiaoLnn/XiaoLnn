@@ -267,7 +267,7 @@
     const PINYIN_PRO_URL = 'https://unpkg.com/pinyin-pro@3.18.2/dist/index.js';
     const LYRIC_TRANSLATION_CACHE_KEY = 'nie-music-lyric-translation-cache-v1';
     const METING_ENDPOINT = 'https://api.qijieya.cn/meting/';
-    const QQ_PLAYLIST_ENDPOINT = '/api/qq-playlist';
+    const QQ_PLAYLIST_ENDPOINT = 'https://xiaolnn.pages.dev/api/qq-playlist';
     const QQ_HOT_ENDPOINT = 'https://cyapi.top/API/music_hot.php';
 
     let openCCConverters=null;

@@ -1,5 +1,9 @@
 const QQ_PLAYLIST_ENDPOINT = 'https://cyapi.top/API/song_list.php';
 const QQ_OFFICIAL_PLAYLIST_ENDPOINT = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg';
+const ALLOWED_SITE_ORIGINS = new Set([
+  'https://xiaolnne.shop',
+  'https://www.xiaolnne.shop',
+]);
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -11,6 +15,22 @@ function json(data, status = 200, extraHeaders = {}) {
       ...extraHeaders,
     },
   });
+}
+
+function corsHeaders(request) {
+  const origin = request.headers.get('origin') || '';
+  const isAllowed = ALLOWED_SITE_ORIGINS.has(origin)
+    || /^https:\/\/[a-z0-9-]+\.xiaolnn\.pages\.dev$/i.test(origin)
+    || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  return {
+    vary: 'Origin',
+    ...(isAllowed ? {
+      'access-control-allow-origin': origin,
+      'access-control-allow-methods': 'GET, OPTIONS',
+      'access-control-allow-headers': 'Accept, Content-Type',
+      'access-control-max-age': '86400',
+    } : {}),
+  };
 }
 
 function validQQPlaylistUrl(value) {
@@ -76,13 +96,20 @@ async function fetchQQOfficialPlaylist(playlistUrl) {
 }
 
 export async function onRequest(context) {
-  if (context.request.method !== 'GET') return json({ error: 'method_not_allowed' }, 405, { allow: 'GET' });
+  const cors = corsHeaders(context.request);
+  const respond = (data, status = 200, headers = {}) => json(data, status, { ...cors, ...headers });
+  if (context.request.method === 'OPTIONS') {
+    return cors['access-control-allow-origin']
+      ? new Response(null, { status: 204, headers: cors })
+      : respond({ error: 'origin_not_allowed' }, 403);
+  }
+  if (context.request.method !== 'GET') return respond({ error: 'method_not_allowed' }, 405, { allow: 'GET, OPTIONS' });
   const requestUrl = new URL(context.request.url);
   const playlistUrl = validQQPlaylistUrl(requestUrl.searchParams.get('url'));
-  if (!playlistUrl) return json({ error: 'invalid_qq_playlist_url' }, 400);
+  if (!playlistUrl) return respond({ error: 'invalid_qq_playlist_url' }, 400);
 
   const apiKey = context.env.QQ_MUSIC_API_KEY;
-  if (!apiKey) return json({ error: 'qq_music_api_key_not_configured' }, 503);
+  if (!apiKey) return respond({ error: 'qq_music_api_key_not_configured' }, 503);
 
   const upstreamUrl = new URL(QQ_PLAYLIST_ENDPOINT);
   upstreamUrl.searchParams.set('apikey', apiKey);
@@ -93,27 +120,26 @@ export async function onRequest(context) {
       headers: { accept: 'application/json' },
       cf: { cacheEverything: true, cacheTtl: 300 },
     });
-    const body = await upstream.text();
     if (!upstream.ok) {
       const fallback = await fetchQQOfficialPlaylist(playlistUrl);
       return fallback
-        ? json(fallback)
-        : json({ error: 'qq_playlist_upstream_error', status: upstream.status }, 502);
+        ? respond(fallback)
+        : respond({ error: 'qq_playlist_upstream_error', status: upstream.status }, 502);
     }
     try {
-      return json(JSON.parse(body));
+      return respond(await upstream.json());
     } catch {
       const fallback = await fetchQQOfficialPlaylist(playlistUrl);
-      return fallback ? json(fallback) : json({ error: 'qq_playlist_invalid_response' }, 502);
+      return fallback ? respond(fallback) : respond({ error: 'qq_playlist_invalid_response' }, 502);
     }
   } catch (error) {
     console.error('QQ playlist proxy failed', error);
     try {
       const fallback = await fetchQQOfficialPlaylist(playlistUrl);
-      return fallback ? json(fallback) : json({ error: 'qq_playlist_proxy_failed' }, 502);
+      return fallback ? respond(fallback) : respond({ error: 'qq_playlist_proxy_failed' }, 502);
     } catch (fallbackError) {
       console.error('QQ official playlist fallback failed', fallbackError);
-      return json({ error: 'qq_playlist_proxy_failed' }, 502);
+      return respond({ error: 'qq_playlist_proxy_failed' }, 502);
     }
   }
 }
