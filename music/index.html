@@ -13,8 +13,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xiaolnne.shop/music/index.html">
 <meta property="og:site_name" content="Nie的音乐站">
-  <link rel="icon" href="assets/images/pikachu.gif?v=5" type="image/gif">
-  <link rel="stylesheet" href="assets/css/app.css?v=5">
+  <link rel="icon" href="assets/images/pikachu.gif?v=6" type="image/gif">
+  <link rel="stylesheet" href="assets/css/app.css?v=6">
 
 </head>
 
@@ -84,10 +84,18 @@
         </div>
         <div class="lyrics-container"><div id="lyrics-inner" class="lyrics-inner"><div id="lyrics-empty" class="lyrics-empty" data-i18n="lyricsEmpty">歌词会在这里与音乐同步呼吸。</div></div></div>
         <audio id="audio" preload="metadata"></audio>
+        <button id="queue-toggle-btn" class="apple-float-btn queue-float-btn ripple-target" type="button" aria-expanded="false" aria-controls="queue-drawer" title="播放列表" aria-label="播放列表"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8h16M5 16h16M5 24h11"/><path class="apple-icon-fill" d="m21 20 7 4-7 4Z"/></svg><span id="queue-count" class="apple-icon-badge" hidden>0</span></button>
+        <div id="queue-drawer" class="queue-drawer" aria-hidden="true">
+          <button class="queue-backdrop" type="button" tabindex="-1" aria-label="关闭播放列表"></button>
+          <section class="queue-sheet" role="dialog" aria-modal="false" aria-labelledby="queue-title">
+            <div class="queue-sheet-header"><div><span class="queue-eyebrow" data-i18n="queueUpNext">接下来播放</span><h2 id="queue-title" data-i18n="queueTitle">播放列表</h2></div><div class="queue-header-actions"><button id="queue-clear-btn" class="queue-text-btn" type="button" data-i18n="queueClear">清空待播</button><button id="queue-close-btn" class="queue-close-btn" type="button" aria-label="关闭">×</button></div></div>
+            <div id="queue-list" class="queue-list"></div>
+          </section>
+        </div>
       </section>
 
-      <section class="panel playlist-panel">
-        <div class="panel-header playlist-panel-header"><div class="playlist-header-content"><div class="panel-title"><span class="icon">≡</span><span data-i18n="playlistTitle">音乐库</span></div><div class="playlist-tabs ripple-target"><div class="playlist-tab active" data-tab="hot" data-i18n="tabHot">QQ 热榜</div><div class="playlist-tab" data-tab="favorites" data-i18n="tabFavorites">收藏</div><div class="playlist-tab" data-tab="playlists" data-i18n="tabCustomLists">歌单</div></div></div><button id="library-toggle" class="library-toggle ripple-target" type="button" aria-expanded="false" title="展开音乐库"><span class="library-toggle-icon">‹</span><span class="library-toggle-text">音乐库</span></button></div>
+      <section id="music-library-panel" class="panel playlist-panel">
+        <div class="panel-header playlist-panel-header"><div class="playlist-header-content"><div class="panel-title"><span class="icon">≡</span><span data-i18n="playlistTitle">音乐库</span></div><div class="playlist-tabs ripple-target"><div class="playlist-tab active" data-tab="hot" data-i18n="tabHot">QQ 热榜</div><div class="playlist-tab" data-tab="favorites" data-i18n="tabFavorites">收藏</div><div class="playlist-tab" data-tab="playlists" data-i18n="tabCustomLists">歌单</div></div></div><button id="library-toggle" class="library-toggle ripple-target" type="button" aria-expanded="false" aria-controls="music-library-panel" title="展开音乐库"><span class="library-toggle-icon">‹</span><span class="library-toggle-text">音乐库</span></button></div>
         <div class="playlist-main">
           <div class="playlist-bar">
             <div class="playlist-top-row"><span id="playlist-info" class="playlist-info"></span><div class="playmode-row"><button class="playmode-btn active ripple-target" data-mode="list" title="列表循环">↻</button><button class="playmode-btn ripple-target" data-mode="single" title="单曲循环">1</button><button class="playmode-btn ripple-target" data-mode="shuffle" title="随机播放">⌁</button></div></div>
@@ -98,6 +106,8 @@
         </div>
       </section>
     </main>
+
+    <button id="library-fab" class="apple-float-btn library-fab ripple-target" type="button" aria-expanded="false" aria-controls="music-library-panel" title="展开音乐库" aria-label="展开音乐库"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8h13M5 15h13M5 22h8"/><path d="M23 7v14.5a4 4 0 1 1-2-3.46V9l7-2v11.5a4 4 0 1 1-2-3.46V6.2Z"/></svg><span data-i18n="playlistTitle">音乐库</span></button>
 
     <nav class="mobile-nav" aria-label="手机端主导航"><button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="search"><span class="mobile-nav-icon">⌕</span><span data-i18n="mobileNavSearch">发现</span></button><button class="mobile-nav-btn active ripple-target" type="button" data-mobile-panel="player" aria-current="page"><span class="mobile-nav-icon">◉</span><span data-i18n="mobileNavPlayer">播放</span></button><button class="mobile-nav-btn ripple-target" type="button" data-mobile-panel="playlist"><span class="mobile-nav-icon">≡</span><span data-i18n="mobileNavPlaylist">音乐库</span></button></nav>
     <footer><span data-i18n="footerText">仅用于学习演示，音乐版权归平台及原作者所有。</span></footer>
@@ -126,6 +136,6 @@
     </section>
   </div>
   <div id="toast"></div>
-  <script src="assets/js/app.js?v=5" defer></script>
+  <script src="assets/js/app.js?v=6" defer></script>
 </body>
 </html>

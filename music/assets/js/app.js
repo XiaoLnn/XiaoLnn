@@ -48,6 +48,15 @@
         translationUnavailable:"翻译暂不可用",
         pinyinUnavailable:"拼音组件暂不可用",
         playlistTitle:"音乐库",
+        queueTitle:"播放列表",
+        queueUpNext:"接下来播放",
+        queueEmpty:"当前没有待播放歌曲，可点击歌曲右侧的 +1 添加。",
+        queueClear:"清空待播",
+        queuePlay:"立即播放",
+        queueRemove:"从待播列表移除",
+        queueFromCurrent:"当前列表",
+        libraryExpand:"展开音乐库",
+        libraryCollapse:"折叠音乐库",
         tabHot:"QQ 热榜",
         tabFavorites:"我的收藏",
         tabCustomLists:"自建歌单",
@@ -159,6 +168,15 @@
         translationUnavailable:"Translation unavailable",
         pinyinUnavailable:"Pinyin unavailable",
         playlistTitle:"Library",
+        queueTitle:"Play Queue",
+        queueUpNext:"Up Next",
+        queueEmpty:"Nothing is queued. Use +1 beside a song to add it.",
+        queueClear:"Clear queued",
+        queuePlay:"Play now",
+        queueRemove:"Remove from queue",
+        queueFromCurrent:"Current list",
+        libraryExpand:"Open library",
+        libraryCollapse:"Collapse library",
         tabHot:"QQ Charts",
         tabFavorites:"Favorites",
         tabCustomLists:"Playlists",
@@ -333,6 +351,10 @@
       updateLyricsFullscreenUI();
       updateLyricsToolsUI();
       if(dom.lyricsInner)refreshLyricPresentation();
+      renderQueue();
+      if(dom.queueToggleBtn){dom.queueToggleBtn.title=t('queueTitle');dom.queueToggleBtn.setAttribute('aria-label',t('queueTitle'));}
+      if(dom.libraryToggle)dom.libraryToggle.title=t(state.libraryCollapsed?'libraryExpand':'libraryCollapse');
+      if(dom.libraryFab){dom.libraryFab.title=t('libraryExpand');dom.libraryFab.setAttribute('aria-label',t('libraryExpand'));}
     }
 
     // ========== 旧的质量映射函数，暂时保留（不再使用 API 的 quality 字段） ==========
@@ -2061,8 +2083,7 @@
 
       nodes.forEach(node=>{
         const assist=node.querySelector('.lyrics-line-assist');
-        const line=state.lyricLines[Number(node.dataset.index)];
-        if(assist)assist.hidden=!(line?.translation||state.lyricAssistEnabled);
+        if(assist)assist.hidden=!state.lyricAssistEnabled;
       });
 
       if(state.lyricAssistEnabled&&state.lyricLines.some(line=>containsChinese(line?.text))){
@@ -2084,21 +2105,19 @@
 
         assist.classList.remove('is-loading');
         assist.removeAttribute('data-assist-kind');
-        if(line.translation){
-          const convertedTranslation=await convertLyricScript(normalizeTranslationText(line.translation));
-          if(token!==state.lyricPresentationToken||!node.isConnected)return;
-          assist.hidden=false;
-          assist.dataset.assistKind='translation';
-          assist.textContent=convertedTranslation;
-          return;
-        }
         if(!state.lyricAssistEnabled){
           assist.hidden=true;
           assist.textContent='';
           return;
         }
-
         assist.hidden=false;
+        if(line.translation){
+          const convertedTranslation=await convertLyricScript(normalizeTranslationText(line.translation));
+          if(token!==state.lyricPresentationToken||!node.isConnected)return;
+          assist.dataset.assistKind='translation';
+          assist.textContent=convertedTranslation;
+          return;
+        }
         if(containsChinese(original)){
           const py=getChinesePinyin(original);
           assist.dataset.assistKind='pinyin';
@@ -2234,7 +2253,7 @@
         const assist=document.createElement('span');
         assist.className='lyrics-line-assist';
         assist.dir='auto';
-        assist.hidden=!(ln.translation||state.lyricAssistEnabled);
+        assist.hidden=!state.lyricAssistEnabled;
         div.appendChild(main);
         div.appendChild(assist);
         fragment.appendChild(div);
@@ -2380,6 +2399,7 @@
       const requestToken=++state.playRequestToken;
       state.currentTrack=track;
       state.playContext=context||state.playContext;
+      renderQueue();
 
       const applyUI=()=>{
         dom.trackTitle.textContent=track.title||'';
@@ -2560,7 +2580,89 @@
       if(!track)return;
       state.upNext=state.upNext.filter(item=>item.uid!==track.uid);
       state.upNext.unshift(track);
+      renderQueue();
       showToast(`${t('toastQueuedNext')} · ${track.title||'Unknown'}`);
+    }
+
+    function setQueueOpen(open){
+      const expanded=Boolean(open);
+      document.body.classList.toggle('queue-open',expanded);
+      dom.queueDrawer?.setAttribute('aria-hidden',expanded?'false':'true');
+      dom.queueToggleBtn?.setAttribute('aria-expanded',expanded?'true':'false');
+      if(expanded){
+        renderQueue();
+        requestAnimationFrame(()=>dom.queueCloseBtn?.focus({preventScroll:true}));
+      }
+    }
+
+    function appendQueueSectionLabel(text){
+      const label=document.createElement('div');
+      label.className='queue-section-label';
+      label.textContent=text;
+      dom.queueList.appendChild(label);
+    }
+
+    function appendQueueItem(track,options={}){
+      const item=document.createElement('article');
+      item.className='queue-item';
+      const cover=document.createElement('img');
+      cover.className='queue-cover';cover.alt='';
+      cyLoadImageWithFallback(cover,track.cover,()=>{},()=>cover.classList.add('is-empty'),track);
+      const meta=document.createElement('div');meta.className='queue-meta';
+      const title=document.createElement('strong');title.textContent=track.title||'Unknown';
+      const artist=document.createElement('span');artist.textContent=cyNormalizeArtist(track.artist)||getTrackSourceLabel(track);
+      meta.appendChild(title);meta.appendChild(artist);
+      const actions=document.createElement('div');actions.className='queue-item-actions';
+      const play=document.createElement('button');
+      play.type='button';play.className='queue-item-btn queue-play-btn';play.textContent='▶';
+      play.title=t('queuePlay');play.setAttribute('aria-label',t('queuePlay'));
+      play.addEventListener('click',()=>{
+        if(Number.isInteger(options.queueIndex)){
+          const selected=state.upNext.splice(options.queueIndex,1)[0];
+          renderQueue();
+          if(selected)playTrack(selected,state.playContext);
+        }else if(Number.isInteger(options.contextIndex)){
+          playFromList(state.playContext.type,options.contextIndex,state.playContext.playlistId);
+        }
+      });
+      actions.appendChild(play);
+      if(Number.isInteger(options.queueIndex)){
+        const remove=document.createElement('button');
+        remove.type='button';remove.className='queue-item-btn';remove.textContent='×';
+        remove.title=t('queueRemove');remove.setAttribute('aria-label',t('queueRemove'));
+        remove.addEventListener('click',()=>{state.upNext.splice(options.queueIndex,1);renderQueue();});
+        actions.appendChild(remove);
+      }
+      item.appendChild(cover);item.appendChild(meta);item.appendChild(actions);
+      dom.queueList.appendChild(item);
+    }
+
+    function renderQueue(){
+      if(!dom.queueList)return;
+      dom.queueList.innerHTML='';
+      const queued=state.upNext.slice();
+      if(dom.queueCount){dom.queueCount.textContent=String(Math.min(queued.length,99));dom.queueCount.hidden=!queued.length;}
+      if(dom.queueClearBtn)dom.queueClearBtn.disabled=!queued.length;
+      if(queued.length){
+        appendQueueSectionLabel(t('queueUpNext'));
+        queued.forEach((track,index)=>appendQueueItem(track,{queueIndex:index}));
+      }
+
+      const list=getActiveList();
+      const rawIndex=Number(state.playContext.index);
+      const start=Number.isInteger(rawIndex)?rawIndex:-1;
+      const queuedIds=new Set(queued.map(track=>track.uid));
+      const following=list.map((track,index)=>({track,index}))
+        .filter(entry=>entry.index>start&&entry.track.uid!==state.currentTrack?.uid&&!queuedIds.has(entry.track.uid))
+        .slice(0,60);
+      if(following.length){
+        appendQueueSectionLabel(t('queueFromCurrent'));
+        following.forEach(entry=>appendQueueItem(entry.track,{contextIndex:entry.index}));
+      }
+      if(!queued.length&&!following.length){
+        const empty=document.createElement('div');empty.className='queue-empty';empty.textContent=t('queueEmpty');
+        dom.queueList.appendChild(empty);
+      }
     }
 
     function safeDownloadPart(value,fallback){
@@ -3064,6 +3166,13 @@
       dom.progressBar=$('progress-bar');
       dom.progressHandle=$('progress-handle');
       dom.volumeSlider=$('volume-slider');
+      dom.queueToggleBtn=$('queue-toggle-btn');
+      dom.queueCount=$('queue-count');
+      dom.queueDrawer=$('queue-drawer');
+      dom.queueList=$('queue-list');
+      dom.queueClearBtn=$('queue-clear-btn');
+      dom.queueCloseBtn=$('queue-close-btn');
+      dom.queueBackdrop=document.querySelector('.queue-backdrop');
       dom.lyricsInner=$('lyrics-inner');
       dom.lyricsContainer=document.querySelector('.lyrics-container');
       dom.lyricsFullBtn=$('lyrics-full-btn');
@@ -3090,6 +3199,7 @@
       dom.exportPlaylistBtn=$('export-playlist-btn');
       dom.addCurrentBtn=$('add-current-btn');
       dom.libraryToggle=$('library-toggle');
+      dom.libraryFab=$('library-fab');
 
       dom.playlistModal=$('playlist-modal');
       dom.playlistModalTitle=$('playlist-modal-title');
@@ -3220,7 +3330,12 @@
       document.body.classList.toggle('library-collapsed',state.libraryCollapsed);
       if(dom.libraryToggle){
         dom.libraryToggle.setAttribute('aria-expanded',state.libraryCollapsed?'false':'true');
-        dom.libraryToggle.title=state.libraryCollapsed?'展开音乐库':'折叠音乐库';
+        dom.libraryToggle.title=t(state.libraryCollapsed?'libraryExpand':'libraryCollapse');
+      }
+      if(dom.libraryFab){
+        dom.libraryFab.setAttribute('aria-expanded',state.libraryCollapsed?'false':'true');
+        dom.libraryFab.title=t('libraryExpand');
+        dom.libraryFab.setAttribute('aria-label',t('libraryExpand'));
       }
       if(persist){try{localStorage.setItem(LIBRARY_COLLAPSED_STORAGE_KEY,state.libraryCollapsed?'1':'0');}catch(e){}}
       if(!state.libraryCollapsed&&!state.hotTracks.length)loadQQHotCharts().catch(error=>console.warn('qq hot lazy load failed',error));
@@ -3449,6 +3564,11 @@
       if(dom.lyricsSizeDown)dom.lyricsSizeDown.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize-1,true));
       if(dom.lyricsSizeUp)dom.lyricsSizeUp.addEventListener('click',()=>applyLyricsFontSize(state.lyricsFontSize+1,true));
       if(dom.libraryToggle)dom.libraryToggle.addEventListener('click',()=>setLibraryCollapsed(!state.libraryCollapsed));
+      if(dom.libraryFab)dom.libraryFab.addEventListener('click',()=>setLibraryCollapsed(false));
+      if(dom.queueToggleBtn)dom.queueToggleBtn.addEventListener('click',()=>setQueueOpen(!document.body.classList.contains('queue-open')));
+      if(dom.queueCloseBtn)dom.queueCloseBtn.addEventListener('click',()=>setQueueOpen(false));
+      if(dom.queueBackdrop)dom.queueBackdrop.addEventListener('click',()=>setQueueOpen(false));
+      if(dom.queueClearBtn)dom.queueClearBtn.addEventListener('click',()=>{state.upNext=[];renderQueue();});
       ['pointerdown','touchstart','wheel'].forEach(eventName=>{
         dom.lyricsContainer.addEventListener(eventName,()=>pauseLyricsAutoFollow(),{passive:true});
       });
@@ -3560,8 +3680,10 @@
         const playlistOpen=dom.playlistModal.classList.contains('show');
         const playlistLinkOpen=dom.playlistLinkModal.classList.contains('show');
         const shortcutOpen=dom.shortcutModal.classList.contains('show');
+        const queueOpen=document.body.classList.contains('queue-open');
 
         if(e.key==='Escape'){
+          if(queueOpen){setQueueOpen(false);dom.queueToggleBtn?.focus({preventScroll:true});return;}
           if(dom.albumInfoModal?.classList.contains('show')){
             closeAlbumInfoModal();
             return;
@@ -3576,7 +3698,7 @@
           return;
         }
 
-        if(playlistOpen || playlistLinkOpen || shortcutOpen){
+        if(playlistOpen || playlistLinkOpen || shortcutOpen || queueOpen){
           return;
         }
 
@@ -3623,6 +3745,7 @@
       syncMobileHotCommentVisibility();
       renderPlaylistOptions();
       renderPlaylistList();
+      renderQueue();
       setPlaymodeUI();
       dom.audio.volume=parseFloat(dom.volumeSlider.value);
       applyThemePalette(themeHashPalette('Nie Music'),null);
