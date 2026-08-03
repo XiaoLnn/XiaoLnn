@@ -1948,6 +1948,24 @@
       return node.value;
     }
 
+    function normalizeTranslationText(text){
+      let value=String(text||'').trim();
+      const wrapped=value.match(/^[（(]\s*([\s\S]*?)\s*[）)]$/);
+      if(wrapped&&containsChinese(wrapped[1]))value=wrapped[1].trim();
+      return value;
+    }
+
+    function splitBilingualLyricText(text){
+      const value=String(text||'').trim();
+      const match=value.match(/^([\s\S]*?\S)\s*[（(]\s*([\s\S]*?[\u3400-\u9fff][\s\S]*?)\s*[）)]$/);
+      if(!match)return {text:value,translation:''};
+      const main=match[1].trim();
+      const translation=normalizeTranslationText(match[2]);
+      return looksEnglish(main)&&translation
+        ? {text:main,translation}
+        : {text:value,translation:''};
+    }
+
     function translateEnglishLine(text){
       const value=String(text||'').trim();
       if(!value)return Promise.resolve('');
@@ -1960,7 +1978,7 @@
         const response=await fetch(url.toString(),{headers:{Accept:'application/json'}});
         if(!response.ok)throw new Error('translation http '+response.status);
         const payload=await response.json();
-        const translated=decodeHtmlEntities(payload?.responseData?.translatedText||'').trim();
+        const translated=normalizeTranslationText(decodeHtmlEntities(payload?.responseData?.translatedText||''));
         if(!translated || /^PLEASE SELECT/i.test(translated))throw new Error('empty translation');
         lyricTranslationCache.set(value,translated);
         saveLyricTranslationCache();
@@ -2043,7 +2061,8 @@
 
       nodes.forEach(node=>{
         const assist=node.querySelector('.lyrics-line-assist');
-        if(assist)assist.hidden=!state.lyricAssistEnabled;
+        const line=state.lyricLines[Number(node.dataset.index)];
+        if(assist)assist.hidden=!(line?.translation||state.lyricAssistEnabled);
       });
 
       if(state.lyricAssistEnabled&&state.lyricLines.some(line=>containsChinese(line?.text))){
@@ -2061,11 +2080,25 @@
         const converted=await convertLyricScript(original);
         if(token!==state.lyricPresentationToken||!node.isConnected)return;
         if(main)main.textContent=converted;
-        if(!assist||!state.lyricAssistEnabled)return;
+        if(!assist)return;
 
-        assist.hidden=false;
         assist.classList.remove('is-loading');
         assist.removeAttribute('data-assist-kind');
+        if(line.translation){
+          const convertedTranslation=await convertLyricScript(normalizeTranslationText(line.translation));
+          if(token!==state.lyricPresentationToken||!node.isConnected)return;
+          assist.hidden=false;
+          assist.dataset.assistKind='translation';
+          assist.textContent=convertedTranslation;
+          return;
+        }
+        if(!state.lyricAssistEnabled){
+          assist.hidden=true;
+          assist.textContent='';
+          return;
+        }
+
+        assist.hidden=false;
         if(containsChinese(original)){
           const py=getChinesePinyin(original);
           assist.dataset.assistKind='pinyin';
@@ -2134,11 +2167,12 @@
         }
 
         const lyricText=line.replace(timeReg,'').replace(/^\[[^\]]+\]\s*/,'').trim();
+        const bilingual=splitBilingualLyricText(lyricText);
         if(stamps.length){
-          if(!lyricText)continue;
-          stamps.forEach(time=>out.push({time,text:lyricText}));
-        }else if(lyricText){
-          plain.push({time:null,text:lyricText});
+          if(!bilingual.text)continue;
+          stamps.forEach(time=>out.push({time,text:bilingual.text,translation:bilingual.translation}));
+        }else if(bilingual.text){
+          plain.push({time:null,text:bilingual.text,translation:bilingual.translation});
         }
       }
 
@@ -2200,7 +2234,7 @@
         const assist=document.createElement('span');
         assist.className='lyrics-line-assist';
         assist.dir='auto';
-        assist.hidden=!state.lyricAssistEnabled;
+        assist.hidden=!(ln.translation||state.lyricAssistEnabled);
         div.appendChild(main);
         div.appendChild(assist);
         fragment.appendChild(div);
@@ -2883,19 +2917,29 @@
 
     function setupParticles(){
       const canvas=$('bg-canvas');const ctx=canvas.getContext('2d');
+      const mobileParticles=window.matchMedia('(max-width:860px)').matches;
+      const reducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+      const saveData=Boolean(navigator.connection?.saveData);
+      let viewportWidth=Math.max(1,window.innerWidth);
+      let viewportHeight=Math.max(1,window.innerHeight);
       function resize(){
         const dpr=window.devicePixelRatio||1;
-        canvas.width=window.innerWidth*dpr;
-        canvas.height=window.innerHeight*dpr;
+        /* 先完成全部布局读取，再写 canvas 尺寸，避免写入 width 后读取 height 触发强制重排。 */
+        const width=Math.max(1,window.innerWidth);
+        const height=Math.max(1,window.innerHeight);
+        viewportWidth=width;
+        viewportHeight=height;
+        canvas.width=Math.round(width*dpr);
+        canvas.height=Math.round(height*dpr);
         ctx.setTransform(dpr,0,0,dpr,0,0);
       }
-      resize();window.addEventListener('resize',resize);
+      resize();window.addEventListener('resize',resize,{passive:true});
       const parts=[];
-      const N=90;
+      const N=(reducedMotion||saveData)?24:(mobileParticles?46:72);
       for(let i=0;i<N;i++){
         parts.push({
-          x:Math.random()*window.innerWidth,
-          y:Math.random()*window.innerHeight,
+          x:Math.random()*viewportWidth,
+          y:Math.random()*viewportHeight,
           vx:(Math.random()-0.5)*0.4,
           vy:(Math.random()-0.5)*0.4,
           r:1+Math.random()*2.5,
@@ -2904,17 +2948,18 @@
           a:0.22+Math.random()*0.3
         });
       }
-      let mouse={x:window.innerWidth/2,y:window.innerHeight/2};
-      window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+      let mouse={x:viewportWidth/2,y:viewportHeight/2};
+      window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;},{passive:true});
       function tick(){
-        ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+        if(document.hidden){requestAnimationFrame(tick);return;}
+        ctx.clearRect(0,0,viewportWidth,viewportHeight);
         const pulse = 1 + audioLevel * 2.2;
         for(const p of parts){
           p.x+=p.vx; p.y+=p.vy; p.hue+=0.08;
-          if(p.x<-40)p.x=window.innerWidth+40;
-          if(p.x>window.innerWidth+40)p.x=-40;
-          if(p.y<-40)p.y=window.innerHeight+40;
-          if(p.y>window.innerHeight+40)p.y=-40;
+          if(p.x<-40)p.x=viewportWidth+40;
+          if(p.x>viewportWidth+40)p.x=-40;
+          if(p.y<-40)p.y=viewportHeight+40;
+          if(p.y>viewportHeight+40)p.y=-40;
           const dx=p.x-mouse.x,dy=p.y-mouse.y;
           const dist=Math.sqrt(dx*dx+dy*dy);
           const push=Math.max(0,140-dist)/140;
@@ -3581,7 +3626,12 @@
       setPlaymodeUI();
       dom.audio.volume=parseFloat(dom.volumeSlider.value);
       applyThemePalette(themeHashPalette('Nie Music'),null);
-      loadHotComment();
+      const loadInitialHotComment=()=>loadHotComment().catch(error=>console.warn('initial hot comment failed',error));
+      if('requestIdleCallback' in window){
+        requestIdleCallback(loadInitialHotComment,{timeout:1600});
+      }else{
+        setTimeout(loadInitialHotComment,600);
+      }
     }
 
     document.addEventListener('DOMContentLoaded',init);

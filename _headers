@@ -1,0 +1,10 @@
+/music/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/music/*
+  Cache-Control: public, max-age=0, must-revalidate
+  Referrer-Policy: no-referrer
+
+/api/*
+  X-Content-Type-Options: nosniff
