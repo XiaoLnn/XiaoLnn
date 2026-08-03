@@ -580,7 +580,7 @@
     function cleanSharedUrl(value){
       const raw=String(value||'').trim();
       const match=raw.match(/https?:\/\/[^\s<>"']+/i);
-      return (match?match[0]:raw).replace(/[）)\]】,，。；;]+$/g,'');
+      return (match?match[0]:raw).replace(/\*{2,}/g,'').replace(/[）)\]】,，。；;]+$/g,'');
     }
 
     function detectExternalPlaylist(value){
@@ -702,9 +702,11 @@
           url.searchParams.set('url',detected.url);
           const payload=await cyRequest(url);
           tracks=payloadArray(payload,['song_list','value','songs']).map((item,index)=>normalizeQQCollectionTrack(item,index,'qq-playlist')).filter(Boolean);
+          if(!customName&&payload?.name)dom.playlistImportNameInput.value=String(payload.name).slice(0,60);
         }
         if(!tracks.length)throw new Error('empty external playlist');
-        const playlist=storeImportedPlaylist(detected.platform,detected.id||detected.url,customName,tracks);
+        const importedName=customName||dom.playlistImportNameInput.value.trim();
+        const playlist=storeImportedPlaylist(detected.platform,detected.id||detected.url,importedName,tracks);
         dom.playlistLinkModal.classList.remove('show');
         document.querySelectorAll('.playlist-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.tab==='playlists'));
         state.playContext={type:'playlist',index:-1,playlistId:playlist.id};
