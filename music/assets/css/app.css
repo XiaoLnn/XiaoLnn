@@ -1839,18 +1839,20 @@ body.lyrics-fullscreen .player-panel .lyrics-line-assist{
 
 /* Windows Edge/Chrome 的原生下拉弹层不会稳定继承 select 的半透明背景。
    为所有下拉项提供不透明底色，避免白底白字看起来像空白列表。 */
-.app select{
+select{
   color-scheme:dark!important;
-  background-color:#25272d!important;
-  color:#f5f5f7!important;
+  background-color:rgb(var(--album-deep))!important;
+  color:#fff!important;
+  border-color:rgb(var(--album-highlight)/.24)!important;
+  accent-color:rgb(var(--album-highlight));
   forced-color-adjust:none;
 }
-.app select option,
-.app select optgroup{
-  background-color:#25272d!important;
-  color:#f5f5f7!important;
-}
-.app select option:checked{
-  background-color:#66445a!important;
+select option,
+select optgroup{
+  background-color:rgb(var(--album-deep))!important;
   color:#fff!important;
+}
+select option:checked{
+  background-color:rgb(var(--album-primary))!important;
+  color:var(--album-contrast,#fff)!important;
 }
