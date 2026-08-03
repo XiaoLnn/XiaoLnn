@@ -1781,3 +1781,76 @@ body.lyrics-fullscreen .player-panel .lyrics-line-assist{
   .player-panel .control-row{transform:translateY(-46px)}
   .player-panel .progress-row{transform:translateY(-10px)}
 }
+
+/* 在线歌单、QQ 热榜与“下一首播放”控件 */
+.hot-chart-row{
+  display:flex;align-items:center;gap:7px;margin-top:8px;
+}
+.hot-chart-row select{
+  flex:1;min-width:0;border:0;border-radius:10px;padding:8px 10px;
+  background:rgba(255,255,255,.09);color:#fff;outline:0;
+}
+.hot-chart-row .btn{padding:8px 10px;font-size:9px}
+.hot-chart-row.is-loading{opacity:.55;pointer-events:none}
+.mini-queue-btn{
+  width:25px;height:22px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;
+  background:rgba(255,255,255,.08);color:#fff;font-size:9px;font-weight:750;cursor:pointer;
+}
+.mini-queue-btn:hover{background:rgb(var(--album-primary)/.25)}
+.queue-next-btn{font-weight:760;letter-spacing:-.04em}
+.library-more-btn{width:100%;margin:8px 0 4px;padding:10px;font-size:9px}
+.modal-field{display:grid;gap:7px;margin-top:12px;color:var(--ink-3);font-size:10px}
+.modal input,.modal textarea{
+  width:100%;padding:12px 13px;border:1px solid var(--stroke);border-radius:13px;outline:0;
+  background:rgba(255,255,255,.055);color:#fff;font:inherit;resize:vertical;
+}
+.modal input:focus,.modal textarea:focus{border-color:rgb(var(--album-highlight)/.55);box-shadow:0 0 0 3px rgb(var(--album-primary)/.15)}
+.playlist-detect-status{min-height:18px;margin-top:8px;color:rgb(var(--album-highlight));font-size:10px}
+.playlist-detect-status.is-error{color:#ff8da6}
+.modal .btn:disabled{opacity:.5;cursor:wait;transform:none}
+
+/* 平板横屏：保留可展开的音乐库抽屉，并压缩上下信息栏释放内容高度。 */
+@media (min-width:861px) and (max-width:1180px){
+  .app{padding:8px 10px 9px;gap:8px}
+  header{height:48px;flex-basis:48px;border-radius:16px;padding-left:9px}
+  .pikachu-box{width:34px;height:34px;border-radius:10px}
+  .title-text p,.shortcut-hint{display:none}
+  .shortcut-toggle-btn{width:34px;height:34px}
+  footer{display:none}
+  .playlist-panel{display:flex!important}
+  body:not(.library-collapsed) .playlist-panel{top:64px!important;right:10px!important;bottom:9px!important;width:min(360px,42vw)!important}
+  .track-actions{opacity:1}
+  .track-actions .btn-icon{width:32px;height:32px;min-width:32px}
+}
+
+/* 平板竖屏和手机：仅收紧顶部/底部信息栏，主体面板布局保持原逻辑。 */
+@media (max-width:860px){
+  header{height:46px!important;flex-basis:46px!important}
+  .title-text p,.shortcut-hint{display:none!important}
+  .pikachu-box{width:34px;height:34px;border-radius:10px}
+  footer{display:none!important}
+  .import-link-modal{max-height:min(680px,calc(var(--visual-height,100dvh) - 32px));overflow:auto}
+  .track-actions .btn-icon{width:30px;height:30px;min-width:30px}
+  .playlist-bar{background:linear-gradient(180deg,rgb(var(--album-deep)/.99) 78%,rgb(var(--album-deep)/.94))!important;backdrop-filter:blur(18px)}
+}
+@media (max-width:480px){
+  .track-actions{display:grid;grid-template-columns:repeat(2,30px);gap:3px}
+}
+
+/* Windows Edge/Chrome 的原生下拉弹层不会稳定继承 select 的半透明背景。
+   为所有下拉项提供不透明底色，避免白底白字看起来像空白列表。 */
+.app select{
+  color-scheme:dark!important;
+  background-color:#25272d!important;
+  color:#f5f5f7!important;
+  forced-color-adjust:none;
+}
+.app select option,
+.app select optgroup{
+  background-color:#25272d!important;
+  color:#f5f5f7!important;
+}
+.app select option:checked{
+  background-color:#66445a!important;
+  color:#fff!important;
+}

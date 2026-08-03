@@ -48,14 +48,17 @@
         translationUnavailable:"翻译暂不可用",
         pinyinUnavailable:"拼音组件暂不可用",
         playlistTitle:"音乐库",
-        tabResults:"搜索结果",
+        tabHot:"QQ 热榜",
         tabFavorites:"我的收藏",
         tabCustomLists:"自建歌单",
-        playlistInfoResults:"搜索结果列表",
+        playlistInfoHot:"QQ 音乐热榜",
         playlistInfoFavorites:"收藏列表",
         playlistInfoPlaylist:"歌单",
         newPlaylist:"新建歌单",
-        importPlaylist:"导入歌单",
+        importPlaylistLink:"链接导入",
+        importPlaylistFile:"文件导入",
+        renamePlaylist:"重命名",
+        refreshHot:"刷新",
         exportPlaylist:"导出歌单",
         deletePlaylist:"删除歌单",
         removeFromPlaylist:"从歌单移除",
@@ -70,14 +73,20 @@
         toastPlayError:"播放失败，请稍后再试。",
         toastLyricStyleSwitched:"已切换歌词炫酷效果。",
         toastDownloadNotReady:"当前歌曲还未加载完成，稍后再试。",
+        toastDownloadPreparing:"正在准备下载…",
+        toastDownloadStarted:"已按“歌手 - 歌名”命名下载。",
+        toastQueuedNext:"已加入下一首播放",
         toastPlaylistCreated:"歌单创建成功。",
         toastPlaylistDeleted:"歌单已删除。",
+        toastPlaylistRenamed:"歌单已重命名。",
         toastTrackRemovedFromPlaylist:"已从歌单移除。",
         confirmDeletePlaylist:"确定要删除这个歌单吗？",
         confirmRemoveTrack:"确定要从歌单中移除这首歌吗？",
         toastPlaylistImported:"导入完成",
         toastPlaylistImportEmpty:"导入文件里没有可用歌单或收藏。",
         toastPlaylistImportError:"导入失败，请确认文件是本站导出的 JSON。",
+        toastPlaylistLinkError:"歌单导入失败，请检查链接或稍后再试。",
+        toastPlaylistLinkUnsupported:"暂未识别该链接，请粘贴网易云或 QQ 音乐歌单链接。",
         toastPlaylistExported:"已导出歌单文件。",
         toastPlaylistExportEmpty:"暂无可导出的歌单。",
         toastPlaylistEmpty:"当前歌单为空，先添加几首歌吧~",
@@ -92,6 +101,13 @@
         sourceJoox:"JOOX",
         modalNewPlaylistTitle:"新建歌单",
         modalNewPlaylistDesc:"给你的歌单取一个可爱的名字吧～",
+        modalRenamePlaylistTitle:"重命名歌单",
+        modalRenamePlaylistDesc:"修改后的名称只保存在当前浏览器。",
+        modalImportPlaylistTitle:"导入在线歌单",
+        modalImportPlaylistDesc:"粘贴网易云或 QQ 音乐歌单分享链接，平台会自动识别。",
+        playlistLinkLabel:"歌单链接或网易云歌单 ID",
+        playlistRenameOptional:"歌单名称（可选）",
+        modalImportConfirm:"识别并导入",
         modalConfirm:"确定",
         modalCancel:"取消"
       },
@@ -143,14 +159,17 @@
         translationUnavailable:"Translation unavailable",
         pinyinUnavailable:"Pinyin unavailable",
         playlistTitle:"Library",
-        tabResults:"Default",
+        tabHot:"QQ Charts",
         tabFavorites:"Favorites",
         tabCustomLists:"Playlists",
-        playlistInfoResults:"Search Result List",
+        playlistInfoHot:"QQ Music Charts",
         playlistInfoFavorites:"Favorites List",
         playlistInfoPlaylist:"Playlist",
         newPlaylist:"Create",
-        importPlaylist:"Import",
+        importPlaylistLink:"Import link",
+        importPlaylistFile:"Import file",
+        renamePlaylist:"Rename",
+        refreshHot:"Refresh",
         exportPlaylist:"Export",
         deletePlaylist:"Delete",
         removeFromPlaylist:"Remove from playlist",
@@ -165,14 +184,20 @@
         toastPlayError:"Playback failed. Please try again.",
         toastLyricStyleSwitched:"Lyrics FX toggled.",
         toastDownloadNotReady:"Song not fully loaded yet. Try again later.",
+        toastDownloadPreparing:"Preparing download…",
+        toastDownloadStarted:"Download named as Artist - Title.",
+        toastQueuedNext:"Queued to play next",
         toastPlaylistCreated:"Playlist created.",
         toastPlaylistDeleted:"Playlist deleted.",
+        toastPlaylistRenamed:"Playlist renamed.",
         toastTrackRemovedFromPlaylist:"Removed from playlist.",
         confirmDeletePlaylist:"Delete this playlist?",
         confirmRemoveTrack:"Remove this song from the playlist?",
         toastPlaylistImported:"Import completed",
         toastPlaylistImportEmpty:"No usable playlists or favorites found in this file.",
         toastPlaylistImportError:"Import failed. Please choose a JSON file exported by this site.",
+        toastPlaylistLinkError:"Playlist import failed. Check the link and try again.",
+        toastPlaylistLinkUnsupported:"Unsupported link. Paste a Netease or QQ Music playlist link.",
         toastPlaylistExported:"Playlist file exported.",
         toastPlaylistExportEmpty:"No playlist to export.",
         toastPlaylistEmpty:"Playlist is empty. Add some songs first.",
@@ -187,6 +212,13 @@
         sourceJoox:"JOOX",
         modalNewPlaylistTitle:"Create Playlist",
         modalNewPlaylistDesc:"Give your playlist a cute name!",
+        modalRenamePlaylistTitle:"Rename Playlist",
+        modalRenamePlaylistDesc:"The new name is stored only in this browser.",
+        modalImportPlaylistTitle:"Import Online Playlist",
+        modalImportPlaylistDesc:"Paste a Netease or QQ Music share link; the platform is detected automatically.",
+        playlistLinkLabel:"Playlist link or Netease playlist ID",
+        playlistRenameOptional:"Playlist name (optional)",
+        modalImportConfirm:"Detect & Import",
         modalConfirm:"Confirm",
         modalCancel:"Cancel"
       }
@@ -204,8 +236,15 @@
       trackMap:new Map(),
       favorites:[],
       playlists:[],
+      hotCharts:[],
+      hotTracks:[],
+      hotLoading:false,
+      selectedHotChartId:'26',
+      upNext:[],
+      libraryRenderLimit:80,
+      playRequestToken:0,
       currentTrack:null,
-      playContext:{type:'results',index:-1,playlistId:null},
+      playContext:{type:'hot',index:-1,playlistId:null},
       playMode:'list',
       isPlaying:false,
       lyricLines:[],
@@ -227,6 +266,9 @@
     const LYRIC_ASSIST_STORAGE_KEY = 'nie-music-lyric-assist';
     const PINYIN_PRO_URL = 'https://unpkg.com/pinyin-pro@3.18.2/dist/index.js';
     const LYRIC_TRANSLATION_CACHE_KEY = 'nie-music-lyric-translation-cache-v1';
+    const METING_ENDPOINT = 'https://api.qijieya.cn/meting/';
+    const QQ_PLAYLIST_ENDPOINT = '/api/qq-playlist';
+    const QQ_HOT_ENDPOINT = 'https://cyapi.top/API/music_hot.php';
 
     let openCCConverters=null;
     let openCCLoadPromise=null;
@@ -330,7 +372,7 @@
       const keys=[
         'uid','source','displayIndex','keyword','songid','songMid','qqId','qqSearchKey','qqIndex',
         'jooxIndex','jooxSongId','jooxSongMid','title','artist','album','cover','pageUrl',
-        'quality','qualityLabel','qqQualityText','jooxQualityText','pay'
+        'quality','qualityLabel','qqQualityText','jooxQualityText','pay','directAudioUrl','directLrcUrl','importSource'
       ];
       const out={};
       keys.forEach(k=>{
@@ -348,20 +390,23 @@
       const track=serializeTrack(raw);
       if(!track) return null;
       track.detailsLoaded=false;
-      track.audioUrl=null;
+      track.audioUrl=track.directAudioUrl||null;
       track.lrc=null;
-      track.lrcUrl=null;
+      track.lrcUrl=track.directLrcUrl||null;
       return track;
     }
 
     function getLibrarySnapshot(){
       return {
-        version:1,
+        version:2,
         savedAt:new Date().toISOString(),
         favorites:state.favorites.map(serializeTrack).filter(Boolean),
         playlists:state.playlists.map(pl=>({
           id:pl.id,
           name:pl.name,
+          originPlatform:pl.originPlatform||null,
+          originId:pl.originId||null,
+          importedAt:pl.importedAt||null,
           tracks:(pl.tracks||[]).map(serializeTrack).filter(Boolean)
         }))
       };
@@ -395,6 +440,9 @@
           ? data.playlists.map((pl,idx)=>({
               id:pl.id || ('pl-cached-'+idx+'-'+Date.now()),
               name:pl.name || (state.language==='zh'?'未命名歌单':'Untitled Playlist'),
+              originPlatform:pl.originPlatform||null,
+              originId:pl.originId||null,
+              importedAt:pl.importedAt||null,
               tracks:Array.isArray(pl.tracks) ? pl.tracks.map(deserializeTrack).filter(Boolean) : []
             }))
           : [];
@@ -520,6 +568,158 @@
       reader.readAsText(file, 'utf-8');
     }
 
+    function payloadArray(payload, keys=[]){
+      if(Array.isArray(payload)) return payload;
+      for(const key of keys){
+        if(Array.isArray(payload?.[key])) return payload[key];
+      }
+      if(Array.isArray(payload?.data)) return payload.data;
+      return [];
+    }
+
+    function cleanSharedUrl(value){
+      const raw=String(value||'').trim();
+      const match=raw.match(/https?:\/\/[^\s<>"']+/i);
+      return (match?match[0]:raw).replace(/[）)\]】,，。；;]+$/g,'');
+    }
+
+    function detectExternalPlaylist(value){
+      const raw=String(value||'').trim();
+      if(/^\d{4,}$/.test(raw)) return {platform:'netease',id:raw,url:raw};
+      const sharedUrl=cleanSharedUrl(raw);
+      let parsed;
+      try{parsed=new URL(sharedUrl);}catch(error){return null;}
+      const host=parsed.hostname.toLowerCase();
+      if(host.includes('163.com')||host.includes('163cn.tv')){
+        const id=parsed.searchParams.get('id')||(parsed.pathname.match(/playlist\/(\d+)/i)||[])[1]||'';
+        return id?{platform:'netease',id,url:sharedUrl}:null;
+      }
+      if(host.includes('qq.com')){
+        const id=parsed.searchParams.get('id')||parsed.searchParams.get('disstid')||'';
+        return {platform:'qq',id,url:sharedUrl};
+      }
+      return null;
+    }
+
+    function normalizeImportedNeteaseTrack(item,index){
+      const audioUrl=String(item?.url||'');
+      let songId='';
+      try{songId=new URL(audioUrl).searchParams.get('id')||'';}catch(error){}
+      if(!songId) songId=String(item?.id||index+1);
+      return {
+        uid:'netease-'+songId,source:'netease',displayIndex:index+1,songid:songId,
+        keyword:((item?.name||'')+' '+(item?.artist||'')).trim(),neteaseIndex:index+1,
+        title:String(item?.name||item?.title||'Unknown'),artist:cyNormalizeArtist(item?.artist||''),album:String(item?.album||''),
+        cover:cyNormalizeMediaUrl(item?.pic||item?.cover||'','image'),audioUrl,
+        directAudioUrl:audioUrl,directLrcUrl:String(item?.lrc||''),lrcUrl:String(item?.lrc||''),lrc:null,
+        importSource:'meting',detailsLoaded:false,quality:null,qualityLabel:null
+      };
+    }
+
+    function normalizeQQCollectionTrack(item,index,prefix='qq'){
+      const mid=String(item?.mid||item?.song_mid||item?.songmid||'').trim();
+      if(!mid)return null;
+      const title=String(item?.name||item?.song_name||item?.title||'Unknown');
+      const artist=cyNormalizeArtist(item?.singer||item?.songer_name||item?.artist||'');
+      return {
+        uid:'qq-'+mid,source:'qq',displayIndex:index+1,songMid:mid,qqId:mid,
+        qqSearchKey:(title+' '+artist).trim(),keyword:(title+' '+artist).trim(),
+        title,artist,album:String(item?.album||''),cover:cyNormalizeMediaUrl(item?.cover||item?.pic||'','image'),
+        detailsLoaded:false,audioUrl:null,lrc:null,lrcUrl:null,importSource:prefix
+      };
+    }
+
+    function storeImportedPlaylist(platform,originId,name,tracks){
+      const originKey=String(originId||'').trim()||String(Date.now());
+      let playlist=state.playlists.find(item=>item.originPlatform===platform&&item.originId===originKey);
+      const fallbackName=platform==='netease'?`网易云歌单 ${originKey}`:`QQ 歌单 ${originKey}`;
+      if(!playlist){
+        playlist={
+          id:`pl-${platform}-${originKey}-${Math.random().toString(16).slice(2,8)}`,
+          name:name||fallbackName,originPlatform:platform,originId:originKey,importedAt:new Date().toISOString(),tracks:[]
+        };
+        state.playlists.push(playlist);
+      }else{
+        if(name)playlist.name=name;
+        playlist.importedAt=new Date().toISOString();
+        playlist.tracks=[];
+      }
+      tracks.filter(Boolean).forEach(track=>{
+        const cached=state.trackMap.get(track.uid);
+        const resolved=cached?Object.assign(cached,track):track;
+        state.trackMap.set(resolved.uid,resolved);
+        if(!playlist.tracks.some(item=>item.uid===resolved.uid))playlist.tracks.push(resolved);
+      });
+      state.playContext={type:'playlist',index:-1,playlistId:playlist.id};
+      renderPlaylistOptions();
+      dom.playlistSelect.value=playlist.id;
+      saveLibraryToStorage();
+      renderPlaylistList();
+      return playlist;
+    }
+
+    function updatePlaylistDetection(){
+      if(!dom.playlistDetectStatus)return null;
+      const detected=detectExternalPlaylist(dom.playlistLinkInput.value);
+      dom.playlistDetectStatus.classList.toggle('is-error',Boolean(dom.playlistLinkInput.value.trim()&&!detected));
+      dom.playlistDetectStatus.textContent=!dom.playlistLinkInput.value.trim()?''
+        :detected?(detected.platform==='netease'?'已识别：网易云音乐歌单':'已识别：QQ 音乐歌单')
+        :t('toastPlaylistLinkUnsupported');
+      return detected;
+    }
+
+    function openPlaylistLinkModal(){
+      dom.playlistLinkModal.classList.add('show');
+      dom.playlistLinkInput.value='';
+      dom.playlistImportNameInput.value='';
+      dom.playlistDetectStatus.textContent='';
+      setTimeout(()=>dom.playlistLinkInput.focus(),50);
+    }
+
+    function closePlaylistLinkModal(){
+      if(dom.playlistLinkConfirm.disabled)return;
+      dom.playlistLinkModal.classList.remove('show');
+    }
+
+    async function importExternalPlaylist(){
+      const detected=updatePlaylistDetection();
+      if(!detected){showToast(t('toastPlaylistLinkUnsupported'));return;}
+      const customName=dom.playlistImportNameInput.value.trim();
+      dom.playlistLinkConfirm.disabled=true;
+      dom.playlistDetectStatus.classList.remove('is-error');
+      dom.playlistDetectStatus.textContent=detected.platform==='netease'?'正在导入网易云歌单…':'正在导入 QQ 音乐歌单…';
+      try{
+        let tracks=[];
+        if(detected.platform==='netease'){
+          const url=new URL(METING_ENDPOINT);
+          url.searchParams.set('server','netease');
+          url.searchParams.set('type','playlist');
+          url.searchParams.set('id',detected.id);
+          const payload=await cyRequest(url);
+          tracks=payloadArray(payload,['value','result','songs']).map(normalizeImportedNeteaseTrack);
+        }else{
+          const url=new URL(QQ_PLAYLIST_ENDPOINT,location.origin);
+          url.searchParams.set('url',detected.url);
+          const payload=await cyRequest(url);
+          tracks=payloadArray(payload,['song_list','value','songs']).map((item,index)=>normalizeQQCollectionTrack(item,index,'qq-playlist')).filter(Boolean);
+        }
+        if(!tracks.length)throw new Error('empty external playlist');
+        const playlist=storeImportedPlaylist(detected.platform,detected.id||detected.url,customName,tracks);
+        dom.playlistLinkModal.classList.remove('show');
+        document.querySelectorAll('.playlist-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.tab==='playlists'));
+        state.playContext={type:'playlist',index:-1,playlistId:playlist.id};
+        renderPlaylistList();
+        showToast(`${t('toastPlaylistImported')}：${playlist.tracks.length} ${state.language==='zh'?'首歌曲':'tracks'}`);
+      }catch(error){
+        console.error('external playlist import failed',error);
+        dom.playlistDetectStatus.classList.add('is-error');
+        dom.playlistDetectStatus.textContent=t('toastPlaylistLinkError');
+        showToast(t('toastPlaylistLinkError'));
+      }finally{
+        dom.playlistLinkConfirm.disabled=false;
+      }
+    }
+
     function renderPlaylistOptions(){
       if(!dom.playlistSelect) return;
       const prev=dom.playlistSelect.value || state.playContext.playlistId;
@@ -552,6 +752,81 @@
     const CY_NETEASE_ENDPOINT='https://cyapi.top/API/netease.php';
     const CY_NETEASE_API_KEY='bc01615f034c60e77e43bc0305b3c2ee944414f740083c9421631e6a797bc84c';
     const CY_HOT_COMMENT_ENDPOINT='https://cyapi.top/API/wyrp.php';
+
+    async function loadQQHotCharts(force=false){
+      if(state.hotLoading)return;
+      if(state.hotCharts.length&&!force){
+        renderHotChartOptions();
+        if(!state.hotTracks.length)await loadQQHotTracks(state.selectedHotChartId);
+        return;
+      }
+      state.hotLoading=true;
+      if(dom.hotChartRow)dom.hotChartRow.classList.add('is-loading');
+      try{
+        const url=new URL(QQ_HOT_ENDPOINT);
+        url.searchParams.set('apikey',CY_NETEASE_API_KEY);
+        const payload=await cyRequest(url);
+        state.hotCharts=payloadArray(payload,['value','data','list']).map(item=>({
+          id:String(item.list_id||item.id||''),
+          name:String(item.list_name||item.name||'QQ 热榜'),
+          cover:cyNormalizeMediaUrl(item.list_cover||item.cover||'','image')
+        })).filter(item=>item.id);
+        if(!state.hotCharts.some(item=>item.id===state.selectedHotChartId)){
+          state.selectedHotChartId=state.hotCharts[0]?.id||'26';
+        }
+        renderHotChartOptions();
+        await loadQQHotTracks(state.selectedHotChartId);
+      }catch(error){
+        console.error('qq hot charts failed',error);
+        if(dom.playlistInfo)dom.playlistInfo.textContent=state.language==='zh'?'QQ 热榜加载失败':'QQ charts unavailable';
+      }finally{
+        state.hotLoading=false;
+        if(dom.hotChartRow)dom.hotChartRow.classList.remove('is-loading');
+      }
+    }
+
+    function renderHotChartOptions(){
+      if(!dom.hotChartSelect)return;
+      dom.hotChartSelect.innerHTML='';
+      state.hotCharts.forEach(chart=>{
+        const option=document.createElement('option');
+        option.value=chart.id;
+        option.textContent=chart.name;
+        dom.hotChartSelect.appendChild(option);
+      });
+      dom.hotChartSelect.value=state.selectedHotChartId;
+    }
+
+    async function loadQQHotTracks(chartId){
+      const id=String(chartId||state.selectedHotChartId||'26');
+      state.selectedHotChartId=id;
+      state.libraryRenderLimit=80;
+      if(dom.hotChartSelect)dom.hotChartSelect.value=id;
+      if(dom.hotChartRow)dom.hotChartRow.classList.add('is-loading');
+      try{
+        const url=new URL(QQ_HOT_ENDPOINT);
+        url.searchParams.set('apikey',CY_NETEASE_API_KEY);
+        url.searchParams.set('id',id);
+        const payload=await cyRequest(url);
+        state.hotTracks=payloadArray(payload,['value','data','songs'])
+          .slice(0,100)
+          .map((item,index)=>normalizeQQCollectionTrack(item,index,'qq-hot'))
+          .filter(Boolean);
+        state.hotTracks.forEach(track=>{
+          const cached=state.trackMap.get(track.uid);
+          if(cached)Object.assign(cached,track);
+          else state.trackMap.set(track.uid,track);
+        });
+        state.hotTracks=state.hotTracks.map(track=>state.trackMap.get(track.uid)||track);
+        renderPlaylistList();
+      }catch(error){
+        console.error('qq hot tracks failed',error);
+        state.hotTracks=[];
+        renderPlaylistList();
+      }finally{
+        if(dom.hotChartRow)dom.hotChartRow.classList.remove('is-loading');
+      }
+    }
 
     function cyFirst(obj, keys, fallback=''){
       if(!obj || typeof obj!=='object')return fallback;
@@ -1120,6 +1395,8 @@
 
         state.searchResults=[];
         state.trackMap.clear();
+        rebuildLibraryTrackMap();
+        state.hotTracks.forEach(track=>state.trackMap.set(track.uid,track));
         state.noMoreResults=false;
         syncMobileHotCommentVisibility();
       }
@@ -1339,6 +1616,22 @@
     }
 
     async function ensureTrackDetails(track){
+      if(track.directAudioUrl){
+        track.audioUrl=track.directAudioUrl;
+        if(!track.lrc&&track.directLrcUrl){
+          try{
+            const response=await fetch(track.directLrcUrl);
+            if(response.ok)track.lrc=await response.text();
+          }catch(error){console.warn('direct lyric load failed',error);}
+        }
+        track.detailsLoaded=true;
+        if(track.audioUrl){
+          const quality=inferQualityFromUrl(track.audioUrl);
+          track.quality=quality.tag;
+          track.qualityLabel=quality.label;
+        }
+        return;
+      }
       if(track.detailsLoaded && track.audioUrl && (track.lrc || !track.lrcUrl) && (track.source!=='netease' || (track.cover && track.lrc))) return;
       dom.playerStatus.textContent=t('playerStatusLoading');
       if(track.source==='netease') await fetchNeteaseDetails(track);
@@ -2040,6 +2333,7 @@
 
     async function playTrack(track,context){
       if(!track)return;
+      const requestToken=++state.playRequestToken;
       state.currentTrack=track;
       state.playContext=context||state.playContext;
 
@@ -2103,6 +2397,7 @@
 
       try{
         await ensureTrackDetails(track);
+        if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return;
         applyUI();
         state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
         renderLyrics();
@@ -2115,6 +2410,7 @@
         setPlayButtonState(true);
         dom.playerStatus.textContent=t('playerStatusPlaying');
       }catch(e){
+        if(requestToken!==state.playRequestToken)return;
         console.error(e);
         showToast(t('toastPlayError'));
         dom.playerStatus.textContent=t('playerStatusIdle');
@@ -2133,6 +2429,7 @@
         }
         return list;
       }
+      if(tp==='hot')return state.hotTracks;
       if(tp==='favorites')return state.favorites;
       if(tp==='playlist'){
         const pl=state.playlists.find(p=>p.id===state.playContext.playlistId);
@@ -2144,6 +2441,7 @@
     function playFromList(type,index,plId){
       let list;
       if(type==='results') list=getInterleavedSearchList();
+      else if(type==='hot') list=state.hotTracks;
       else if(type==='favorites') list=state.favorites;
       else{
         const pl=state.playlists.find(p=>p.id===plId);
@@ -2163,6 +2461,11 @@
     }
 
     function playNext(direction){
+      if(direction==='next'&&state.upNext.length){
+        const queued=state.upNext.shift();
+        playTrack(queued,state.playContext);
+        return;
+      }
       const list=getActiveList(); if(!list.length)return;
       let idx=state.playContext.index ?? -1;
       if(idx<0||idx>=list.length)idx=0;
@@ -2209,10 +2512,63 @@
       renderPlaylistList();
     }
 
-    function handleDownloadCurrent(){
+    function queueTrackNext(track){
+      if(!track)return;
+      state.upNext=state.upNext.filter(item=>item.uid!==track.uid);
+      state.upNext.unshift(track);
+      showToast(`${t('toastQueuedNext')} · ${track.title||'Unknown'}`);
+    }
+
+    function safeDownloadPart(value,fallback){
+      const text=String(value||fallback||'').normalize('NFC')
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g,' ')
+        .replace(/\s+/g,' ').replace(/[. ]+$/g,'').trim();
+      return (text||fallback||'Music').slice(0,80);
+    }
+
+    function inferAudioExtension(url,contentType=''){
+      const mime=String(contentType).split(';')[0].toLowerCase();
+      const byMime={'audio/mpeg':'mp3','audio/mp3':'mp3','audio/flac':'flac','audio/x-flac':'flac','audio/wav':'wav','audio/x-wav':'wav','audio/ogg':'ogg','audio/aac':'aac','audio/mp4':'m4a'};
+      if(byMime[mime])return byMime[mime];
+      try{
+        const ext=(new URL(url).pathname.match(/\.([a-z0-9]{2,5})$/i)||[])[1]?.toLowerCase();
+        if(['mp3','flac','wav','ogg','aac','m4a'].includes(ext))return ext;
+      }catch(error){}
+      return 'mp3';
+    }
+
+    function triggerDownload(url,filename){
+      const anchor=document.createElement('a');
+      anchor.href=url;
+      anchor.download=filename;
+      anchor.rel='noopener';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+
+    async function handleDownloadCurrent(){
       const tr=state.currentTrack;
-      if(!tr||!tr.audioUrl){showToast(t('toastDownloadNotReady'));return;}
-      window.open(tr.audioUrl,'_blank');
+      if(!tr){showToast(t('toastDownloadNotReady'));return;}
+      try{await ensureTrackDetails(tr);}catch(error){console.warn('download detail load failed',error);}
+      if(!tr.audioUrl){showToast(t('toastDownloadNotReady'));return;}
+      const baseName=`${safeDownloadPart(tr.artist,state.language==='zh'?'未知歌手':'Unknown Artist')} - ${safeDownloadPart(tr.title,state.language==='zh'?'未知歌曲':'Unknown Track')}`;
+      showToast(t('toastDownloadPreparing'));
+      try{
+        const response=await fetch(tr.audioUrl);
+        if(!response.ok)throw new Error(`download ${response.status}`);
+        const blob=await response.blob();
+        const ext=inferAudioExtension(tr.audioUrl,blob.type||response.headers.get('content-type'));
+        const objectUrl=URL.createObjectURL(blob);
+        triggerDownload(objectUrl,`${baseName}.${ext}`);
+        setTimeout(()=>URL.revokeObjectURL(objectUrl),3000);
+        showToast(t('toastDownloadStarted'));
+      }catch(error){
+        console.warn('named download fallback',error);
+        const ext=inferAudioExtension(tr.audioUrl);
+        triggerDownload(tr.audioUrl,`${baseName}.${ext}`);
+        showToast(t('toastDownloadStarted'));
+      }
     }
 
     function addCurrentToPlaylist(){
@@ -2296,7 +2652,10 @@
         const src=document.createElement('div');src.className='mini-source';
         const dot=document.createElement('span');dot.className='source-dot '+track.source;
         const key=track.source==='netease'?'sourceNetease':track.source==='qq'?'sourceQQ':track.source==='joox'?'sourceJoox':'sourceKuwo';
-        const txt=document.createElement('span');txt.textContent=t(key);src.appendChild(dot);src.appendChild(txt);right.appendChild(badge);right.appendChild(src);
+        const txt=document.createElement('span');txt.textContent=t(key);src.appendChild(dot);src.appendChild(txt);
+        const queueBtn=document.createElement('button');queueBtn.className='mini-queue-btn ripple-target';queueBtn.type='button';queueBtn.textContent='+1';queueBtn.title=state.language==='zh'?'下一首播放':'Play next';queueBtn.setAttribute('aria-label',queueBtn.title);
+        queueBtn.addEventListener('click',event=>{event.stopPropagation();queueTrackNext(track);});
+        right.appendChild(badge);right.appendChild(src);right.appendChild(queueBtn);
         item.appendChild(cover);item.appendChild(meta);item.appendChild(right);
         item.addEventListener('click',()=>{const visible=getInterleavedSearchList();const idx=visible.findIndex(x=>x.uid===track.uid);playFromList('results',idx);});
         wrap.appendChild(item);
@@ -2305,8 +2664,11 @@
     }
 
     function updatePlaylistInfoLabel(){
-      const tab=document.querySelector('.playlist-tab.active')?.dataset.tab||'results';
-      if(tab==='results') dom.playlistInfo.textContent = t('playlistInfoResults');
+      const tab=document.querySelector('.playlist-tab.active')?.dataset.tab||'hot';
+      if(tab==='hot'){
+        const chart=state.hotCharts.find(item=>item.id===state.selectedHotChartId);
+        dom.playlistInfo.textContent = chart?`${t('playlistInfoHot')} · ${chart.name}`:t('playlistInfoHot');
+      }
       else if(tab==='favorites') dom.playlistInfo.textContent = t('playlistInfoFavorites');
       else {
         const pl=state.playlists.find(p=>p.id===dom.playlistSelect.value);
@@ -2318,18 +2680,18 @@
     function renderPlaylistList(){
       const wrap=dom.playlistList;
       wrap.innerHTML='';
-      const activeTab=document.querySelector('.playlist-tab.active')?.dataset.tab||'results';
+      const activeTab=document.querySelector('.playlist-tab.active')?.dataset.tab||'hot';
       let list=[];
-      if(activeTab==='results'){
-        list=getInterleavedSearchList();
-        if(!list.length && state.searchResults.length){
-          list=[...state.searchResults];
-        }
+      if(activeTab==='hot'){
+        list=state.hotTracks;
+        dom.hotChartRow.style.display='flex';
         dom.playlistSelectRow.style.display='none';
       }else if(activeTab==='favorites'){
         list=state.favorites;
+        dom.hotChartRow.style.display='none';
         dom.playlistSelectRow.style.display='none';
       }else{
+        dom.hotChartRow.style.display='none';
         dom.playlistSelectRow.style.display='flex';
         renderPlaylistOptions();
         if(!state.playlists.length){
@@ -2343,7 +2705,8 @@
       }
       updatePlaylistInfoLabel();
 
-      list.forEach((track,idx)=>{
+      const totalTracks=list.length;
+      list.slice(0,state.libraryRenderLimit).forEach((track,idx)=>{
         const item=document.createElement('div');
         item.className='track-item ripple-target';
         if(state.currentTrack && state.currentTrack.uid===track.uid) item.classList.add('playing');
@@ -2375,6 +2738,9 @@
         const fBtn=document.createElement('button');
         fBtn.className='btn btn-secondary btn-icon ripple-target'; fBtn.textContent='❤';
         if(isFavorite(track)) fBtn.classList.add('btn-fav-active');
+        const qBtn=document.createElement('button');
+        qBtn.className='btn btn-secondary btn-icon queue-next-btn ripple-target'; qBtn.textContent='+1';
+        qBtn.title=state.language==='zh'?'下一首播放':'Play next';qBtn.setAttribute('aria-label',qBtn.title);
         const removeBtn=document.createElement('button');
         removeBtn.className='btn btn-ghost btn-icon ripple-target';
         removeBtn.textContent='×';
@@ -2382,7 +2748,10 @@
 
         pBtn.addEventListener('click',ev=>{
           ev.stopPropagation();
-          if(activeTab==='results'){
+          if(activeTab==='hot'){
+            const i=state.hotTracks.findIndex(x=>x.uid===track.uid);
+            playFromList('hot',i);
+          }else if(activeTab==='results'){
             const visible=getInterleavedSearchList();
             const i=visible.findIndex(x=>x.uid===track.uid);
             playFromList('results',i);
@@ -2396,6 +2765,7 @@
             playFromList('playlist',i,plId);
           }
         });
+        qBtn.addEventListener('click',ev=>{ev.stopPropagation();queueTrackNext(track);});
         fBtn.addEventListener('click',ev=>{
           ev.stopPropagation();
           const i=state.favorites.findIndex(x=>x.uid===track.uid);
@@ -2410,12 +2780,24 @@
           removeTrackFromCurrentPlaylist(track.uid);
         });
         act.appendChild(pBtn);
+        act.appendChild(qBtn);
         act.appendChild(fBtn);
         if(activeTab==='playlists') act.appendChild(removeBtn);
         item.appendChild(index);item.appendChild(meta);item.appendChild(act);
         item.addEventListener('click',()=>pBtn.click());
         wrap.appendChild(item);
       });
+
+      if(totalTracks>state.libraryRenderLimit){
+        const more=document.createElement('button');
+        more.className='library-more-btn btn btn-ghost ripple-target';
+        more.type='button';
+        more.textContent=state.language==='zh'
+          ?`再显示 ${Math.min(80,totalTracks-state.libraryRenderLimit)} 首 · 共 ${totalTracks} 首`
+          :`Show ${Math.min(80,totalTracks-state.libraryRenderLimit)} more · ${totalTracks} total`;
+        more.addEventListener('click',()=>{state.libraryRenderLimit+=80;renderPlaylistList();});
+        wrap.appendChild(more);
+      }
 
       // Do not auto-scroll the right playlist after every re-render.
       // Re-rendering can happen when favoriting/unfavoriting a track; forcing
@@ -2425,17 +2807,36 @@
 
     // ===================== 歌单弹窗 =====================
 
-    function openPlaylistModal(){
+    let playlistModalMode='create';
+
+    function openPlaylistModal(mode='create'){
+      playlistModalMode=mode;
       dom.playlistModal.classList.add('show');
-      dom.playlistNameInput.value='';
+      const current=state.playlists.find(item=>item.id===dom.playlistSelect.value);
+      if(mode==='rename'&&!current){showToast(t('toastNeedPlaylistSelected'));dom.playlistModal.classList.remove('show');return;}
+      dom.playlistModalTitle.textContent=t(mode==='rename'?'modalRenamePlaylistTitle':'modalNewPlaylistTitle');
+      dom.playlistModalDesc.textContent=t(mode==='rename'?'modalRenamePlaylistDesc':'modalNewPlaylistDesc');
+      dom.playlistNameInput.value=mode==='rename'?(current?.name||''):'';
       setTimeout(()=>dom.playlistNameInput.focus(),50);
     }
     function closePlaylistModal(){
       dom.playlistModal.classList.remove('show');
     }
-    function createPlaylist(){
+    function savePlaylistFromModal(){
       let name=dom.playlistNameInput.value.trim();
       if(!name)name=state.language==='zh'?'未命名歌单':'Untitled Playlist';
+      if(playlistModalMode==='rename'){
+        const playlist=state.playlists.find(item=>item.id===dom.playlistSelect.value);
+        if(!playlist){showToast(t('toastNeedPlaylistSelected'));return;}
+        playlist.name=name;
+        renderPlaylistOptions();
+        dom.playlistSelect.value=playlist.id;
+        saveLibraryToStorage();
+        closePlaylistModal();
+        renderPlaylistList();
+        showToast(t('toastPlaylistRenamed'));
+        return;
+      }
       const id='pl-'+Date.now()+'-'+Math.random().toString(16).slice(2);
       const pl={id,name,tracks:[]};
       state.playlists.push(pl);
@@ -2622,19 +3023,34 @@
       dom.playlistInfo=$('playlist-info');
       dom.playlistSelectRow=$('playlist-select-row');
       dom.playlistSelect=$('playlist-select');
+      dom.hotChartRow=$('hot-chart-row');
+      dom.hotChartSelect=$('hot-chart-select');
+      dom.refreshHotChartBtn=$('refresh-hot-chart-btn');
       dom.deletePlaylistBtn=$('delete-playlist-btn');
+      dom.renamePlaylistBtn=$('rename-playlist-btn');
       dom.newPlaylistBtn=$('new-playlist-btn');
       dom.importPlaylistBtn=$('import-playlist-btn');
+      dom.importFileBtn=$('import-file-btn');
       dom.importPlaylistInput=$('import-playlist-input');
       dom.exportPlaylistBtn=$('export-playlist-btn');
       dom.addCurrentBtn=$('add-current-btn');
       dom.libraryToggle=$('library-toggle');
 
       dom.playlistModal=$('playlist-modal');
+      dom.playlistModalTitle=$('playlist-modal-title');
+      dom.playlistModalDesc=$('playlist-modal-desc');
       dom.playlistNameInput=$('playlist-name-input');
       dom.playlistConfirmBtn=$('playlist-confirm-btn');
       dom.playlistCancelBtn=$('playlist-cancel-btn');
       dom.playlistCloseBtn=$('playlist-close');
+
+      dom.playlistLinkModal=$('playlist-link-modal');
+      dom.playlistLinkInput=$('playlist-link-input');
+      dom.playlistImportNameInput=$('playlist-import-name-input');
+      dom.playlistDetectStatus=$('playlist-detect-status');
+      dom.playlistLinkConfirm=$('playlist-link-confirm');
+      dom.playlistLinkCancel=$('playlist-link-cancel');
+      dom.playlistLinkClose=$('playlist-link-close');
 
       dom.shortcutToggleBtn=$('shortcut-toggle-btn');
       dom.shortcutModal=$('shortcut-modal');
@@ -2662,6 +3078,7 @@
       };
       if(!panels[name]) name='player';
       mobileActivePanel=name;
+      if(name==='playlist'&&!state.hotTracks.length)loadQQHotCharts().catch(error=>console.warn('qq hot lazy load failed',error));
       const mobile=window.matchMedia('(max-width: 860px)').matches;
 
       if(mobile){
@@ -2751,6 +3168,7 @@
         dom.libraryToggle.title=state.libraryCollapsed?'展开音乐库':'折叠音乐库';
       }
       if(persist){try{localStorage.setItem(LIBRARY_COLLAPSED_STORAGE_KEY,state.libraryCollapsed?'1':'0');}catch(e){}}
+      if(!state.libraryCollapsed&&!state.hotTracks.length)loadQQHotCharts().catch(error=>console.warn('qq hot lazy load failed',error));
     }
 
     function setPlaymodeUI(){
@@ -2824,7 +3242,7 @@
       });
 
       dom.playlistMain.addEventListener('scroll',()=>{
-        const activeTab=document.querySelector('.playlist-tab.active')?.dataset.tab||'results';
+        const activeTab=document.querySelector('.playlist-tab.active')?.dataset.tab||'hot';
         if(activeTab!=='results')return;
         if(!canAutoLoadMore())return;
         if(dom.playlistMain.scrollTop + dom.playlistMain.clientHeight >= dom.playlistMain.scrollHeight-10){
@@ -3023,10 +3441,12 @@
 
       document.querySelectorAll('.playlist-tab').forEach(tab=>{
         tab.addEventListener('click',()=>{
+          state.libraryRenderLimit=80;
           document.querySelectorAll('.playlist-tab').forEach(el=>el.classList.toggle('active',el===tab));
           const tName=tab.dataset.tab;
-          if(tName==='results'){
-            state.playContext.type='results';state.playContext.playlistId=null;
+          if(tName==='hot'){
+            state.playContext.type='hot';state.playContext.playlistId=null;
+            if(!state.hotTracks.length)loadQQHotCharts().catch(error=>console.warn('qq hot tab load failed',error));
           }else if(tName==='favorites'){
             state.playContext.type='favorites';state.playContext.playlistId=null;
           }else{
@@ -3040,19 +3460,30 @@
       });
 
       dom.deletePlaylistBtn.addEventListener('click',deleteSelectedPlaylist);
-      dom.newPlaylistBtn.addEventListener('click',openPlaylistModal);
-      dom.importPlaylistBtn.addEventListener('click',()=>dom.importPlaylistInput.click());
+      dom.renamePlaylistBtn.addEventListener('click',()=>openPlaylistModal('rename'));
+      dom.newPlaylistBtn.addEventListener('click',()=>openPlaylistModal('create'));
+      dom.importPlaylistBtn.addEventListener('click',openPlaylistLinkModal);
+      dom.importFileBtn.addEventListener('click',()=>dom.importPlaylistInput.click());
       dom.importPlaylistInput.addEventListener('change',handleImportPlaylistFile);
       dom.exportPlaylistBtn.addEventListener('click',exportPlaylistData);
-      dom.playlistConfirmBtn.addEventListener('click',createPlaylist);
+      dom.playlistConfirmBtn.addEventListener('click',savePlaylistFromModal);
       dom.playlistCancelBtn.addEventListener('click',closePlaylistModal);
       dom.playlistCloseBtn.addEventListener('click',closePlaylistModal);
       dom.playlistModal.addEventListener('click',e=>{if(e.target===dom.playlistModal)closePlaylistModal();});
       dom.playlistSelect.addEventListener('change',()=>{
+        state.libraryRenderLimit=80;
         state.playContext.playlistId=dom.playlistSelect.value;
         renderPlaylistList();
       });
       dom.addCurrentBtn.addEventListener('click',addCurrentToPlaylist);
+      dom.hotChartSelect.addEventListener('change',()=>loadQQHotTracks(dom.hotChartSelect.value));
+      dom.refreshHotChartBtn.addEventListener('click',()=>loadQQHotCharts(true));
+
+      dom.playlistLinkInput.addEventListener('input',updatePlaylistDetection);
+      dom.playlistLinkConfirm.addEventListener('click',importExternalPlaylist);
+      dom.playlistLinkCancel.addEventListener('click',closePlaylistLinkModal);
+      dom.playlistLinkClose.addEventListener('click',closePlaylistLinkModal);
+      dom.playlistLinkModal.addEventListener('click',event=>{if(event.target===dom.playlistLinkModal)closePlaylistLinkModal();});
 
       dom.shortcutToggleBtn.addEventListener('click',()=>{dom.shortcutModal.classList.add('show');});
       dom.shortcutCloseBtn.addEventListener('click',()=>{dom.shortcutModal.classList.remove('show');});
@@ -3072,6 +3503,7 @@
         const tag=document.activeElement.tagName.toLowerCase();
         const typing=(tag==='input'||tag==='textarea');
         const playlistOpen=dom.playlistModal.classList.contains('show');
+        const playlistLinkOpen=dom.playlistLinkModal.classList.contains('show');
         const shortcutOpen=dom.shortcutModal.classList.contains('show');
 
         if(e.key==='Escape'){
@@ -3084,11 +3516,12 @@
             return;
           }
           if(playlistOpen)closePlaylistModal();
+          if(playlistLinkOpen)closePlaylistLinkModal();
           if(shortcutOpen)dom.shortcutModal.classList.remove('show');
           return;
         }
 
-        if(playlistOpen || shortcutOpen){
+        if(playlistOpen || playlistLinkOpen || shortcutOpen){
           return;
         }
 
@@ -3149,7 +3582,7 @@
   const viewport=window.visualViewport;
   const root=document.documentElement;
   const searchInput=document.getElementById('search-input');
-  let stableHeight=Math.max(window.innerHeight,viewport?viewport.height:0);
+  let stableHeight=0;
   let raf=0;
 
   if(searchInput){
@@ -3168,10 +3601,12 @@
   function applyViewport(){
     raf=0;
     const current=Math.max(1,Math.round(viewport?viewport.height:window.innerHeight));
+    const windowHeight=window.innerHeight;
+    if(!stableHeight)stableHeight=Math.max(current,windowHeight);
     const focused=isEditableFocused();
 
     if(!focused || current>stableHeight-36){
-      stableHeight=Math.max(stableHeight,current,window.innerHeight);
+      stableHeight=Math.max(stableHeight,current,windowHeight);
     }
 
     root.style.setProperty('--visual-height',current+'px');
