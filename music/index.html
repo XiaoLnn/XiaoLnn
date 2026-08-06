@@ -13,8 +13,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xiaolnne.shop/music/index.html">
 <meta property="og:site_name" content="Nie的音乐站">
-  <link rel="icon" href="assets/images/pikachu.gif?v=6" type="image/gif">
-  <link rel="stylesheet" href="assets/css/app.css?v=6">
+  <link rel="icon" href="assets/images/pikachu.gif?v=7" type="image/gif">
+  <link rel="stylesheet" href="assets/css/app.css?v=10">
 
 </head>
 
@@ -84,6 +84,14 @@
         </div>
         <div class="lyrics-container"><div id="lyrics-inner" class="lyrics-inner"><div id="lyrics-empty" class="lyrics-empty" data-i18n="lyricsEmpty">歌词会在这里与音乐同步呼吸。</div></div></div>
         <audio id="audio" preload="metadata"></audio>
+        <button id="ai-review-toggle-btn" class="apple-float-btn ai-review-float-btn ripple-target" type="button" aria-expanded="false" aria-controls="ai-review-drawer" title="AI 乐评" aria-label="AI 乐评"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4.5 18.1 11l6.4 2.1-6.4 2.1L16 21.5l-2.1-6.3-6.4-2.1 6.4-2.1Z"/><path d="m25 20 .9 2.7 2.6.8-2.6.9L25 27l-.9-2.6-2.6-.9 2.6-.8Z"/></svg></button>
+        <div id="ai-review-drawer" class="ai-review-drawer" aria-hidden="true" inert>
+          <button class="ai-review-backdrop" type="button" tabindex="-1" aria-label="关闭 AI 乐评"></button>
+          <section class="ai-review-sheet" role="dialog" aria-modal="false" aria-label="AI 乐评">
+            <button id="ai-review-close-btn" class="ai-review-close-btn" type="button" aria-label="关闭 AI 乐评">×</button>
+            <div id="ai-review-content" class="ai-review-content" role="status" aria-live="polite"><div class="ai-review-empty" data-i18n="aiReviewEmpty">连续播放满 3 秒后，AI 会发来一条懂歌留言。</div></div>
+          </section>
+        </div>
         <button id="queue-toggle-btn" class="apple-float-btn queue-float-btn ripple-target" type="button" aria-expanded="false" aria-controls="queue-drawer" title="播放列表" aria-label="播放列表"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8h16M5 16h16M5 24h11"/><path class="apple-icon-fill" d="m21 20 7 4-7 4Z"/></svg><span id="queue-count" class="apple-icon-badge" hidden>0</span></button>
         <div id="queue-drawer" class="queue-drawer" aria-hidden="true">
           <button class="queue-backdrop" type="button" tabindex="-1" aria-label="关闭播放列表"></button>
@@ -136,6 +144,6 @@
     </section>
   </div>
   <div id="toast"></div>
-  <script src="assets/js/app.js?v=6" defer></script>
+  <script src="assets/js/app.js?v=10" defer></script>
 </body>
 </html>
