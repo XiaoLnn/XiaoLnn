@@ -57,6 +57,22 @@
         queueFromCurrent:"当前列表",
         libraryExpand:"展开音乐库",
         libraryCollapse:"折叠音乐库",
+        aiReviewTitle:"AI 乐评",
+        aiReviewNoTrack:"暂未选择歌曲",
+        aiReviewChooseTrack:"播放歌曲，3 秒后自动送达",
+        aiReviewModel:"点评模式",
+        aiReviewEmpty:"连续播放满 3 秒后，AI 会发来一条懂歌留言。",
+        aiReviewPrivacy:"连续播放 3 秒自动生成 · 优先读取缓存",
+        aiReviewGenerate:"生成乐评",
+        aiReviewRegenerate:"重新点评",
+        aiReviewLoading:"正在听这首歌…",
+        aiReviewReady:"AI 音乐手记 · 已生成",
+        aiReviewCached:"AI 音乐手记 · 已从缓存读取",
+        aiReviewNeedTrack:"请先选择一首歌曲。",
+        aiReviewFailed:"AI 乐评生成失败，请稍后再试。",
+        aiReviewRateLimited:"点评太频繁，请一分钟后再试。",
+        aiReviewNotConfigured:"Cloudflare 尚未配置 DeepSeek API 密钥。",
+        aiReviewLocalPreview:"本地预览已就绪；部署并配置 Cloudflare 密钥后即可生成真实乐评。",
         tabHot:"QQ 热榜",
         tabFavorites:"我的收藏",
         tabCustomLists:"自建歌单",
@@ -177,6 +193,22 @@
         queueFromCurrent:"Current list",
         libraryExpand:"Open library",
         libraryCollapse:"Collapse library",
+        aiReviewTitle:"AI Review",
+        aiReviewNoTrack:"No track selected",
+        aiReviewChooseTrack:"Play a song and receive a note after 3 seconds",
+        aiReviewModel:"Review mode",
+        aiReviewEmpty:"Keep a song playing for 3 seconds and AI will send a listening note.",
+        aiReviewPrivacy:"Generated after 3 seconds · Reuses cached notes",
+        aiReviewGenerate:"Generate",
+        aiReviewRegenerate:"Regenerate",
+        aiReviewLoading:"Listening to this song…",
+        aiReviewReady:"AI listening note · Ready",
+        aiReviewCached:"AI listening note · From cache",
+        aiReviewNeedTrack:"Choose a track first.",
+        aiReviewFailed:"Could not generate a review. Please try again.",
+        aiReviewRateLimited:"Too many reviews. Try again in one minute.",
+        aiReviewNotConfigured:"The DeepSeek API key is not configured in Cloudflare.",
+        aiReviewLocalPreview:"Local preview is ready. Deploy and configure the Cloudflare secret for live reviews.",
         tabHot:"QQ Charts",
         tabFavorites:"Favorites",
         tabCustomLists:"Playlists",
@@ -276,6 +308,13 @@
       lyricPresentationToken:0,
       renderedLyricTrackUid:null,
       libraryCollapsed:true,
+      aiReviewModel:'deepseek-v4-flash',
+      aiReviewCache:{},
+      aiReviewRequestToken:0,
+      aiReviewAutoTimer:0,
+      aiReviewAutoCloseTimer:0,
+      aiReviewAutoCloseDelay:0,
+      aiReviewLoadingKey:'',
       muted:false
     };
 
@@ -284,6 +323,12 @@
     const LYRIC_ASSIST_STORAGE_KEY = 'nie-music-lyric-assist';
     const PINYIN_PRO_URL = 'https://unpkg.com/pinyin-pro@3.18.2/dist/index.js';
     const LYRIC_TRANSLATION_CACHE_KEY = 'nie-music-lyric-translation-cache-v1';
+    const AI_REVIEW_ENDPOINT = /(^|\.)xiaolnn\.pages\.dev$/i.test(location.hostname)
+      ? '/api/ai-review'
+      : ['localhost','127.0.0.1'].includes(location.hostname)
+        ? '/api/ai-review'
+        : 'https://xiaolnn.pages.dev/api/ai-review';
+    const AI_REVIEW_CACHE_KEY = 'nie-music-ai-review-cache-v3';
     const METING_ENDPOINT = 'https://api.qijieya.cn/meting/';
     const QQ_PLAYLIST_ENDPOINT = 'https://xiaolnn.pages.dev/api/qq-playlist';
     const QQ_HOT_ENDPOINT = 'https://cyapi.top/API/music_hot.php';
@@ -352,6 +397,7 @@
       updateLyricsToolsUI();
       if(dom.lyricsInner)refreshLyricPresentation();
       renderQueue();
+      updateAIReviewUI();
       if(dom.queueToggleBtn){dom.queueToggleBtn.title=t('queueTitle');dom.queueToggleBtn.setAttribute('aria-label',t('queueTitle'));}
       if(dom.libraryToggle)dom.libraryToggle.title=t(state.libraryCollapsed?'libraryExpand':'libraryCollapse');
       if(dom.libraryFab){dom.libraryFab.title=t('libraryExpand');dom.libraryFab.setAttribute('aria-label',t('libraryExpand'));}
@@ -1855,7 +1901,8 @@
         currentHotCommentTrack={
           uid:'hot-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),source:'netease',
           title:song,artist:singer,album:'网易云热评',cover,audioUrl,lrc:null,lrcUrl:null,
-          pageUrl,detailsLoaded:false,quality:null,qualityLabel:null,keyword:(song+' '+singer).trim(),neteaseIndex:1
+          pageUrl,detailsLoaded:false,quality:null,qualityLabel:null,keyword:(song+' '+singer).trim(),neteaseIndex:1,
+          hotComment:text,hotCommentUser:user,hotCommentLiked:liked
         };
         dom.hotCommentText.textContent=text;dom.hotCommentUser.textContent='— '+user;
         dom.hotCommentSong.textContent=singer?song+' · '+singer:song;
@@ -2396,10 +2443,13 @@
 
     async function playTrack(track,context){
       if(!track)return;
+      cancelPendingAIReview();
+      if(document.body.classList.contains('ai-review-open'))setAIReviewOpen(false,{focus:false});
       const requestToken=++state.playRequestToken;
       state.currentTrack=track;
       state.playContext=context||state.playContext;
       renderQueue();
+      updateAIReviewUI();
 
       const applyUI=()=>{
         dom.trackTitle.textContent=track.title||'';
@@ -2586,6 +2636,7 @@
 
     function setQueueOpen(open){
       const expanded=Boolean(open);
+      if(expanded&&document.body.classList.contains('ai-review-open'))setAIReviewOpen(false);
       document.body.classList.toggle('queue-open',expanded);
       dom.queueDrawer?.setAttribute('aria-hidden',expanded?'false':'true');
       dom.queueToggleBtn?.setAttribute('aria-expanded',expanded?'true':'false');
@@ -2662,6 +2713,239 @@
       if(!queued.length&&!following.length){
         const empty=document.createElement('div');empty.className='queue-empty';empty.textContent=t('queueEmpty');
         dom.queueList.appendChild(empty);
+      }
+    }
+
+    function loadAIReviewCache(){
+      try{
+        const saved=JSON.parse(localStorage.getItem(AI_REVIEW_CACHE_KEY)||'{}');
+        state.aiReviewCache=saved&&typeof saved==='object'?saved:{};
+        const storedModel=localStorage.getItem('nie-music-ai-review-model');
+        if(storedModel==='deepseek-v4-flash'||storedModel==='deepseek-v4-pro')state.aiReviewModel=storedModel;
+      }catch(error){state.aiReviewCache={};}
+    }
+
+    function saveAIReviewCache(){
+      try{
+        const entries=Object.entries(state.aiReviewCache).slice(-36);
+        state.aiReviewCache=Object.fromEntries(entries);
+        localStorage.setItem(AI_REVIEW_CACHE_KEY,JSON.stringify(state.aiReviewCache));
+      }catch(error){}
+    }
+
+    function aiReviewCacheKey(track=state.currentTrack,model=state.aiReviewModel){
+      if(!track)return '';
+      return `${model}|${track.uid||`${track.source||''}:${track.id||''}:${track.title||''}:${track.artist||''}`}`;
+    }
+
+    function getLyricsExcerpt(){
+      const parts=[];
+      for(const line of state.lyricLines.slice(0,24)){
+        const main=String(line?.text||'').trim();
+        if(!main)continue;
+        parts.push(main);
+        const translation=String(line?.translation||'').trim();
+        if(translation)parts.push(translation);
+        if(parts.join('\n').length>=1000)break;
+      }
+      return parts.join('\n').slice(0,1000);
+    }
+
+    function getTrackHotComment(track){
+      if(!track)return '';
+      let sourceTrack=track.hotComment?track:null;
+      if(!sourceTrack&&currentHotCommentTrack){
+        const sameTitle=cyMatchText(currentHotCommentTrack.title)===cyMatchText(track.title);
+        const sourceArtist=cyMatchText(currentHotCommentTrack.artist);
+        const sameArtist=!sourceArtist||cyMatchText(track.artist).includes(sourceArtist);
+        if(sameTitle&&sameArtist)sourceTrack=currentHotCommentTrack;
+      }
+      if(!sourceTrack?.hotComment)return '';
+      const author=String(sourceTrack.hotCommentUser||'').trim();
+      const likes=Number(sourceTrack.hotCommentLiked)||0;
+      const suffix=likes?`（${likes.toLocaleString()} 人赞同）`:'';
+      return `${author?`${author}：`:''}${sourceTrack.hotComment}${suffix}`.slice(0,320);
+    }
+
+    function buildCulturalContext(track){
+      if(!track)return '';
+      const identity=[track.title,track.artist,track.album].filter(Boolean).join(' · ');
+      const hints=[];
+      if(/方大同|薛凯琪/.test(identity)){
+        hints.push('方大同与薛凯琪长期公开的音乐合作、舞台互动与友谊常被歌迷共同提起；只可使用公开音乐记忆，不推断私人关系。');
+      }
+      if(/周杰伦|蔡依林/.test(identity)){
+        hints.push('周杰伦与蔡依林在华语流行黄金年代留下公开合作与舞台记忆；只在歌曲气质契合时轻点，不写私人关系。');
+      }
+      if(/不能说的秘密|路小雨|secret/i.test(identity)){
+        hints.push('电影《不能说的秘密》里的时间、琴房与路小雨属于虚构叙事语境；只有当前曲目直接相关时才可使用。');
+      }
+      return hints.join(' ').slice(0,600);
+    }
+
+    function renderAIReviewMessage(text,{error=false,loading=false,review=false}={}){
+      if(!dom.aiReviewContent)return;
+      dom.aiReviewContent.classList.toggle('is-error',error);
+      dom.aiReviewContent.classList.toggle('is-loading',loading);
+      dom.aiReviewContent.classList.toggle('has-review',review);
+      dom.aiReviewContent.setAttribute('aria-busy',loading?'true':'false');
+      dom.aiReviewContent.replaceChildren();
+      const node=document.createElement('div');
+      node.className=review?'ai-review-copy':'ai-review-empty';
+      node.textContent=text;
+      dom.aiReviewContent.appendChild(node);
+    }
+
+    function updateAIReviewUI(){
+      if(!dom.aiReviewContent)return;
+      const track=state.currentTrack;
+      document.querySelectorAll('.ai-model-btn').forEach(btn=>{
+        const active=btn.dataset.model===state.aiReviewModel;
+        btn.classList.toggle('active',active);
+        btn.setAttribute('aria-pressed',active?'true':'false');
+      });
+      if(dom.aiReviewToggleBtn){
+        dom.aiReviewToggleBtn.title=t('aiReviewTitle');
+        dom.aiReviewToggleBtn.setAttribute('aria-label',t('aiReviewTitle'));
+      }
+      if(dom.aiReviewTrackTitle)dom.aiReviewTrackTitle.textContent=track?.title||t('aiReviewNoTrack');
+      if(dom.aiReviewTrackMeta)dom.aiReviewTrackMeta.textContent=track
+        ? [cyNormalizeArtist(track.artist),track.album].filter(Boolean).join(' · ')||getTrackSourceLabel(track)
+        : t('aiReviewChooseTrack');
+      if(dom.aiReviewCover){
+        const cover=track?.cover||'';
+        if(cover){dom.aiReviewCover.src=cover;dom.aiReviewCover.style.visibility='visible';}
+        else{dom.aiReviewCover.removeAttribute('src');dom.aiReviewCover.style.visibility='hidden';}
+      }
+      const key=aiReviewCacheKey();
+      const cached=key?state.aiReviewCache[key]:null;
+      const loading=Boolean(key&&state.aiReviewLoadingKey===key);
+      dom.aiReviewToggleBtn?.classList.toggle('is-listening',loading);
+      dom.aiReviewToggleBtn?.classList.toggle('has-review',Boolean(cached));
+      if(dom.aiReviewStatus)dom.aiReviewStatus.textContent=loading
+        ? t('aiReviewLoading')
+        : cached?t(cached.edgeCached?'aiReviewCached':'aiReviewReady'):t('aiReviewPrivacy');
+      if(loading)renderAIReviewMessage(t('aiReviewLoading'),{loading:true});
+      else if(cached?.review)renderAIReviewMessage(cached.review,{review:true});
+      else renderAIReviewMessage(t('aiReviewEmpty'));
+    }
+
+    function setAIReviewModel(model){
+      if(model!=='deepseek-v4-flash'&&model!=='deepseek-v4-pro')return;
+      state.aiReviewModel=model;
+      try{localStorage.setItem('nie-music-ai-review-model',model);}catch(error){}
+      updateAIReviewUI();
+      if(state.isPlaying&&state.currentTrack)scheduleAIReview(state.currentTrack,{delay:350});
+    }
+
+    function cancelPendingAIReview(){
+      if(state.aiReviewAutoTimer){clearTimeout(state.aiReviewAutoTimer);state.aiReviewAutoTimer=0;}
+      state.aiReviewRequestToken+=1;
+      state.aiReviewLoadingKey='';
+    }
+
+    function scheduleAIReview(track=state.currentTrack,{delay=3000}={}){
+      if(!track)return;
+      const key=aiReviewCacheKey(track);
+      if(!key)return;
+      cancelPendingAIReview();
+      const cached=state.aiReviewCache[key];
+      state.aiReviewLoadingKey=cached?'':key;
+      updateAIReviewUI();
+      state.aiReviewAutoTimer=setTimeout(()=>{
+        state.aiReviewAutoTimer=0;
+        const stillCurrent=state.currentTrack===track&&aiReviewCacheKey()===key;
+        if(!state.isPlaying||!stillCurrent){
+          if(state.aiReviewLoadingKey===key)state.aiReviewLoadingKey='';
+          updateAIReviewUI();
+          return;
+        }
+        if(state.aiReviewCache[key]){
+          updateAIReviewUI();
+          setAIReviewOpen(true,{focus:false,autoClose:15000});
+          return;
+        }
+        generateAIReview(track,key);
+      },delay);
+    }
+
+    function armAIReviewAutoClose(delay=state.aiReviewAutoCloseDelay){
+      if(state.aiReviewAutoCloseTimer){clearTimeout(state.aiReviewAutoCloseTimer);state.aiReviewAutoCloseTimer=0;}
+      if(!document.body.classList.contains('ai-review-open')||delay<=0)return;
+      state.aiReviewAutoCloseDelay=delay;
+      state.aiReviewAutoCloseTimer=setTimeout(()=>setAIReviewOpen(false,{focus:false}),delay);
+    }
+
+    function setAIReviewOpen(open,{focus=false,autoClose=15000}={}){
+      const expanded=Boolean(open);
+      if(state.aiReviewAutoCloseTimer){clearTimeout(state.aiReviewAutoCloseTimer);state.aiReviewAutoCloseTimer=0;}
+      if(!expanded)state.aiReviewAutoCloseDelay=0;
+      if(expanded&&document.body.classList.contains('queue-open'))setQueueOpen(false);
+      if(!expanded&&focus&&dom.aiReviewDrawer?.contains(document.activeElement))dom.aiReviewToggleBtn?.focus({preventScroll:true});
+      document.body.classList.toggle('ai-review-open',expanded);
+      dom.aiReviewDrawer?.setAttribute('aria-hidden',expanded?'false':'true');
+      if(dom.aiReviewDrawer)dom.aiReviewDrawer.inert=!expanded;
+      dom.aiReviewToggleBtn?.setAttribute('aria-expanded',expanded?'true':'false');
+      if(expanded){
+        updateAIReviewUI();
+        if(focus)requestAnimationFrame(()=>dom.aiReviewCloseBtn?.focus({preventScroll:true}));
+        armAIReviewAutoClose(autoClose);
+      }
+    }
+
+    async function generateAIReview(track=state.currentTrack,expectedKey=aiReviewCacheKey(track)){
+      if(!track||!expectedKey)return;
+      if(state.aiReviewCache[expectedKey]){updateAIReviewUI();return;}
+      const token=++state.aiReviewRequestToken;
+      state.aiReviewLoadingKey=expectedKey;
+      if(dom.aiReviewStatus)dom.aiReviewStatus.textContent=t('aiReviewLoading');
+      renderAIReviewMessage(t('aiReviewLoading'),{loading:true});
+      dom.aiReviewToggleBtn?.classList.add('is-listening');
+      let completed=false;
+      try{
+        const response=await fetch(AI_REVIEW_ENDPOINT,{
+          method:'POST',
+          headers:{'content-type':'application/json','accept':'application/json'},
+          body:JSON.stringify({
+            title:track.title||'',
+            artist:cyNormalizeArtist(track.artist)||'',
+            album:track.album||'',
+            source:getTrackSourceLabel(track),
+            lyricsExcerpt:getLyricsExcerpt(),
+            hotComment:getTrackHotComment(track),
+            culturalContext:buildCulturalContext(track),
+            model:state.aiReviewModel,
+          }),
+        });
+        let payload={};
+        try{payload=await response.json();}catch(error){}
+        if(token!==state.aiReviewRequestToken||aiReviewCacheKey()!==expectedKey)return;
+        if(!response.ok||!payload?.review){
+          let key='aiReviewFailed';
+          if(payload?.error==='rate_limit_exceeded')key='aiReviewRateLimited';
+          else if(payload?.error==='deepseek_api_key_not_configured')key='aiReviewNotConfigured';
+          else if(['localhost','127.0.0.1'].includes(location.hostname))key='aiReviewLocalPreview';
+          throw new Error(key);
+        }
+        state.aiReviewCache[expectedKey]={review:String(payload.review),model:payload.model||state.aiReviewModel,createdAt:Date.now(),edgeCached:Boolean(payload.cached)};
+        saveAIReviewCache();
+        renderAIReviewMessage(String(payload.review),{review:true});
+        if(dom.aiReviewStatus)dom.aiReviewStatus.textContent=payload.cached?'Cloudflare · Cached':`DeepSeek · ${payload.model||state.aiReviewModel}`;
+        completed=true;
+      }catch(error){
+        if(token!==state.aiReviewRequestToken)return;
+        const key=String(error?.message||'aiReviewFailed');
+        renderAIReviewMessage(t(key),{error:true});
+        if(dom.aiReviewStatus)dom.aiReviewStatus.textContent=t('aiReviewPrivacy');
+      }finally{
+        if(token===state.aiReviewRequestToken){
+          state.aiReviewLoadingKey='';
+          dom.aiReviewToggleBtn?.classList.remove('is-listening');
+          if(completed){
+            updateAIReviewUI();
+            setAIReviewOpen(true,{focus:false,autoClose:15000});
+          }
+        }
       }
     }
 
@@ -3173,6 +3457,15 @@
       dom.queueClearBtn=$('queue-clear-btn');
       dom.queueCloseBtn=$('queue-close-btn');
       dom.queueBackdrop=document.querySelector('.queue-backdrop');
+      dom.aiReviewToggleBtn=$('ai-review-toggle-btn');
+      dom.aiReviewDrawer=$('ai-review-drawer');
+      dom.aiReviewBackdrop=document.querySelector('.ai-review-backdrop');
+      dom.aiReviewCloseBtn=$('ai-review-close-btn');
+      dom.aiReviewCover=$('ai-review-cover');
+      dom.aiReviewTrackTitle=$('ai-review-track-title');
+      dom.aiReviewTrackMeta=$('ai-review-track-meta');
+      dom.aiReviewContent=$('ai-review-content');
+      dom.aiReviewStatus=$('ai-review-status');
       dom.lyricsInner=$('lyrics-inner');
       dom.lyricsContainer=document.querySelector('.lyrics-container');
       dom.lyricsFullBtn=$('lyrics-full-btn');
@@ -3569,6 +3862,15 @@
       if(dom.queueCloseBtn)dom.queueCloseBtn.addEventListener('click',()=>setQueueOpen(false));
       if(dom.queueBackdrop)dom.queueBackdrop.addEventListener('click',()=>setQueueOpen(false));
       if(dom.queueClearBtn)dom.queueClearBtn.addEventListener('click',()=>{state.upNext=[];renderQueue();});
+      if(dom.aiReviewToggleBtn)dom.aiReviewToggleBtn.addEventListener('click',()=>setAIReviewOpen(!document.body.classList.contains('ai-review-open')));
+      if(dom.aiReviewCloseBtn)dom.aiReviewCloseBtn.addEventListener('click',()=>setAIReviewOpen(false));
+      if(dom.aiReviewBackdrop)dom.aiReviewBackdrop.addEventListener('click',()=>setAIReviewOpen(false));
+      if(dom.aiReviewDrawer){
+        ['pointermove','pointerdown','touchstart','wheel','focusin','keydown'].forEach(eventName=>{
+          dom.aiReviewDrawer.addEventListener(eventName,()=>armAIReviewAutoClose(15000),{passive:eventName!=='keydown'});
+        });
+      }
+      document.querySelectorAll('.ai-model-btn').forEach(btn=>btn.addEventListener('click',()=>setAIReviewModel(btn.dataset.model)));
       ['pointerdown','touchstart','wheel'].forEach(eventName=>{
         dom.lyricsContainer.addEventListener(eventName,()=>pauseLyricsAutoFollow(),{passive:true});
       });
@@ -3595,12 +3897,19 @@
         state.isPlaying=true;
         setPlayButtonState(true);
         dom.playerStatus.textContent=t('playerStatusPlaying');
+        scheduleAIReview(state.currentTrack);
       });
       dom.audio.addEventListener('pause',()=>{
         state.isPlaying=false;
         setPlayButtonState(false);
         dom.playerStatus.textContent=t('playerStatusPaused');
         audioLevel = 0;
+        if(state.aiReviewAutoTimer){
+          clearTimeout(state.aiReviewAutoTimer);
+          state.aiReviewAutoTimer=0;
+          state.aiReviewLoadingKey='';
+          updateAIReviewUI();
+        }
       });
       dom.audio.addEventListener('ended',()=>{
         audioLevel = 0;
@@ -3681,8 +3990,10 @@
         const playlistLinkOpen=dom.playlistLinkModal.classList.contains('show');
         const shortcutOpen=dom.shortcutModal.classList.contains('show');
         const queueOpen=document.body.classList.contains('queue-open');
+        const aiReviewOpen=document.body.classList.contains('ai-review-open');
 
         if(e.key==='Escape'){
+          if(aiReviewOpen){setAIReviewOpen(false);dom.aiReviewToggleBtn?.focus({preventScroll:true});return;}
           if(queueOpen){setQueueOpen(false);dom.queueToggleBtn?.focus({preventScroll:true});return;}
           if(dom.albumInfoModal?.classList.contains('show')){
             closeAlbumInfoModal();
@@ -3698,7 +4009,7 @@
           return;
         }
 
-        if(playlistOpen || playlistLinkOpen || shortcutOpen || queueOpen){
+        if(playlistOpen || playlistLinkOpen || shortcutOpen || queueOpen || aiReviewOpen){
           return;
         }
 
@@ -3734,6 +4045,7 @@
       try{const scriptMode=localStorage.getItem(LYRIC_SCRIPT_STORAGE_KEY);if(scriptMode==='simplified'||scriptMode==='traditional')state.lyricScriptMode=scriptMode;}catch(e){}
       try{state.lyricAssistEnabled=localStorage.getItem(LYRIC_ASSIST_STORAGE_KEY)==='1';}catch(e){}
       loadLyricTranslationCache();
+      loadAIReviewCache();
       applyLyricsFontSize(state.lyricsFontSize);
       setLibraryCollapsed(state.libraryCollapsed,false);
       setupParticles();
@@ -3746,6 +4058,7 @@
       renderPlaylistOptions();
       renderPlaylistList();
       renderQueue();
+      updateAIReviewUI();
       setPlaymodeUI();
       dom.audio.volume=parseFloat(dom.volumeSlider.value);
       applyThemePalette(themeHashPalette('Nie Music'),null);
