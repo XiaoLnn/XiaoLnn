@@ -31,10 +31,6 @@
         playerTitle:"正在播放",
         playerSubtitle:"封面色彩驱动 · 同步歌词",
         coverHint:"选择一首歌，让色彩开始流动。",
-        playerStatusIdle:"待机",
-        playerStatusLoading:"加载音源中…",
-        playerStatusPlaying:"播放中",
-        playerStatusPaused:"已暂停",
         lyricsEmpty:"歌词会在这里与音乐同步呼吸。",
         lyricsFullscreen:"完整歌词",
         lyricsExitFullscreen:"退出完整歌词",
@@ -167,10 +163,6 @@
         playerTitle:"Now Playing",
         playerSubtitle:"Artwork colors · Synced lyrics",
         coverHint:"Choose a song and let its colors flow.",
-        playerStatusIdle:"Standby",
-        playerStatusLoading:"Loading audio…",
-        playerStatusPlaying:"Playing",
-        playerStatusPaused:"Paused",
         lyricsEmpty:"No lyrics yet. Try a song with LRC lyrics.",
         lyricsFullscreen:"Full lyrics",
         lyricsExitFullscreen:"Exit full lyrics",
@@ -1333,6 +1325,7 @@
     async function searchQQ(kw, limit) {
       const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(kw)}&type=json`;
       let added=0;
+      const created=[];
       try {
         const res=await fetch(url);
         const json=await res.json();
@@ -1357,8 +1350,9 @@
             audioUrl:null,lrc:null,lrcUrl:null,detailsLoaded:false,quality:null,qualityLabel:null,
             qqQualityText:it.pay||null,pay:it.pay||null
           };
-          state.trackMap.set(uid,track);state.searchResults.push(track);added++;
+          state.trackMap.set(uid,track);state.searchResults.push(track);created.push(track);added++;
         });
+        if(created.length)primeQQMetadata(created,kw).catch(error=>console.warn('qq metadata queue',error));
       }catch(e){console.error('qq search (tang)',e);}
       return added;
     }
@@ -1503,9 +1497,6 @@
       renderMiniSearchList();
       renderPlaylistList();
       syncMobileHotCommentVisibility();
-      if(!state.currentTrack && state.searchResults.length){
-        playFromList('results',0);
-      }
       if(!reset){
         if(added===0){state.noMoreResults=true;showToast(t('toastNoMore'));}
         else state.noMoreResults=false;
@@ -1570,7 +1561,7 @@
         track.title=cyPreferText(cyFirst(d,['song_title','song_name','name','title'],''),track.title);
         track.artist=cyPreferText(cyPickArtist(d,''),track.artist);
         track.album=cyPreferText(cyFirst(d,['album_name','album_title','album','albumname'],''),track.album);
-        const directCover=cyFirst(d,['album_pic','albumPic','pic','picurl','cover','image','singer_pic','singerPic'],'');
+        const directCover=cyFirst(d,['album_pic','albumPic','album_cover','albumCover','album_img','albumImg','song_pic','songPic','pic','picurl','pic_url','cover','image','singer_pic','singerPic'],'');
         const generated=cyQQCoverUrl(track.albumMid,800);
         track.coverCandidates=[directCover,generated,cyQQCoverUrl(track.albumMid,500),...(track.coverCandidates||[])].filter(Boolean);
         track.cover=cyNormalizeMediaUrl(directCover||generated||track.cover,'image');
@@ -1583,6 +1574,22 @@
         if(track.audioUrl){const q=inferQualityFromUrl(track.audioUrl);if(q&&q.label){track.quality=q.tag;track.qualityLabel=q.label;}}
         track.detailsLoaded=Boolean(track.audioUrl);
       }catch(e){console.error('qq detail (tang)',e);}
+    }
+
+    async function primeQQMetadata(tracks,searchToken){
+      const queue=tracks.filter(track=>!track.cover).slice(0,12);
+      let cursor=0;
+      const worker=async()=>{
+        while(cursor<queue.length){
+          const track=queue[cursor++];
+          await fetchQQDetails(track);
+          if(searchToken!==state.searchKeyword)continue;
+          renderMiniSearchList();
+          if(state.currentTrack?.uid===track.uid)updateThemeFromTrack(track);
+          await new Promise(resolve=>setTimeout(resolve,80));
+        }
+      };
+      await Promise.all([worker(),worker(),worker()]);
     }
 
     async function fetchKuwoDetails(track){
@@ -1711,7 +1718,6 @@
         return;
       }
       if(track.detailsLoaded && track.audioUrl && (track.lrc || !track.lrcUrl) && (track.source!=='netease' || (track.cover && track.lrc))) return;
-      dom.playerStatus.textContent=t('playerStatusLoading');
       if(track.source==='netease') await fetchNeteaseDetails(track);
       else if(track.source==='kuwo') await fetchKuwoDetails(track);
       else if(track.source==='joox') await fetchJooxDetails(track);
@@ -2502,7 +2508,6 @@
         if(dom.albumInfoModal?.classList.contains('show'))updateAlbumInfoModal();
       };
 
-      dom.playerStatus.textContent=t('playerStatusLoading');
       applyUI();
 
       state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
@@ -2515,19 +2520,17 @@
         applyUI();
         state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
         renderLyrics();
-        if(!track.audioUrl){showToast(t('toastPlayError'));dom.playerStatus.textContent=t('playerStatusIdle');return;}
+        if(!track.audioUrl){showToast(t('toastPlayError'));return;}
         track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
-        if(!track.audioUrl){showToast(t('toastPlayError'));dom.playerStatus.textContent=t('playerStatusIdle');return;}
+        if(!track.audioUrl){showToast(t('toastPlayError'));return;}
         dom.audio.src=track.audioUrl;
         await dom.audio.play();
         state.isPlaying=true;
         setPlayButtonState(true);
-        dom.playerStatus.textContent=t('playerStatusPlaying');
       }catch(e){
         if(requestToken!==state.playRequestToken)return;
         console.error(e);
         showToast(t('toastPlayError'));
-        dom.playerStatus.textContent=t('playerStatusIdle');
       }
 
       renderMiniSearchList();
@@ -3437,7 +3440,6 @@
       dom.trackArtist=$('track-artist');
       dom.trackSourcePill=$('track-source-pill');
       dom.trackQualityPill=$('track-quality-pill');
-      dom.playerStatus=$('player-status');
       dom.playBtn=$('play-btn');
       dom.prevBtn=$('prev-btn');
       dom.nextBtn=$('next-btn');
@@ -3896,13 +3898,11 @@
       dom.audio.addEventListener('play',()=>{
         state.isPlaying=true;
         setPlayButtonState(true);
-        dom.playerStatus.textContent=t('playerStatusPlaying');
         scheduleAIReview(state.currentTrack);
       });
       dom.audio.addEventListener('pause',()=>{
         state.isPlaying=false;
         setPlayButtonState(false);
-        dom.playerStatus.textContent=t('playerStatusPaused');
         audioLevel = 0;
         if(state.aiReviewAutoTimer){
           clearTimeout(state.aiReviewAutoTimer);
