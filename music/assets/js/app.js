@@ -2459,13 +2459,17 @@
 
     function setupSystemMediaControls(){
       if(!('mediaSession' in navigator))return;
+      // iPhone/iPad 的系统媒体面板会优先把 seekbackward/seekforward
+      // 显示为“后退/快进 10 秒”。苹果触屏设备上不注册这两个动作，
+      // 让系统使用 previoustrack/nexttrack 显示上一首/下一首。
+      const ua=navigator.userAgent||'';
+      const isAppleTouchDevice=/iPhone|iPad|iPod/i.test(ua)||
+        (/Macintosh/i.test(ua)&&(navigator.maxTouchPoints||0)>1);
       const handlers={
         play:()=>dom.audio?.play().catch(()=>{}),
         pause:()=>dom.audio?.pause(),
         previoustrack:()=>playNext('prev'),
         nexttrack:()=>playNext('next'),
-        seekbackward:(details)=>{if(dom.audio)dom.audio.currentTime=Math.max(0,(dom.audio.currentTime||0)-(details.seekOffset||10));},
-        seekforward:(details)=>{if(dom.audio)dom.audio.currentTime=Math.min(dom.audio.duration||Infinity,(dom.audio.currentTime||0)+(details.seekOffset||10));},
         seekto:(details)=>{
           if(!dom.audio || !Number.isFinite(details.seekTime))return;
           dom.audio.currentTime=Math.max(0,Math.min(dom.audio.duration||details.seekTime,details.seekTime));
@@ -2473,6 +2477,15 @@
         },
         stop:()=>{if(dom.audio){dom.audio.pause();dom.audio.currentTime=0;}}
       };
+      if(!isAppleTouchDevice){
+        handlers.seekbackward=(details)=>{if(dom.audio)dom.audio.currentTime=Math.max(0,(dom.audio.currentTime||0)-(details.seekOffset||10));};
+        handlers.seekforward=(details)=>{if(dom.audio)dom.audio.currentTime=Math.min(dom.audio.duration||Infinity,(dom.audio.currentTime||0)+(details.seekOffset||10));};
+      }else{
+        // 清掉可能由热更新/旧代码注册过的 seek handler。
+        ['seekbackward','seekforward'].forEach(action=>{
+          try{navigator.mediaSession.setActionHandler(action,null);}catch(error){}
+        });
+      }
       Object.entries(handlers).forEach(([action,handler])=>{
         try{navigator.mediaSession.setActionHandler(action,handler);}catch(error){/* unsupported action */}
       });
