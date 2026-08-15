@@ -333,16 +333,8 @@
 
     const dom = {};
     let audioLevel = 0;
-    let mobileImmersiveEnteredUid = null;
-    let mobileImmersivePlaybackStartedAt = 0;
-    let mobileImmersiveCanAutoEnter = true;
-    let mobileImmersivePlaybackReady = false;
     let wakeLockSentinel = null;
     let mediaPositionUpdateAt = 0;
-
-    function isMobilePlayerUI(){
-      return window.matchMedia('(max-width: 860px)').matches;
-    }
 
     function $(id){return document.getElementById(id);}
     function t(k){const lang=state.language;return (translations[lang]&&translations[lang][k])||translations.zh[k]||k;}
@@ -2376,7 +2368,7 @@
         act.classList.add('active');
         if(Date.now()>=lyricAutoFollowPausedUntil){
           const box=dom.lyricsContainer;
-          const target=Math.max(0,act.offsetTop-(box.clientHeight-act.offsetHeight)/2);
+          const target=Math.max(0,act.offsetTop-box.clientHeight*0.45);
           box.scrollTo({top:target,behavior:'smooth'});
         }
       }
@@ -2384,36 +2376,6 @@
 
     function isLyricsFullscreen(){
       return document.body.classList.contains('lyrics-fullscreen');
-    }
-
-    function isMobileImmersiveLyrics(){
-      return document.body.classList.contains('mobile-immersive-lyrics');
-    }
-
-    function nativeFullscreenElement(){
-      return document.fullscreenElement || document.webkitFullscreenElement || null;
-    }
-
-    async function requestNativePlayerFullscreen(){
-      if(!isMobilePlayerUI())return false;
-      const target=dom.playerPanel || document.documentElement;
-      const request=target?.requestFullscreen || target?.webkitRequestFullscreen;
-      if(typeof request!=='function')return false;
-      try{
-        await request.call(target);
-        return true;
-      }catch(error){
-        // Fullscreen commonly requires a direct user gesture. CSS immersive mode still works.
-        console.debug('native fullscreen unavailable for this gesture',error);
-        return false;
-      }
-    }
-
-    async function exitNativePlayerFullscreen(){
-      if(!nativeFullscreenElement())return;
-      const exit=document.exitFullscreen || document.webkitExitFullscreen;
-      if(typeof exit!=='function')return;
-      try{await exit.call(document);}catch(error){console.debug('fullscreen exit failed',error);}
     }
 
     function updateLyricsFullscreenUI(){
@@ -2428,18 +2390,7 @@
 
     let lyricsScrollBeforeFullscreen=0;
 
-    function setMobileImmersiveLyrics(enabled){
-      const active=Boolean(enabled) && isMobilePlayerUI();
-      if(active){
-        activateMobilePanel('player');
-        document.body.classList.add('lyrics-fullscreen','mobile-immersive-lyrics');
-      }else{
-        document.body.classList.remove('mobile-immersive-lyrics');
-      }
-      updateLyricsFullscreenUI();
-    }
-
-    function setLyricsFullscreen(expanded,{requestNative=false,immersive=false}={}){
+    function setLyricsFullscreen(expanded){
       const shouldExpand=Boolean(expanded);
       if(shouldExpand){
         activateMobilePanel('player');
@@ -2447,53 +2398,18 @@
         if(dom.lyricsInner&&!dom.lyricsInner.children.length)renderLyrics();
       }
       document.body.classList.toggle('lyrics-fullscreen',shouldExpand);
-      document.body.classList.toggle('mobile-immersive-lyrics',shouldExpand && immersive && isMobilePlayerUI());
       updateLyricsFullscreenUI();
-      if(shouldExpand && requestNative)requestNativePlayerFullscreen();
-      if(!shouldExpand)exitNativePlayerFullscreen();
       requestAnimationFrame(()=>{
         if(!dom.lyricsContainer)return;
         if(shouldExpand){
           const active=dom.lyricsInner.querySelector('.lyrics-line.active');
           dom.lyricsContainer.scrollTop=active
-            ? Math.max(0,active.offsetTop-(dom.lyricsContainer.clientHeight-active.offsetHeight)/2)
+            ? Math.max(0,active.offsetTop-dom.lyricsContainer.clientHeight*.42)
             : Math.max(0,lyricsScrollBeforeFullscreen);
         }else{
           dom.lyricsContainer.scrollTop=Math.max(0,lyricsScrollBeforeFullscreen);
         }
       });
-    }
-
-    function disarmMobileImmersiveLyrics(){
-      mobileImmersivePlaybackStartedAt=0;
-      mobileImmersiveCanAutoEnter=false;
-      mobileImmersivePlaybackReady=false;
-      mobileImmersiveEnteredUid=null;
-    }
-
-    function armMobileImmersiveLyrics(){
-      // Only arm after the audio element has actually entered the `playing` state.
-      // This prevents timeupdate events from the previous track / loading phase
-      // from opening immersive lyrics while a newly selected song is still loading.
-      if(!state.currentTrack || dom.audio.paused || dom.audio.ended || dom.audio.seeking || dom.audio.readyState<3){
-        disarmMobileImmersiveLyrics();
-        return;
-      }
-      mobileImmersivePlaybackStartedAt=performance.now();
-      mobileImmersiveCanAutoEnter=true;
-      mobileImmersivePlaybackReady=true;
-      mobileImmersiveEnteredUid=null;
-    }
-
-    function maybeEnterMobileImmersiveLyrics(){
-      if(!state.isPlaying || !state.currentTrack || !isMobilePlayerUI())return;
-      if(!mobileImmersivePlaybackReady || dom.audio.paused || dom.audio.ended || dom.audio.seeking || dom.audio.readyState<3)return;
-      if(isMobileImmersiveLyrics() || !mobileImmersiveCanAutoEnter)return;
-      if(!mobileImmersivePlaybackStartedAt)return;
-      if(performance.now()-mobileImmersivePlaybackStartedAt<5000)return;
-      mobileImmersiveEnteredUid=state.currentTrack.uid;
-      mobileImmersiveCanAutoEnter=false;
-      setLyricsFullscreen(true,{immersive:true});
     }
 
     function getCurrentSystemLyric(){
@@ -2652,12 +2568,7 @@
       cancelPendingAIReview();
       if(document.body.classList.contains('ai-review-open'))setAIReviewOpen(false,{focus:false});
       const requestToken=++state.playRequestToken;
-      // Stop the previous track immediately. While the new track metadata/audio URL
-      // is being resolved, immersive lyrics must stay disarmed.
-      disarmMobileImmersiveLyrics();
-      if(!dom.audio.paused)dom.audio.pause();
       state.currentTrack=track;
-      if(isMobileImmersiveLyrics())setLyricsFullscreen(false);
       state.playContext=context||state.playContext;
       renderQueue();
       updateAIReviewUI();
@@ -3640,7 +3551,6 @@
       dom.hotCommentLike=$('hot-comment-like');
       dom.hotCommentAction=$('hot-comment-action');
 
-      dom.playerPanel=document.querySelector('.player-panel');
       dom.coverImg=$('cover-img');
       dom.coverWrapper=$('cover-detail-trigger');
       dom.coverPlaceholder=document.querySelector('.cover-placeholder');
@@ -3941,11 +3851,7 @@
       if(dom.albumInfoModal)dom.albumInfoModal.addEventListener('click',event=>{
         if(event.target===dom.albumInfoModal)closeAlbumInfoModal();
       });
-      dom.lyricsFullBtn.addEventListener('click',()=>{
-        const expand=!isLyricsFullscreen();
-        setLyricsFullscreen(expand,{requestNative:expand,immersive:expand&&isMobilePlayerUI()});
-        if(!expand && state.isPlaying)armMobileImmersiveLyrics();
-      });
+      dom.lyricsFullBtn.addEventListener('click',()=>setLyricsFullscreen(!isLyricsFullscreen()));
       dom.lyricsScriptButtons.forEach(btn=>btn.addEventListener('click',()=>setLyricScriptMode(btn.dataset.lyricScript)));
       if(dom.lyricsAssistBtn)dom.lyricsAssistBtn.addEventListener('click',toggleLyricAssist);
       let suppressNextLyricClick=false;
@@ -4014,14 +3920,7 @@
           suppressNextLyricClick=false;
           return;
         }
-        if(isMobileImmersiveLyrics() && !event.target.closest('.lyrics-line')){
-          setLyricsFullscreen(false);
-          return;
-        }
         seekFromLyricElement(event.target);
-      });
-      dom.lyricsContainer.addEventListener('dblclick',()=>{
-        if(isMobileImmersiveLyrics())setLyricsFullscreen(false);
       });
       dom.lyricsInner.addEventListener('keydown',event=>{
         if((event.key==='Enter'||event.key===' ')&&seekFromLyricElement(event.target))event.preventDefault();
@@ -4113,7 +4012,6 @@
         const intensity = Math.abs(Math.sin(cur * 2.3));
         audioLevel = 0.3 + 0.7 * intensity * (dom.audio.volume || 1);
         updateLyricsHighlight(cur);
-        maybeEnterMobileImmersiveLyrics();
         syncSystemMediaPosition();
       });
       dom.audio.addEventListener('play',()=>{
@@ -4125,19 +4023,8 @@
         requestPlaybackWakeLock();
         scheduleAIReview(state.currentTrack);
       });
-      dom.audio.addEventListener('playing',()=>{
-        state.isPlaying=true;
-        if(!isMobileImmersiveLyrics())armMobileImmersiveLyrics();
-      });
-      ['loadstart','waiting','stalled','seeking','emptied'].forEach(eventName=>{
-        dom.audio.addEventListener(eventName,()=>{
-          // Loading/buffering/seeking must never consume the 5-second immersive timer.
-          disarmMobileImmersiveLyrics();
-        });
-      });
       dom.audio.addEventListener('pause',()=>{
         state.isPlaying=false;
-        disarmMobileImmersiveLyrics();
         setPlayButtonState(false);
         syncSystemMediaPlaybackState();
         releasePlaybackWakeLock();
@@ -4155,11 +4042,6 @@
         playNext('next');
       });
 
-      ['fullscreenchange','webkitfullscreenchange'].forEach(eventName=>document.addEventListener(eventName,()=>{
-        if(!nativeFullscreenElement() && isMobileImmersiveLyrics() && !isLyricsFullscreen()){
-          document.body.classList.remove('mobile-immersive-lyrics');
-        }
-      }));
 
       dom.progressWrapper.addEventListener('click',e=>{
         const rect=dom.progressWrapper.getBoundingClientRect();
