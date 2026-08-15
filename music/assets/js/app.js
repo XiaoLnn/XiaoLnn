@@ -988,6 +988,93 @@
       return Object.entries(payload).filter(([key])=>/^\d+$/.test(key)).map(([,value])=>value);
     }
 
+
+    // cyapi 的不同音乐接口返回层级并不完全一致：有的 data 是数组，
+    // 有的是 {"1": {...}, "2": {...}}，还有的会再套 result/list。
+    // 搜索音乐时使用递归提取，避免 HTTP 200 但前端因为结构不同误判为“无结果”。
+    function cyParseSongTextLine(line,index=1){
+      const raw=String(line??'').trim();
+      if(!raw)return null;
+      const clean=raw.replace(/^\s*\d+\s*[.、)）:：\-]\s*/, '').trim();
+      // 常见文本列表：歌名 - 歌手、歌名|歌手，以及行尾携带 QQ mid/hash 的形式。
+      const midMatch=clean.match(/(?:^|[\s|｜,，;；])([A-Za-z0-9]{12,40})(?:$|[\s|｜,，;；])/);
+      const mid=midMatch?midMatch[1]:'';
+      const withoutId=mid?clean.replace(mid,'').replace(/[|｜,，;；\s-]+$/,'').trim():clean;
+      const parts=withoutId.split(/\s+-\s+|\s*[|｜]\s*/).map(x=>x.trim()).filter(Boolean);
+      return {index,name:parts[0]||withoutId,singer:parts[1]||'',mid,raw};
+    }
+
+    function cySongArray(payload){
+      if(typeof payload==='string'){
+        const text=payload.trim();
+        if(!text)return [];
+        try{return cySongArray(JSON.parse(text));}catch(e){}
+        return text.split(/\r?\n/).map((line,idx)=>cyParseSongTextLine(line,idx+1)).filter(Boolean);
+      }
+      const out=[];
+      const seen=new Set();
+      const visited=new Set();
+      const titleKeys=['song','song_name','songname','song_title','name','title','music','filename','fileName','FileName','歌曲','歌曲名称','歌名'];
+      const idKeys=['mid','songmid','song_mid','songMid','id','songid','song_id','rid','hash','audio_id','歌曲id','歌曲ID','歌曲Id'];
+      const artistKeys=['artist','artists','singer','singers','singer_name','singername','author','歌手','歌手名称'];
+      const looksLikeSong=(obj)=>{
+        if(!obj||typeof obj!=='object'||Array.isArray(obj))return false;
+        const hasTitle=titleKeys.some(k=>obj[k]!==undefined&&obj[k]!==null&&String(obj[k]).trim()!=='');
+        const hasId=idKeys.some(k=>obj[k]!==undefined&&obj[k]!==null&&String(obj[k]).trim()!=='');
+        const hasArtist=artistKeys.some(k=>obj[k]!==undefined&&obj[k]!==null&&String(obj[k]).trim()!=='');
+        return hasTitle || (hasId&&hasArtist);
+      };
+      const push=(obj)=>{
+        if(!obj)return;
+        const sig=idKeys.map(k=>String(obj[k]??'').trim()).find(Boolean)
+          || titleKeys.map(k=>String(obj[k]??'').trim()).find(Boolean)
+          || JSON.stringify(obj).slice(0,180);
+        if(!seen.has(sig)){seen.add(sig);out.push(obj);}
+      };
+      const visit=(value,depth=0,allowPlainText=false)=>{
+        if(value==null||depth>9)return;
+        if(typeof value==='string'){
+          const t=value.trim();
+          if(!t)return;
+          if((t.startsWith('{')&&t.endsWith('}'))||(t.startsWith('[')&&t.endsWith(']'))){
+            try{visit(JSON.parse(t),depth+1,allowPlainText);return;}catch(e){}
+          }
+          if(allowPlainText){
+            const parsed=cyParseSongTextLine(t,out.length+1);
+            if(parsed)push(parsed);
+          }
+          return;
+        }
+        if(typeof value!=='object')return;
+        if(visited.has(value))return;
+        visited.add(value);
+        if(Array.isArray(value)){
+          value.forEach(v=>visit(v,depth+1,true));
+          return;
+        }
+        if(looksLikeSong(value)){push(value);return;}
+        const numeric=Object.keys(value).filter(k=>/^\d+$/.test(k)).sort((a,b)=>Number(a)-Number(b));
+        if(numeric.length)numeric.forEach(k=>visit(value[k],depth+1,true));
+        for(const key of ['data','result','results','list','songs','songlist','items','info','body']){
+          if(Object.prototype.hasOwnProperty.call(value,key))visit(value[key],depth+1,true);
+        }
+        Object.entries(value).forEach(([k,v])=>{
+          if(!numeric.includes(k)&&!['data','result','results','list','songs','songlist','items','info','body'].includes(k))visit(v,depth+1,false);
+        });
+      };
+      visit(payload);
+      return out;
+    }
+
+    function cyTitleArtistFromFilename(obj){
+      const raw=cyFirst(obj,['filename','fileName','FileName','file_name'],'');
+      if(!cyUsableText(raw))return {title:'',artist:''};
+      const text=String(raw).replace(/\.(?:mp3|flac|m4a|aac|ogg|wav)$/i,'').trim();
+      const parts=text.split(/\s+-\s+/);
+      if(parts.length>=2)return {artist:parts.shift().trim(),title:parts.join(' - ').trim()};
+      return {title:text,artist:''};
+    }
+
     async function cyRequest(url){
       const res=await fetch(url,{headers:{Accept:'application/json,text/plain,*/*'}});
       const text=await res.text();
@@ -1337,15 +1424,15 @@
       const created=[];
       try {
         const payload=await cyRequest(url);
-        const data=cyArray(payload);
-        if(!data.length)return 0;
+        const data=cySongArray(payload);
+        if(!data.length){console.warn('QQ cyapi returned no recognizable song objects',payload);return 0;}
         data.slice(0,requestLimit).forEach((it,idx)=>{
           if(!it || typeof it!=='object')return;
           const mid=String(cyFirst(it,[
             'mid','songmid','song_mid','songMid','歌曲mid','歌曲MID','歌曲Mid','qqmid','qq_mid'
           ],'')).trim();
-          if(!mid)return;
-          const uid=`qq-${mid}`;
+          const resultIndex=Number(cyFirst(it,['n','index','no','num','序号'],idx+1))||idx+1;
+          const uid=mid?`qq-${mid}`:`qq-search-${kw}-${resultIndex}`;
           if(state.trackMap.has(uid))return;
           const albumMid=String(cyFirst(it,['album_mid','albummid','albumMid','专辑mid','专辑MID'],'')).trim();
           const singerMid=String(cyFirst(it,['singer_mid','singermid','singerMid','歌手mid','歌手MID'],Array.isArray(it.singer)?cyFirst(it.singer[0]||{},['mid','singer_mid'],''):'' )).trim();
@@ -1357,9 +1444,9 @@
             'url','music_url','play_url','playurl','song_play_url','歌曲链接','播放链接','音频链接'
           ],''),'audio');
           const track={
-            uid,source:'qq',displayIndex:idx+1,keyword:kw,qqSearchKey:kw,qqIndex:idx+1,
+            uid,source:'qq',displayIndex:resultIndex,keyword:kw,qqSearchKey:kw,qqIndex:resultIndex,
             qqId:mid,songid:mid,songMid:mid,albumMid,singerMid,
-            title:cyPreferText(cyFirst(it,['song_title','song_name','songname','name','title','歌曲名称','歌名'],'') ,'QQ音乐'),
+            title:cyPreferText(cyFirst(it,['song_title','song_name','songname','song','name','title','music','歌曲','歌曲名称','歌名'],'') ,'QQ音乐'),
             artist:cyPreferText(cyPickArtist(it,''),cyFirst(it,['singer_name','singername','author','歌手','歌手名称'],'')),
             album:cyPreferText(cyFirst(it,['album_name','album_title','album','albumname','专辑','专辑名称'],'')),
             cover:cover||null,coverCandidates:[directCover,cyQQCoverUrl(albumMid,800),cyQQCoverUrl(albumMid,500)].filter(Boolean),
@@ -1388,8 +1475,8 @@
       let added=0;
       try{
         const payload=await cyRequest(url);
-        const data=cyArray(payload);
-        if(!data.length)return 0;
+        const data=cySongArray(payload);
+        if(!data.length){console.warn('kugou cyapi returned no recognizable song objects',payload);return 0;}
 
         data.slice(0,requestLimit).forEach((it,idx)=>{
           if(!it || typeof it!=='object')return;
@@ -1399,6 +1486,7 @@
           if(!songId)return;
           const uid=`kuwo-${songId}`;
           if(state.trackMap.has(uid))return;
+          const fileMeta=cyTitleArtistFromFilename(it);
 
           const directAudio=cyNormalizeMediaUrl(cyFirst(it,[
             'url','music_url','play_url','playurl','song_play_url','歌曲链接','播放链接','音频链接'
@@ -1412,8 +1500,8 @@
             displayIndex:idx+1,
             keyword:kw,
             songid:songId,
-            title:cyPreferText(cyFirst(it,['name','song_name','songname','title','歌曲名称','歌名'],'')),
-            artist:cyPreferText(cyPickArtist(it,''),cyFirst(it,['singer_name','singername','author','歌手','歌手名称'],'')),
+            title:cyPreferText(cyFirst(it,['name','song_name','songname','song','title','music','歌曲','歌曲名称','歌名'],''),fileMeta.title),
+            artist:cyPreferText(cyPickArtist(it,''),cyFirst(it,['singer_name','singername','author','歌手','歌手名称'],''),fileMeta.artist),
             album:cyPreferText(cyFirst(it,['album','album_name','albumname','专辑','专辑名称'],'')),
             cover:cover||null,
             audioUrl:directAudio||null,
@@ -1573,10 +1661,17 @@
     // QQ 详情：用搜索结果的 mid 直接解析；传 mid 后接口会忽略 msg/n/num 等参数。
     async function fetchQQDetails(track) {
       const mid=String(track.qqId||track.songMid||track.songid||'').trim();
-      if(!mid)return;
       const url=new URL(CY_QQ_ENDPOINT);
       url.searchParams.set('apikey',CY_MUSIC_API_KEY);
-      url.searchParams.set('mid',mid);
+      if(mid){
+        url.searchParams.set('mid',mid);
+      }else{
+        const keyword=track.qqSearchKey||track.keyword||((track.title||'')+' '+(track.artist||'')).trim();
+        if(!keyword)return;
+        url.searchParams.set('msg',keyword);
+        url.searchParams.set('n',String(track.qqIndex||track.displayIndex||1));
+        url.searchParams.set('num',String(Math.max(state.perSourceCurrentLimit.qq||state.perSourceLimit||10,track.qqIndex||1)));
+      }
       url.searchParams.set('type','json');
 
       function pickBestPlayUrl(d){
@@ -1601,17 +1696,17 @@
       try{
         const payload=await cyRequest(url);
         let d=payload;
-        if(Array.isArray(payload))d=payload.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid)||payload[0]||{};
+        if(Array.isArray(payload))d=(mid?payload.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid):null)||payload[0]||{};
         else if(payload && typeof payload==='object'){
           const arr=cyArray(payload);
-          if(arr.length)d=arr.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid)||arr[0]||{};
+          if(arr.length)d=(mid?arr.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid):null)||arr[0]||{};
           else if(payload.data && typeof payload.data==='object' && !Array.isArray(payload.data))d=payload.data;
         }
         if(!d||typeof d!=='object')throw new Error('qq detail error (invalid response)');
 
         track.albumMid=String(cyFirst(d,['album_mid','albummid','albumMid','专辑mid','专辑MID'],track.albumMid||'')).trim();
         track.singerMid=String(cyFirst(d,['singer_mid','singermid','singerMid','歌手mid','歌手MID'],track.singerMid||'')).trim();
-        track.title=cyPreferText(cyFirst(d,['song_title','song_name','songname','name','title','歌曲名称','歌名'],''),track.title);
+        track.title=cyPreferText(cyFirst(d,['song_title','song_name','songname','song','name','title','music','歌曲','歌曲名称','歌名'],''),track.title);
         track.artist=cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer_name','singername','author','歌手','歌手名称'],''),track.artist);
         track.album=cyPreferText(cyFirst(d,['album_name','album_title','album','albumname','专辑','专辑名称'],''),track.album);
         const directCover=cyFirst(d,[
@@ -1664,6 +1759,7 @@
       }
       if(!d || typeof d!=='object')throw new Error('kuwo/kugou cyapi detail failed');
 
+      const fileMeta=cyTitleArtistFromFilename(d);
       const audioUrl=cyNormalizeMediaUrl(cyFirst(d,[
         'url','music_url','play_url','playurl','song_play_url','audioUrl','audio_url','歌曲链接','播放链接','音频链接'
       ],track.audioUrl||''),'audio');
@@ -1671,8 +1767,8 @@
         'pic','picurl','pic_url','cover','coverUrl','image','img','封面','图片'
       ],track.cover||''),'image');
       Object.assign(track,{
-        title:cyPreferText(cyFirst(d,['name','song_name','songname','title','歌曲名称','歌名'],''),track.title),
-        artist:cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer_name','singername','author','歌手','歌手名称'],''),track.artist),
+        title:cyPreferText(cyFirst(d,['name','song_name','songname','song','title','music','歌曲','歌曲名称','歌名'],''),fileMeta.title,track.title),
+        artist:cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer_name','singername','author','歌手','歌手名称'],''),fileMeta.artist,track.artist),
         album:cyPreferText(cyFirst(d,['album','album_name','albumname','专辑','专辑名称'],''),track.album),
         cover:cover||track.cover,
         audioUrl:audioUrl||track.audioUrl,
