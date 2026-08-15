@@ -1331,27 +1331,17 @@
         const json=await res.json();
         const data=Array.isArray(json)?json:(Array.isArray(json?.data)?json.data:(Array.isArray(json?.result)?json.result:[]));
         if(!data.length)return 0;
-        // 只对“当前搜索结果”去重，不能用全局 trackMap 直接跳过。
-        // trackMap 同时包含收藏/歌单/热榜歌曲；如果某首歌（例如《枫》）已经在那里，
-        // API 明明返回了它，也会被旧逻辑误判为重复而不显示在搜索列表中。
-        const resultUids=new Set(state.searchResults.filter(t=>t.source==='qq').map(t=>t.uid));
-        const maxResults=Math.max(1,Number(limit)||data.length);
-        let validIndex=0;
-        for(const it of data){
-          if(validIndex>=maxResults)break;
+        data.slice(0,limit||data.length).forEach((it,idx)=>{
           const mid=String(cyFirst(it,['song_mid','songmid','mid','songId','songid'],'')).trim();
-          if(!mid)continue; // 无效条目不占用 limit 名额
-
-          validIndex++;
+          if(!mid)return;
           const uid=`qq-${mid}`;
-          if(resultUids.has(uid))continue;
-
+          if(state.trackMap.has(uid))return;
           const albumMid=String(cyFirst(it,['album_mid','albummid','albumMid'],'')).trim();
           const singerMid=String(cyFirst(it,['singer_mid','singermid','singerMid'],Array.isArray(it.singer)?cyFirst(it.singer[0]||{},['mid','singer_mid'],''):'' )).trim();
           const directCover=cyFirst(it,['album_pic','albumPic','pic','picurl','cover','image','singer_pic'],'');
           const cover=cyNormalizeMediaUrl(directCover||cyQQCoverUrl(albumMid,800),'image');
-          const searchData={
-            uid,source:'qq',displayIndex:validIndex,keyword:kw,qqSearchKey:kw,qqIndex:validIndex,
+          const track={
+            uid,source:'qq',displayIndex:idx+1,keyword:kw,qqSearchKey:kw,qqIndex:idx+1,
             qqId:mid,songid:mid,songMid:mid,albumMid,singerMid,
             title:cyPreferText(cyFirst(it,['song_title','song_name','name','title'],'') ,'QQ音乐'),
             artist:cyPickArtist(it,''),
@@ -1360,36 +1350,8 @@
             audioUrl:null,lrc:null,lrcUrl:null,detailsLoaded:false,quality:null,qualityLabel:null,
             qqQualityText:it.pay||null,pay:it.pay||null
           };
-
-          // 已存在于收藏/歌单/热榜时复用同一 Track 对象，但仍然加入搜索结果。
-          // 搜索接口返回的标题、歌手、专辑等字段优先补齐，同时保留已经取得的播放地址/歌词。
-          const existing=state.trackMap.get(uid);
-          const track=existing||searchData;
-          if(existing){
-            track.source='qq';
-            track.displayIndex=validIndex;
-            track.keyword=kw;
-            track.qqSearchKey=kw;
-            track.qqIndex=validIndex;
-            track.qqId=track.qqId||mid;
-            track.songid=track.songid||mid;
-            track.songMid=track.songMid||mid;
-            track.albumMid=track.albumMid||albumMid;
-            track.singerMid=track.singerMid||singerMid;
-            track.title=cyPreferText(searchData.title,track.title);
-            track.artist=cyPreferText(searchData.artist,track.artist);
-            track.album=cyPreferText(searchData.album,track.album);
-            track.cover=track.cover||searchData.cover;
-            track.coverCandidates=[...(track.coverCandidates||[]),...searchData.coverCandidates].filter((v,i,a)=>v&&a.indexOf(v)===i);
-          }else{
-            state.trackMap.set(uid,track);
-          }
-
-          resultUids.add(uid);
-          state.searchResults.push(track);
-          created.push(track);
-          added++;
-        }
+          state.trackMap.set(uid,track);state.searchResults.push(track);created.push(track);added++;
+        });
         if(created.length)primeQQMetadata(created,kw).catch(error=>console.warn('qq metadata queue',error));
       }catch(e){console.error('qq search (tang)',e);}
       return added;
@@ -1579,13 +1541,27 @@
       const mid=String(track.qqId||track.songMid||track.songid||'').trim();
       if(!mid)return;
       const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(msg)}&type=json&mid=${encodeURIComponent(mid)}`;
+      // 默认选择接口实际返回的最高音质：优先比较 kbps，码率缺失时按档位优先级兜底。
       function pickBestPlayUrl(d){
-        if(d.song_play_url_sq)return {url:d.song_play_url_sq,tag:'lossless',label:'LOSSLESS',text:`SQ ${d.kbps_sq||''}`.trim()};
-        if(d.song_play_url_pq)return {url:d.song_play_url_pq,tag:'lossless',label:'LOSSLESS',text:`PQ ${d.kbps_pq||''}`.trim()};
-        if(d.song_play_url_accom)return {url:d.song_play_url_accom,tag:'hq',label:'HQ',text:`ACCOM ${d.kbps_accom||''}`.trim()};
-        if(d.song_play_url_hq)return {url:d.song_play_url_hq,tag:'hq',label:'HQ',text:`HQ ${d.kbps_hq||''}`.trim()};
-        if(d.song_play_url_standard)return {url:d.song_play_url_standard,tag:'standard',label:'STD',text:`STD ${d.kbps_standard||''}`.trim()};
-        if(d.song_play_url_fq)return {url:d.song_play_url_fq,tag:'low',label:'LOW',text:`FQ ${d.kbps_fq||''}`.trim()};
+        const qualities=[
+          {key:'sq',url:d.song_play_url_sq,kbps:Number(d.kbps_sq)||0,rank:6,tag:'lossless',label:'LOSSLESS',name:'SQ'},
+          {key:'pq',url:d.song_play_url_pq,kbps:Number(d.kbps_pq)||0,rank:5,tag:'lossless',label:'LOSSLESS',name:'PQ'},
+          {key:'accom',url:d.song_play_url_accom,kbps:Number(d.kbps_accom)||0,rank:4,tag:'hq',label:'HQ',name:'ACCOM'},
+          {key:'hq',url:d.song_play_url_hq,kbps:Number(d.kbps_hq)||0,rank:3,tag:'hq',label:'HQ',name:'HQ'},
+          {key:'standard',url:d.song_play_url_standard,kbps:Number(d.kbps_standard)||0,rank:2,tag:'standard',label:'STD',name:'STD'},
+          {key:'fq',url:d.song_play_url_fq,kbps:Number(d.kbps_fq)||0,rank:1,tag:'low',label:'LOW',name:'FQ'}
+        ].filter(item=>item.url);
+
+        if(qualities.length){
+          qualities.sort((a,b)=>(b.kbps-a.kbps)||(b.rank-a.rank));
+          const best=qualities[0];
+          return {
+            url:best.url,
+            tag:best.tag,
+            label:best.label,
+            text:`${best.name}${best.kbps ? ` ${best.kbps}K` : ''}`
+          };
+        }
         if(d.song_play_url)return {url:d.song_play_url,tag:null,label:null,text:null};
         return {url:null,tag:null,label:null,text:null};
       }
