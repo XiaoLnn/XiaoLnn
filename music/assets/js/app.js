@@ -2459,9 +2459,10 @@
 
     function setupSystemMediaControls(){
       if(!('mediaSession' in navigator))return;
-      // iPhone/iPad 的系统媒体面板会优先把 seekbackward/seekforward
-      // 显示为“后退/快进 10 秒”。苹果触屏设备上不注册这两个动作，
-      // 让系统使用 previoustrack/nexttrack 显示上一首/下一首。
+      // iPhone/iPad 的系统媒体面板可能固定显示“后退/快进 10 秒”。
+      // 仅把 handler 设为 null 会让 iOS 回退到浏览器默认的 10 秒跳转行为。
+      // 因此苹果触屏设备上仍显式注册 seekbackward/seekforward，
+      // 但把动作映射为上一首/下一首；即使系统图标仍是 ±10 秒，实际行为也是切歌。
       const ua=navigator.userAgent||'';
       const isAppleTouchDevice=/iPhone|iPad|iPod/i.test(ua)||
         (/Macintosh/i.test(ua)&&(navigator.maxTouchPoints||0)>1);
@@ -2477,14 +2478,12 @@
         },
         stop:()=>{if(dom.audio){dom.audio.pause();dom.audio.currentTime=0;}}
       };
-      if(!isAppleTouchDevice){
+      if(isAppleTouchDevice){
+        handlers.seekbackward=()=>playNext('prev');
+        handlers.seekforward=()=>playNext('next');
+      }else{
         handlers.seekbackward=(details)=>{if(dom.audio)dom.audio.currentTime=Math.max(0,(dom.audio.currentTime||0)-(details.seekOffset||10));};
         handlers.seekforward=(details)=>{if(dom.audio)dom.audio.currentTime=Math.min(dom.audio.duration||Infinity,(dom.audio.currentTime||0)+(details.seekOffset||10));};
-      }else{
-        // 清掉可能由热更新/旧代码注册过的 seek handler。
-        ['seekbackward','seekforward'].forEach(action=>{
-          try{navigator.mediaSession.setActionHandler(action,null);}catch(error){}
-        });
       }
       Object.entries(handlers).forEach(([action,handler])=>{
         try{navigator.mediaSession.setActionHandler(action,handler);}catch(error){/* unsupported action */}
