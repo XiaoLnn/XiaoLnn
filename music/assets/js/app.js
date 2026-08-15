@@ -820,7 +820,13 @@
 
     // 网易云搜索：迟言 API（列表请求不传 n，选择歌曲时再传 n）
     const CY_NETEASE_ENDPOINT='https://cyapi.top/API/netease.php';
+    const CY_QQ_ENDPOINT='https://cyapi.top/API/qq_music.php';
+    // 按你的要求：原“酷我”入口改用 cyapi 的 kugou_music.php。
+    // 前端仍保留 source='kuwo'，避免影响现有 UI、收藏和本地数据结构。
+    const CY_KUWO_ENDPOINT='https://cyapi.top/API/kugou_music.php';
     const CY_NETEASE_API_KEY='bc01615f034c60e77e43bc0305b3c2ee944414f740083c9421631e6a797bc84c';
+    // QQ / kugou_music 与现有 CY API 共用同一把密钥。
+    const CY_MUSIC_API_KEY=CY_NETEASE_API_KEY;
     const CY_HOT_COMMENT_ENDPOINT='https://cyapi.top/API/wyrp.php';
 
     async function loadQQHotCharts(force=false){
@@ -1319,85 +1325,114 @@
       return added;
     }
 
-    // QQ 搜索：
-
-    // QQ 搜索：使用 tang 的 QQ 音乐搜索 API（只拿列表，不拿 url）
+    // QQ 搜索：cyapi qq_music.php（列表请求不传 n；使用 mid 精确解析详情）
     async function searchQQ(kw, limit) {
-      const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(kw)}&type=json`;
+      const requestLimit=Math.min(50,Math.max(1,Number(limit)||20));
+      const url=new URL(CY_QQ_ENDPOINT);
+      url.searchParams.set('apikey',CY_MUSIC_API_KEY);
+      url.searchParams.set('msg',kw);
+      url.searchParams.set('num',String(requestLimit));
+      url.searchParams.set('type','json');
       let added=0;
       const created=[];
       try {
-        const res=await fetch(url);
-        const json=await res.json();
-        const data=Array.isArray(json)?json:(Array.isArray(json?.data)?json.data:(Array.isArray(json?.result)?json.result:[]));
+        const payload=await cyRequest(url);
+        const data=cyArray(payload);
         if(!data.length)return 0;
-        data.slice(0,limit||data.length).forEach((it,idx)=>{
-          const mid=String(cyFirst(it,['song_mid','songmid','mid','songId','songid'],'')).trim();
+        data.slice(0,requestLimit).forEach((it,idx)=>{
+          if(!it || typeof it!=='object')return;
+          const mid=String(cyFirst(it,[
+            'mid','songmid','song_mid','songMid','歌曲mid','歌曲MID','歌曲Mid','qqmid','qq_mid'
+          ],'')).trim();
           if(!mid)return;
           const uid=`qq-${mid}`;
           if(state.trackMap.has(uid))return;
-          const albumMid=String(cyFirst(it,['album_mid','albummid','albumMid'],'')).trim();
-          const singerMid=String(cyFirst(it,['singer_mid','singermid','singerMid'],Array.isArray(it.singer)?cyFirst(it.singer[0]||{},['mid','singer_mid'],''):'' )).trim();
-          const directCover=cyFirst(it,['album_pic','albumPic','pic','picurl','cover','image','singer_pic'],'');
+          const albumMid=String(cyFirst(it,['album_mid','albummid','albumMid','专辑mid','专辑MID'],'')).trim();
+          const singerMid=String(cyFirst(it,['singer_mid','singermid','singerMid','歌手mid','歌手MID'],Array.isArray(it.singer)?cyFirst(it.singer[0]||{},['mid','singer_mid'],''):'' )).trim();
+          const directCover=cyFirst(it,[
+            'album_pic','albumPic','album_cover','albumCover','song_pic','songPic','pic','picurl','pic_url','cover','image','封面','图片'
+          ],'');
           const cover=cyNormalizeMediaUrl(directCover||cyQQCoverUrl(albumMid,800),'image');
+          const directAudio=cyNormalizeMediaUrl(cyFirst(it,[
+            'url','music_url','play_url','playurl','song_play_url','歌曲链接','播放链接','音频链接'
+          ],''),'audio');
           const track={
             uid,source:'qq',displayIndex:idx+1,keyword:kw,qqSearchKey:kw,qqIndex:idx+1,
             qqId:mid,songid:mid,songMid:mid,albumMid,singerMid,
-            title:cyPreferText(cyFirst(it,['song_title','song_name','name','title'],'') ,'QQ音乐'),
-            artist:cyPickArtist(it,''),
-            album:cyPreferText(cyFirst(it,['album_name','album_title','album','albumname'],'')),
+            title:cyPreferText(cyFirst(it,['song_title','song_name','songname','name','title','歌曲名称','歌名'],'') ,'QQ音乐'),
+            artist:cyPreferText(cyPickArtist(it,''),cyFirst(it,['singer_name','singername','author','歌手','歌手名称'],'')),
+            album:cyPreferText(cyFirst(it,['album_name','album_title','album','albumname','专辑','专辑名称'],'')),
             cover:cover||null,coverCandidates:[directCover,cyQQCoverUrl(albumMid,800),cyQQCoverUrl(albumMid,500)].filter(Boolean),
-            audioUrl:null,lrc:null,lrcUrl:null,detailsLoaded:false,quality:null,qualityLabel:null,
-            qqQualityText:it.pay||null,pay:it.pay||null
+            audioUrl:directAudio||null,
+            lrc:cyFirst(it,['song_lyric','lyric','lrc','歌词','歌词内容'],null),lrcUrl:null,
+            detailsLoaded:Boolean(directAudio),quality:null,qualityLabel:null,
+            qqQualityText:cyFirst(it,['quality','br','bitrate','pay','音质'],null),pay:it.pay||null
           };
+          if(track.audioUrl){
+            const q=inferQualityFromUrl(track.audioUrl);
+            track.quality=q.tag;track.qualityLabel=q.label;
+          }
           state.trackMap.set(uid,track);state.searchResults.push(track);created.push(track);added++;
         });
         if(created.length)primeQQMetadata(created,kw).catch(error=>console.warn('qq metadata queue',error));
-      }catch(e){console.error('qq search (tang)',e);}
+      }catch(e){console.error('qq search (cyapi)',e);}
       return added;
     }
 
-    // 酷我搜索
-
-    // 酷我搜索
+    // 原“酷我”搜索入口：按要求改用 cyapi kugou_music.php。
     async function searchKuwo(kw, limit){
-      const url=`https://kw-api.cenguigui.cn/?name=${encodeURIComponent(kw)}&page=1&limit=${encodeURIComponent(limit)}`;
+      const requestLimit=Math.max(1,Number(limit)||20);
+      const url=new URL(CY_KUWO_ENDPOINT);
+      url.searchParams.set('apikey',CY_MUSIC_API_KEY);
+      url.searchParams.set('msg',kw);
       let added=0;
       try{
-        const res=await fetch(url);
-        const json=await res.json();
-        if(json.code!==200 || !Array.isArray(json.data)) return 0;
+        const payload=await cyRequest(url);
+        const data=cyArray(payload);
+        if(!data.length)return 0;
 
-        json.data.forEach((it, idx)=>{
-          const uid=`kuwo-${it.rid}`;
+        data.slice(0,requestLimit).forEach((it,idx)=>{
+          if(!it || typeof it!=='object')return;
+          const songId=String(cyFirst(it,[
+            'id','songid','song_id','rid','hash','audio_id','歌曲id','歌曲ID','歌曲Id'
+          ],'')).trim();
+          if(!songId)return;
+          const uid=`kuwo-${songId}`;
           if(state.trackMap.has(uid))return;
 
+          const directAudio=cyNormalizeMediaUrl(cyFirst(it,[
+            'url','music_url','play_url','playurl','song_play_url','歌曲链接','播放链接','音频链接'
+          ],''),'audio');
+          const cover=cyNormalizeMediaUrl(cyFirst(it,[
+            'pic','picurl','pic_url','cover','coverUrl','image','img','封面','图片'
+          ],''),'image');
           const track={
             uid,
             source:'kuwo',
             displayIndex:idx+1,
             keyword:kw,
-            songid:it.rid,
-
-            title:it.name||'',
-            artist:it.artist||'',
-            album:it.album||'',
-
-            cover:it.pic||null,
-            audioUrl:null,
-            lrc:null,
+            songid:songId,
+            title:cyPreferText(cyFirst(it,['name','song_name','songname','title','歌曲名称','歌名'],'')),
+            artist:cyPreferText(cyPickArtist(it,''),cyFirst(it,['singer_name','singername','author','歌手','歌手名称'],'')),
+            album:cyPreferText(cyFirst(it,['album','album_name','albumname','专辑','专辑名称'],'')),
+            cover:cover||null,
+            audioUrl:directAudio||null,
+            lrc:cyFirst(it,['lyric','lrc','歌词','歌词内容'],null),
             lrcUrl:null,
-            detailsLoaded:false,
+            detailsLoaded:Boolean(directAudio),
             quality:null,
             qualityLabel:null
           };
-
+          if(track.audioUrl){
+            const q=inferQualityFromUrl(track.audioUrl);
+            track.quality=q.tag;track.qualityLabel=q.label;
+          }
           state.trackMap.set(uid,track);
           state.searchResults.push(track);
           added++;
         });
       }catch(e){
-        console.error('kuwo search',e);
+        console.error('kuwo/kugou cyapi search',e);
       }
       return added;
     }
@@ -1535,49 +1570,70 @@
       track.detailsLoaded=Boolean(track.audioUrl);
     }
 
-    // QQ 详情：根据搜索时的关键词 + song_mid(mid) 拿 url + lrc（tang API）
+    // QQ 详情：用搜索结果的 mid 直接解析；传 mid 后接口会忽略 msg/n/num 等参数。
     async function fetchQQDetails(track) {
-      const msg=(track.qqSearchKey||track.keyword||'').trim()||((track.title||'')+' '+(track.artist||'')).trim();
       const mid=String(track.qqId||track.songMid||track.songid||'').trim();
       if(!mid)return;
-      const url=`https://tang.api.s01s.cn/music_open_api.php?msg=${encodeURIComponent(msg)}&type=json&mid=${encodeURIComponent(mid)}`;
+      const url=new URL(CY_QQ_ENDPOINT);
+      url.searchParams.set('apikey',CY_MUSIC_API_KEY);
+      url.searchParams.set('mid',mid);
+      url.searchParams.set('type','json');
+
       function pickBestPlayUrl(d){
-        if(d.song_play_url_sq)return {url:d.song_play_url_sq,tag:'lossless',label:'LOSSLESS',text:`SQ ${d.kbps_sq||''}`.trim()};
-        if(d.song_play_url_pq)return {url:d.song_play_url_pq,tag:'lossless',label:'LOSSLESS',text:`PQ ${d.kbps_pq||''}`.trim()};
-        if(d.song_play_url_accom)return {url:d.song_play_url_accom,tag:'hq',label:'HQ',text:`ACCOM ${d.kbps_accom||''}`.trim()};
-        if(d.song_play_url_hq)return {url:d.song_play_url_hq,tag:'hq',label:'HQ',text:`HQ ${d.kbps_hq||''}`.trim()};
-        if(d.song_play_url_standard)return {url:d.song_play_url_standard,tag:'standard',label:'STD',text:`STD ${d.kbps_standard||''}`.trim()};
-        if(d.song_play_url_fq)return {url:d.song_play_url_fq,tag:'low',label:'LOW',text:`FQ ${d.kbps_fq||''}`.trim()};
-        if(d.song_play_url)return {url:d.song_play_url,tag:null,label:null,text:null};
-        return {url:null,tag:null,label:null,text:null};
+        const candidates=[
+          ['song_play_url_sq','lossless','LOSSLESS','SQ'],
+          ['song_play_url_pq','lossless','LOSSLESS','PQ'],
+          ['song_play_url_accom','hq','HQ','ACCOM'],
+          ['song_play_url_hq','hq','HQ','HQ'],
+          ['song_play_url_standard','standard','STD','STD'],
+          ['song_play_url_fq','low','LOW','FQ']
+        ];
+        for(const [key,tag,label,text] of candidates){
+          const value=cyNormalizeMediaUrl(d?.[key],'audio');
+          if(value)return {url:value,tag,label,text};
+        }
+        const generic=cyNormalizeMediaUrl(cyFirst(d,[
+          'song_play_url','url','music_url','play_url','playurl','audioUrl','audio_url','歌曲链接','播放链接','音频链接'
+        ],''),'audio');
+        return {url:generic||null,tag:null,label:null,text:null};
       }
+
       try{
-        const res=await fetch(url);
-        const payload=await res.json();
-        const d=Array.isArray(payload)?(payload.find(x=>String(x.song_mid||x.songmid||'')===mid)||payload[0]||{}):(payload?.data&&!Array.isArray(payload.data)?payload.data:payload);
+        const payload=await cyRequest(url);
+        let d=payload;
+        if(Array.isArray(payload))d=payload.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid)||payload[0]||{};
+        else if(payload && typeof payload==='object'){
+          const arr=cyArray(payload);
+          if(arr.length)d=arr.find(x=>String(cyFirst(x||{},['mid','songmid','song_mid','songMid'],'')).trim()===mid)||arr[0]||{};
+          else if(payload.data && typeof payload.data==='object' && !Array.isArray(payload.data))d=payload.data;
+        }
         if(!d||typeof d!=='object')throw new Error('qq detail error (invalid response)');
-        track.albumMid=String(cyFirst(d,['album_mid','albummid','albumMid'],track.albumMid||'')).trim();
-        track.singerMid=String(cyFirst(d,['singer_mid','singermid','singerMid'],track.singerMid||'')).trim();
-        track.title=cyPreferText(cyFirst(d,['song_title','song_name','name','title'],''),track.title);
-        track.artist=cyPreferText(cyPickArtist(d,''),track.artist);
-        track.album=cyPreferText(cyFirst(d,['album_name','album_title','album','albumname'],''),track.album);
-        const directCover=cyFirst(d,['album_pic','albumPic','album_cover','albumCover','album_img','albumImg','song_pic','songPic','pic','picurl','pic_url','cover','image','singer_pic','singerPic'],'');
+
+        track.albumMid=String(cyFirst(d,['album_mid','albummid','albumMid','专辑mid','专辑MID'],track.albumMid||'')).trim();
+        track.singerMid=String(cyFirst(d,['singer_mid','singermid','singerMid','歌手mid','歌手MID'],track.singerMid||'')).trim();
+        track.title=cyPreferText(cyFirst(d,['song_title','song_name','songname','name','title','歌曲名称','歌名'],''),track.title);
+        track.artist=cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer_name','singername','author','歌手','歌手名称'],''),track.artist);
+        track.album=cyPreferText(cyFirst(d,['album_name','album_title','album','albumname','专辑','专辑名称'],''),track.album);
+        const directCover=cyFirst(d,[
+          'album_pic','albumPic','album_cover','albumCover','album_img','albumImg','song_pic','songPic','pic','picurl','pic_url','cover','image','singer_pic','singerPic','封面','图片'
+        ],'');
         const generated=cyQQCoverUrl(track.albumMid,800);
         track.coverCandidates=[directCover,generated,cyQQCoverUrl(track.albumMid,500),...(track.coverCandidates||[])].filter(Boolean);
         track.cover=cyNormalizeMediaUrl(directCover||generated||track.cover,'image');
-        track.pageUrl=d.song_h5_url||track.pageUrl;
+        track.pageUrl=cyFirst(d,['song_h5_url','page_url','pageUrl','歌曲页面'],track.pageUrl||'');
         const best=pickBestPlayUrl(d);
-        track.audioUrl=cyNormalizeMediaUrl(best.url||track.audioUrl,'audio');
-        track.lrc=d.song_lyric||d.lyric||track.lrc;
-        track.qqQualityText=best.text||(d.vip?`VIP:${d.vip}`:null)||track.qqQualityText;
+        track.audioUrl=best.url||track.audioUrl;
+        track.lrc=cyFirst(d,['song_lyric','lyric','lrc','歌词','歌词内容'],track.lrc||null);
+        track.qqQualityText=best.text||cyFirst(d,['quality','br','bitrate','音质','vip'],track.qqQualityText||null);
         if(best.tag&&best.label){track.quality=best.tag;track.qualityLabel=best.label;}
         if(track.audioUrl){const q=inferQualityFromUrl(track.audioUrl);if(q&&q.label){track.quality=q.tag;track.qualityLabel=q.label;}}
         track.detailsLoaded=Boolean(track.audioUrl);
-      }catch(e){console.error('qq detail (tang)',e);}
+      }catch(e){console.error('qq detail (cyapi)',e);}
     }
 
     async function primeQQMetadata(tracks,searchToken){
-      const queue=tracks.filter(track=>!track.cover).slice(0,12);
+      // 只给缺少关键元数据的前几首补详情，避免搜索瞬间大量消耗接口额度。
+      const queue=tracks.filter(track=>!track.cover||!cyUsableText(track.artist)).slice(0,8);
       let cursor=0;
       const worker=async()=>{
         while(cursor<queue.length){
@@ -1586,35 +1642,49 @@
           if(searchToken!==state.searchKeyword)continue;
           renderMiniSearchList();
           if(state.currentTrack?.uid===track.uid)updateThemeFromTrack(track);
-          await new Promise(resolve=>setTimeout(resolve,80));
+          await new Promise(resolve=>setTimeout(resolve,100));
         }
       };
-      await Promise.all([worker(),worker(),worker()]);
+      await Promise.all([worker(),worker()]);
     }
 
     async function fetchKuwoDetails(track){
-      const api=`https://kw-api.cenguigui.cn/?id=${encodeURIComponent(track.songid)}&type=song&level=zp&format=json`;
-      const res=await fetch(api);
-      const j=await res.json();
-      if(!j || j.code!==200 || !j.data) throw new Error('kuwo kw-api detail failed');
+      const id=String(track.songid||'').trim();
+      if(!id)return;
+      const url=new URL(CY_KUWO_ENDPOINT);
+      url.searchParams.set('apikey',CY_MUSIC_API_KEY);
+      url.searchParams.set('id',id);
+      const payload=await cyRequest(url);
+      let d=payload;
+      if(Array.isArray(payload))d=payload[0]||{};
+      else if(payload && typeof payload==='object'){
+        const arr=cyArray(payload);
+        if(arr.length)d=arr[0]||{};
+        else if(payload.data && typeof payload.data==='object' && !Array.isArray(payload.data))d=payload.data;
+      }
+      if(!d || typeof d!=='object')throw new Error('kuwo/kugou cyapi detail failed');
 
-      const d=j.data;
+      const audioUrl=cyNormalizeMediaUrl(cyFirst(d,[
+        'url','music_url','play_url','playurl','song_play_url','audioUrl','audio_url','歌曲链接','播放链接','音频链接'
+      ],track.audioUrl||''),'audio');
+      const cover=cyNormalizeMediaUrl(cyFirst(d,[
+        'pic','picurl','pic_url','cover','coverUrl','image','img','封面','图片'
+      ],track.cover||''),'image');
       Object.assign(track,{
-        title:d.name || track.title,
-        artist:d.artist || track.artist,
-        album:d.album || track.album,
-        cover:d.pic || track.cover,
-        audioUrl:d.url || track.audioUrl,
-        lrc: d.lyric || track.lrc || null,
-        lrcUrl: null,
-        detailsLoaded:true
+        title:cyPreferText(cyFirst(d,['name','song_name','songname','title','歌曲名称','歌名'],''),track.title),
+        artist:cyPreferText(cyPickArtist(d,''),cyFirst(d,['singer_name','singername','author','歌手','歌手名称'],''),track.artist),
+        album:cyPreferText(cyFirst(d,['album','album_name','albumname','专辑','专辑名称'],''),track.album),
+        cover:cover||track.cover,
+        audioUrl:audioUrl||track.audioUrl,
+        lrc:cyFirst(d,['lyric','lrc','歌词','歌词内容'],track.lrc||null),
+        lrcUrl:null,
+        detailsLoaded:Boolean(audioUrl||track.audioUrl)
       });
 
-      // 酷我：根据最终 url 后缀判断音质
-      if (track.audioUrl) {
-        const q = inferQualityFromUrl(track.audioUrl);
-        track.quality = q.tag;
-        track.qualityLabel = q.label;
+      if(track.audioUrl){
+        const q=inferQualityFromUrl(track.audioUrl);
+        track.quality=q.tag;
+        track.qualityLabel=q.label;
       }
     }
 
