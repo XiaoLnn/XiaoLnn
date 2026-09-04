@@ -1645,20 +1645,51 @@
     track.qualityLabel = q.label;
   }
 
-  // 获取歌词
+  // 获取歌词：使用 QQMusicLyric。先按歌名搜索候选，再按候选歌曲 id 获取 LRC。
   try {
-    const msg = `${track.title} ${track.artist}`.trim();
-    const lyricUrl = `https://oiapi.net/api/Kggc?msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(track.displayIndex)}&format=lrc&type=json`;
-    console.log('[Kuwo 歌词请求]', lyricUrl);
-    const lyricRes = await fetch(lyricUrl);
-    const lyricJson = await lyricRes.json();
-    console.log('[Kuwo 歌词响应]', lyricJson);
+    const keyword = track.title || track.keyword || '';
+    const searchUrl = `https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&page=1&limit=10&type=json`;
+    console.log('[Kuwo 歌词搜索请求]', searchUrl);
+    const searchRes = await fetch(searchUrl);
+    const searchJson = await searchRes.json();
+    console.log('[Kuwo 歌词搜索响应]', searchJson);
 
-    if (lyricJson.code === 1 && lyricJson.data && lyricJson.data.content) {
-      track.lrc = lyricJson.data.content;
-      console.log('[Kuwo] 歌词获取成功');
+    if (!searchJson || searchJson.code !== 1 || !Array.isArray(searchJson.data) || !searchJson.data.length) {
+      console.warn('[Kuwo] 未找到歌词候选');
     } else {
-      console.warn('[Kuwo] 歌词获取失败，code:', lyricJson.code);
+      const normalize = value => String(value || '').trim().toLowerCase();
+      const wantedTitle = normalize(track.title);
+      const wantedArtist = normalize(track.artist);
+      const singerText = item => Array.isArray(item?.singer)
+        ? item.singer.map(s => typeof s === 'string' ? s : (s?.name || '')).join(' / ')
+        : String(item?.singer || '');
+
+      const candidate = searchJson.data.find(item =>
+        normalize(item?.name) === wantedTitle &&
+        (!wantedArtist || normalize(singerText(item)).includes(wantedArtist))
+      ) || searchJson.data.find(item => normalize(item?.name) === wantedTitle) || searchJson.data[0];
+
+      const lyricId = candidate?.id || candidate?.mid;
+      if (!lyricId) {
+        console.warn('[Kuwo] 歌词候选缺少 id/mid', candidate);
+      } else {
+        const lyricUrl = `https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&id=${encodeURIComponent(lyricId)}&format=lrc&type=json`;
+        console.log('[Kuwo 歌词请求]', lyricUrl);
+        const lyricRes = await fetch(lyricUrl);
+        const lyricJson = await lyricRes.json();
+        console.log('[Kuwo 歌词响应]', lyricJson);
+
+        const lyricData = lyricJson?.data;
+        const lyricText = lyricData && !Array.isArray(lyricData)
+          ? (lyricData.conteng || lyricData.content || lyricData.lrc || '')
+          : '';
+        if (lyricJson?.code === 1 && lyricText) {
+          track.lrc = lyricText;
+          console.log('[Kuwo] 歌词获取成功');
+        } else {
+          console.warn('[Kuwo] 歌词获取失败', lyricJson);
+        }
+      }
     }
   } catch (e) {
     console.warn('[Kuwo] 歌词接口异常', e);
