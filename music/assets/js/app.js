@@ -1363,7 +1363,7 @@
 
     // 酷我搜索
     async function searchKuwo(kw, limit){
-      const url=`https://kw-api.cenguigui.cn/?name=${encodeURIComponent(kw)}&page=1&limit=${encodeURIComponent(limit)}`;
+      const url=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(kw)}&limit=${encodeURIComponent(limit)}`;
       let added=0;
       try{
         const res=await fetch(url);
@@ -1381,11 +1381,11 @@
             keyword:kw,
             songid:it.rid,
 
-            title:it.name||'',
-            artist:it.artist||'',
+            title:it.song||'',
+            artist:it.singer||'',
             album:it.album||'',
 
-            cover:it.pic||null,
+            cover:it.picture||null,
             audioUrl:null,
             lrc:null,
             lrcUrl:null,
@@ -1394,14 +1394,16 @@
             qualityLabel:null
           };
 
-          state.trackMap.set(uid,track);
+          state.trackMap.set(uid, track);
           state.searchResults.push(track);
           added++;
         });
+
+        return added;
       }catch(e){
-        console.error('kuwo search',e);
+        console.error('kuwo search failed',e);
+        return 0;
       }
-      return added;
     }
 
     const JOOX_TOKEN = 'f84ao9lMF_q7husBWRfgUw';
@@ -1609,24 +1611,23 @@
     }
 
     async function fetchKuwoDetails(track){
-      const api=`https://kw-api.cenguigui.cn/?id=${encodeURIComponent(track.songid)}&type=song&level=zp&format=json`;
+      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=3`;
+
       const res=await fetch(api);
       const j=await res.json();
-      if(!j || j.code!==200 || !j.data) throw new Error('kuwo kw-api detail failed');
+
+      if(!j || j.code!==200 || !j.data) throw new Error('kuwo detail failed');
 
       const d=j.data;
       Object.assign(track,{
-        title:d.name || track.title,
-        artist:d.artist || track.artist,
+        title:d.song || track.title,
+        artist:d.singer || track.artist,
         album:d.album || track.album,
-        cover:d.pic || track.cover,
+        cover:d.picture || track.cover,
         audioUrl:d.url || track.audioUrl,
-        lrc: d.lyric || track.lrc || null,
-        lrcUrl: null,
         detailsLoaded:true
       });
 
-      // 酷我：根据最终 url 后缀判断音质
       if (track.audioUrl) {
         const q = inferQualityFromUrl(track.audioUrl);
         track.quality = q.tag;
