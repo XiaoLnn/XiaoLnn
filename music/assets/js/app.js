@@ -1,3 +1,4 @@
+console.info('[Kuwo Fix] n-limit-v2 loaded');
 (function(){
     const translations = {
       zh: {
