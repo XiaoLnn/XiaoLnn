@@ -324,12 +324,6 @@
     const METING_ENDPOINT = 'https://api.qijieya.cn/meting/';
     const QQ_PLAYLIST_ENDPOINT = 'https://xiaolnn.pages.dev/api/qq-playlist';
     const QQ_HOT_ENDPOINT = 'https://cyapi.top/API/music_hot.php';
-    const KUWO_LYRIC_ENDPOINT = 'https://oiapi.net/api/Kggc';
-
-    function isOiApiOk(payload){
-      const code = Number(payload?.code);
-      return code === 1 || code === 200;
-    }
 
     let openCCConverters=null;
     let openCCLoadPromise=null;
@@ -1374,36 +1368,18 @@
       try{
         const res=await fetch(url);
         const json=await res.json();
-        // 接口成功码现为 1（兼容 200）
-        if(!isOiApiOk(json) || !Array.isArray(json.data)) return 0;
+        if(json.code!==200 || !Array.isArray(json.data)) return 0;
 
         json.data.forEach((it, idx)=>{
-          const rid=String(it.rid || it.id || '').replace(/^MUSIC_/i,'');
-          if(!rid)return;
-
-          const uid=`kuwo-${rid}`;
-          // 已在收藏/歌单中的歌曲也要出现在搜索列表，不能直接跳过
-          if(state.trackMap.has(uid)){
-            const existing=state.trackMap.get(uid);
-            existing.displayIndex=idx+1;
-            existing.keyword=kw;
-            if(!existing.title && it.song) existing.title=it.song;
-            if(!existing.artist && it.singer) existing.artist=it.singer;
-            if(!existing.cover && it.picture) existing.cover=it.picture;
-            if(!state.searchResults.some(t=>t.uid===uid)){
-              state.searchResults.push(existing);
-              added++;
-            }
-            return;
-          }
+          const uid=`kuwo-${it.rid}`;
+          if(state.trackMap.has(uid))return;
 
           const track={
             uid,
             source:'kuwo',
             displayIndex:idx+1,
             keyword:kw,
-            songid:rid,
-            rid:rid,
+            songid:it.rid,
 
             title:it.song||'',
             artist:it.singer||'',
@@ -1634,93 +1610,13 @@
       await Promise.all([worker(),worker(),worker()]);
     }
 
-
-    // 酷我官方歌词兜底（按 musicId）
-    async function fetchKuwoOfficialLyrics(track){
-      const musicId=String(track.songid || track.rid || '').replace(/^MUSIC_/i,'');
-      if(!musicId) return;
-      try{
-        const url=`https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=${encodeURIComponent(musicId)}`;
-        const res=await fetch(url,{headers:{Accept:'application/json'}});
-        const json=await res.json();
-        const list=json?.data?.lrclist;
-        if(!Array.isArray(list) || !list.length) return;
-
-        const lines=list.map(item=>{
-          const t=Number(item.time);
-          if(!Number.isFinite(t)) return '';
-          const min=Math.floor(t/60);
-          const sec=Math.floor(t%60);
-          const ms=Math.round((t-Math.floor(t))*1000);
-          const stamp=`[${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(ms).padStart(3,'0')}]`;
-          return stamp+(item.lineLyric||'');
-        }).filter(Boolean);
-
-        if(lines.length){
-          track.lrc=lines.join('\n');
-          track.lrcUrl='';
-        }
-      }catch(e){
-        console.warn('Kuwo official lyric fallback failed', e);
-      }
-    }
-
-    async function fetchKuwoLyrics(track){
-      try{
-        const url = new URL(KUWO_LYRIC_ENDPOINT);
-        const msg = (`${track.title || ''} ${track.artist || ''}`.trim())
-          || track.keyword
-          || '';
-        url.searchParams.set('msg', msg);
-        url.searchParams.set('n', String(track.displayIndex || 1));
-
-        const res = await fetch(url,{
-          headers:{Accept:'application/json,text/plain,*/*'}
-        });
-
-        const json = await res.json();
-        if(json?.code!=null && !isOiApiOk(json)){
-          console.warn('Kuwo lyric api code', json.code, json.message);
-        }
-
-        let lyric = '';
-
-        if(typeof json?.data === 'string'){
-          lyric = json.data;
-        }else if(json?.data?.content){
-          lyric = json.data.content;
-        }else if(Array.isArray(json?.data)){
-          lyric = json.data[0]?.content || json.data[0]?.lrc || '';
-        }else if(json?.content){
-          lyric = json.content;
-        }
-        // 部分响应把完整 LRC 放在 message 里
-        if(!lyric && typeof json?.message === 'string' && /\[\d{1,3}:\d{1,2}/.test(json.message)){
-          lyric = json.message;
-        }
-
-        if(lyric){
-          track.lrc = lyric;
-          track.lrcUrl = '';
-        }
-      }catch(error){
-        console.warn('Kuwo lyric load failed:', error);
-      }
-
-      // oiapi 失败时尝试官方接口
-      if(!track.lrc){
-        await fetchKuwoOfficialLyrics(track);
-      }
-    }
-
     async function fetchKuwoDetails(track){
       const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=3`;
 
       const res=await fetch(api);
       const j=await res.json();
 
-      // 接口成功码现为 1（兼容 200）
-      if(!j || !isOiApiOk(j) || !j.data) throw new Error('kuwo detail failed');
+      if(!j || j.code!==200 || !j.data) throw new Error('kuwo detail failed');
 
       const d=j.data;
       Object.assign(track,{
@@ -1729,8 +1625,6 @@
         album:d.album || track.album,
         cover:d.picture || track.cover,
         audioUrl:d.url || track.audioUrl,
-        songid:String(d.id || d.rid || track.songid || '').replace(/^MUSIC_/i,''),
-        rid:String(d.rid || d.id || track.rid || '').replace(/^MUSIC_/i,''),
         detailsLoaded:true
       });
 
@@ -1739,8 +1633,6 @@
         track.quality = q.tag;
         track.qualityLabel = q.label;
       }
-
-      await fetchKuwoLyrics(track);
     }
 
     async function fetchJooxDetails(track){
