@@ -1850,15 +1850,12 @@
           if(!isCurrent())return false;
           try{
             let d;
-            const canReuse=br===1&&attempt===0&&track.kuwoCurrentBr===1&&track.audioUrl;
-            if(canReuse){
-              d={url:track.audioUrl,format:'',bitrate:0};
-            }else{
-              d=await fetchKuwoByBr(track,br,controller.signal,attempt>0);
-              if(!isCurrent())return false;
-              if(!d?.url)throw new Error(`Kuwo br=${br} 无音频链接`);
-              applyKuwoDetail(track,d,br);
-            }
+            // 酷我直链带时效签名。每次真正播放/切回歌曲都重新取一条最新链接，
+            // 不复用上一轮保存的 URL，避免连续切歌后命中过期签名。
+            d=await fetchKuwoByBr(track,br,controller.signal,attempt>0);
+            if(!isCurrent())return false;
+            if(!d?.url)throw new Error(`Kuwo br=${br} 无音频链接`);
+            applyKuwoDetail(track,d,br);
 
             const candidates=kuwoAudioCandidates(d?.url||track.audioUrl);
             if(!candidates.length)throw new Error(`Kuwo br=${br} 音频链接为空`);
@@ -2937,19 +2934,35 @@
       updateMainFavButton();
 
       try{
-        await ensureTrackDetails(track);
-        if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return;
-        applyUI();
-        state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
-        renderLyrics();
-        if(!track.audioUrl){showToast(t('toastPlayError'));return;}
-        track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
-        if(!track.audioUrl){showToast(t('toastPlayError'));return;}
         if(track.source==='kuwo'){
+          // 酷我播放本身会按 br 获取最新签名音频链接。这里不要先 ensureTrackDetails()，
+          // 否则每次切歌会重复请求一次 br=1，并增加旧请求与新播放会话交叉的机会。
+          // 歌词独立并行获取，不阻塞音频开始播放。
+          if(!track.lrc){
+            fetchKuwoLyrics(track).then(()=>{
+              if(requestToken===state.playRequestToken&&state.currentTrack?.uid===track.uid&&track.lrc){
+                state.lyricLines=parseLRC(track.lrc);
+                renderLyrics();
+              }
+            }).catch(()=>{});
+          }
+
           const played=await playKuwoWithFallback(track,requestToken);
+          // 切歌会主动取消上一首的播放会话。取消不是播放失败，旧任务不得弹错误提示。
+          if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return;
           if(!played){showToast(t('toastPlayError'));return;}
           applyUI();
+          state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
+          renderLyrics();
         }else{
+          await ensureTrackDetails(track);
+          if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return;
+          applyUI();
+          state.lyricLines = track.lrc ? parseLRC(track.lrc) : [];
+          renderLyrics();
+          if(!track.audioUrl){showToast(t('toastPlayError'));return;}
+          track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
+          if(!track.audioUrl){showToast(t('toastPlayError'));return;}
           dom.audio.src=track.audioUrl;
           await dom.audio.play();
           state.isPlaying=true;
