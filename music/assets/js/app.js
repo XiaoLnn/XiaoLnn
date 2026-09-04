@@ -1363,7 +1363,7 @@
 
     // 酷我搜索
    async function searchKuwo(kw, limit) {
-  const url = `/api/kuwo?mode=search&msg=${encodeURIComponent(kw)}&limit=${encodeURIComponent(limit)}`;
+  const url = `https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(kw)}&limit=${encodeURIComponent(limit)}`;
   let added = 0;
   try {
     const res = await fetch(url);
@@ -1618,7 +1618,7 @@
 
     async function fetchKuwoDetails(track) {
   // 获取播放链接（详情接口也使用 n 参数）
-  const api = `/api/kuwo?mode=detail&msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
+  const api = `https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
   console.log('[Kuwo 详情请求]', api);
   const res = await fetch(api);
   const j = await res.json();
@@ -1648,7 +1648,7 @@
   // 获取歌词
   try {
     const msg = `${track.title} ${track.artist}`.trim();
-    const lyricUrl = `/api/kuwo?mode=lyric&msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(track.displayIndex)}&format=lrc&type=json`;
+    const lyricUrl = `https://oiapi.net/api/Kggc?msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(track.displayIndex)}&format=lrc&type=json`;
     console.log('[Kuwo 歌词请求]', lyricUrl);
     const lyricRes = await fetch(lyricUrl);
     const lyricJson = await lyricRes.json();
