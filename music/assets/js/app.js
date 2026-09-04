@@ -1611,7 +1611,7 @@
     }
 
     async function fetchKuwoDetails(track){
-      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=3`;
+      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
 
       const res=await fetch(api);
       const j=await res.json();
