@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: './',
+  base: '/music1/',
   build: {
     target: 'es2019',
     cssCodeSplit: true,
