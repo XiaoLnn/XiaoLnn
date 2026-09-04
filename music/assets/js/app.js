@@ -1616,85 +1616,181 @@
       await Promise.all([worker(),worker(),worker()]);
     }
 
-    async function fetchKuwoDetails(track) {
-  // 获取播放链接（详情接口也使用 n 参数）
-  const api = `https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
-  console.log('[Kuwo 详情请求]', api);
-  const res = await fetch(api);
-  const j = await res.json();
-  console.log('[Kuwo 详情响应]', j);
+    function kuwoMimeFromFormat(format){
+      const f=String(format||'').toLowerCase();
+      if(f==='flac')return 'audio/flac';
+      if(f==='ogg')return 'audio/ogg';
+      if(f==='mp3')return 'audio/mpeg';
+      if(f==='aac'||f==='m4a')return 'audio/aac';
+      if(f==='wav')return 'audio/wav';
+      return '';
+    }
 
-  // 同样使用 code === 1 判断成功
-  if (!j || j.code !== 1 || !j.data) {
-    throw new Error('酷我详情获取失败');
-  }
-  const d = j.data;
+    function kuwoCanPlayFormat(format){
+      const mime=kuwoMimeFromFormat(format);
+      if(!mime||!dom.audio?.canPlayType)return true;
+      return dom.audio.canPlayType(mime)!=='';
+    }
 
-  Object.assign(track, {
-    title: d.song || track.title,
-    artist: d.singer || track.artist,
-    album: d.album || track.album,
-    cover: d.picture || track.cover,
-    audioUrl: d.url || track.audioUrl,   // 若 d.url 为空，可能需要根据 types 构造
-    detailsLoaded: true,
-  });
+    function kuwoQualityRank(item,index){
+      const format=String(item?.format||'').toLowerCase();
+      const bitrate=Number(item?.bitrate)||0;
+      const level=String(item?.level||'').toLowerCase();
+      let score=bitrate;
+      if(['flac','wav','ape','alac','aiff'].includes(format))score+=100000;
+      if(level==='ff'||level==='zp'||/lossless|无损/.test(level))score+=50000;
+      return {item,index,score};
+    }
 
-  if (track.audioUrl) {
-    const q = inferQualityFromUrl(track.audioUrl);
-    track.quality = q.tag;
-    track.qualityLabel = q.label;
-  }
+    function buildKuwoQualityOrder(types){
+      if(!Array.isArray(types)||!types.length)return [1,2,3,4,5,6,7];
+      // OIAPI 的 br 是音质序号；types 通常按高到低返回。优先尊重接口顺序，
+      // 同时把浏览器明确不支持的格式放到最后，避免首播浪费时间。
+      return types.map((item,index)=>({
+        br:index+1,
+        playable:kuwoCanPlayFormat(item?.format),
+        ranked:kuwoQualityRank(item,index)
+      })).sort((a,b)=>{
+        if(a.playable!==b.playable)return a.playable?-1:1;
+        return b.ranked.score-a.ranked.score || a.br-b.br;
+      }).map(x=>x.br);
+    }
 
-  // 获取歌词：使用 QQMusicLyric。先按歌名搜索候选，再按候选歌曲 id 获取 LRC。
-  try {
-    const keyword = track.title || track.keyword || '';
-    const searchUrl = `https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&page=1&limit=10&type=json`;
-    console.log('[Kuwo 歌词搜索请求]', searchUrl);
-    const searchRes = await fetch(searchUrl);
-    const searchJson = await searchRes.json();
-    console.log('[Kuwo 歌词搜索响应]', searchJson);
+    async function fetchKuwoByBr(track,br){
+      const n=track.displayIndex||1;
+      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(n)}&br=${encodeURIComponent(br)}`;
+      console.log(`[Kuwo br=${br} 请求]`,api);
+      const res=await fetch(api,{cache:'no-store'});
+      if(!res.ok)throw new Error(`Kuwo HTTP ${res.status}`);
+      const j=await res.json();
+      console.log(`[Kuwo br=${br} 响应]`,j);
+      if(!j||j.code!==1||!j.data)throw new Error(`Kuwo br=${br} 获取失败`);
+      return j.data;
+    }
 
-    if (!searchJson || searchJson.code !== 1 || !Array.isArray(searchJson.data) || !searchJson.data.length) {
-      console.warn('[Kuwo] 未找到歌词候选');
-    } else {
-      const normalize = value => String(value || '').trim().toLowerCase();
-      const wantedTitle = normalize(track.title);
-      const wantedArtist = normalize(track.artist);
-      const singerText = item => Array.isArray(item?.singer)
-        ? item.singer.map(s => typeof s === 'string' ? s : (s?.name || '')).join(' / ')
-        : String(item?.singer || '');
-
-      const candidate = searchJson.data.find(item =>
-        normalize(item?.name) === wantedTitle &&
-        (!wantedArtist || normalize(singerText(item)).includes(wantedArtist))
-      ) || searchJson.data.find(item => normalize(item?.name) === wantedTitle) || searchJson.data[0];
-
-      const lyricId = candidate?.id || candidate?.mid;
-      if (!lyricId) {
-        console.warn('[Kuwo] 歌词候选缺少 id/mid', candidate);
-      } else {
-        const lyricUrl = `https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&id=${encodeURIComponent(lyricId)}&format=lrc&type=json`;
-        console.log('[Kuwo 歌词请求]', lyricUrl);
-        const lyricRes = await fetch(lyricUrl);
-        const lyricJson = await lyricRes.json();
-        console.log('[Kuwo 歌词响应]', lyricJson);
-
-        const lyricData = lyricJson?.data;
-        const lyricText = lyricData && !Array.isArray(lyricData)
-          ? (lyricData.conteng || lyricData.content || lyricData.lrc || '')
-          : '';
-        if (lyricJson?.code === 1 && lyricText) {
-          track.lrc = lyricText;
-          console.log('[Kuwo] 歌词获取成功');
-        } else {
-          console.warn('[Kuwo] 歌词获取失败', lyricJson);
-        }
+    function applyKuwoDetail(track,d,br){
+      const audioUrl=cyNormalizeMediaUrl(d?.url||'','audio');
+      Object.assign(track,{
+        title:d?.song||track.title,
+        artist:d?.singer||track.artist,
+        album:d?.album||track.album,
+        cover:d?.picture||track.cover,
+        audioUrl:audioUrl||track.audioUrl,
+        kuwoCurrentBr:br,
+        detailsLoaded:true
+      });
+      if(Array.isArray(d?.types)&&d.types.length){
+        track.kuwoTypes=d.types;
+        track.kuwoQualityOrder=buildKuwoQualityOrder(d.types);
+      }
+      if(track.audioUrl){
+        const format=String(d?.format||'').toLowerCase();
+        const bitrate=Number(d?.bitrate)||0;
+        const lossless=['flac','wav','ape','alac','aiff'].includes(format)||bitrate>1000;
+        track.quality=lossless?'lossless':(bitrate?`${bitrate}k`:inferQualityFromUrl(track.audioUrl).tag);
+        track.qualityLabel=lossless?'LOSSLESS':(bitrate?`${bitrate}K`:inferQualityFromUrl(track.audioUrl).label);
       }
     }
-  } catch (e) {
-    console.warn('[Kuwo] 歌词接口异常', e);
-  }
-}
+
+    async function fetchKuwoLyrics(track){
+      try{
+        const keyword=track.title||track.keyword||'';
+        const searchUrl=`https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&page=1&limit=10&type=json`;
+        const searchRes=await fetch(searchUrl);
+        const searchJson=await searchRes.json();
+        if(!searchJson||searchJson.code!==1||!Array.isArray(searchJson.data)||!searchJson.data.length)return;
+        const normalize=value=>String(value||'').trim().toLowerCase();
+        const wantedTitle=normalize(track.title);
+        const wantedArtist=normalize(track.artist);
+        const singerText=item=>Array.isArray(item?.singer)
+          ? item.singer.map(s=>typeof s==='string'?s:(s?.name||'')).join(' / ')
+          : String(item?.singer||'');
+        const candidate=searchJson.data.find(item=>normalize(item?.name)===wantedTitle&&(!wantedArtist||normalize(singerText(item)).includes(wantedArtist)))
+          ||searchJson.data.find(item=>normalize(item?.name)===wantedTitle)
+          ||searchJson.data[0];
+        const lyricId=candidate?.id||candidate?.mid;
+        if(!lyricId)return;
+        const lyricUrl=`https://oiapi.net/api/QQMusicLyric?keyword=${encodeURIComponent(keyword)}&id=${encodeURIComponent(lyricId)}&format=lrc&type=json`;
+        const lyricRes=await fetch(lyricUrl);
+        const lyricJson=await lyricRes.json();
+        const lyricData=lyricJson?.data;
+        const lyricText=lyricData&&!Array.isArray(lyricData)?(lyricData.conteng||lyricData.content||lyricData.lrc||''):'';
+        if(lyricJson?.code===1&&lyricText)track.lrc=lyricText;
+      }catch(e){
+        console.warn('[Kuwo] 歌词接口异常',e);
+      }
+    }
+
+    async function fetchKuwoDetails(track){
+      // 首次只请求最高音质，歌词并行获取，减少等待时间。
+      let d;
+      try{
+        d=await fetchKuwoByBr(track,1);
+        applyKuwoDetail(track,d,1);
+      }catch(e){
+        console.warn('[Kuwo] 最高音质详情失败，准备降级',e);
+        // 极少数情况下 br=1 不可用，直接从 br=2 开始逐级尝试。
+        let lastError=e;
+        for(let br=2;br<=7;br++){
+          try{
+            d=await fetchKuwoByBr(track,br);
+            if(d?.url){applyKuwoDetail(track,d,br);lastError=null;break;}
+          }catch(err){lastError=err;}
+        }
+        if(lastError&&!track.audioUrl)throw lastError;
+      }
+      // 不阻塞首播；歌词拿到后若仍是当前歌曲则即时刷新。
+      fetchKuwoLyrics(track).then(()=>{
+        if(state.currentTrack?.uid===track.uid&&track.lrc){
+          state.lyricLines=parseLRC(track.lrc);
+          renderLyrics();
+        }
+      });
+    }
+
+    async function playKuwoWithFallback(track,requestToken){
+      const tried=new Set();
+      let order=Array.isArray(track.kuwoQualityOrder)&&track.kuwoQualityOrder.length
+        ? [...track.kuwoQualityOrder]
+        : [1,2,3,4,5,6,7];
+      if(track.kuwoCurrentBr&&!order.includes(track.kuwoCurrentBr))order.unshift(track.kuwoCurrentBr);
+      else if(track.kuwoCurrentBr)order=[track.kuwoCurrentBr,...order.filter(x=>x!==track.kuwoCurrentBr)];
+
+      for(const br of order){
+        if(tried.has(br))continue;
+        tried.add(br);
+        if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return false;
+        try{
+          let d=null;
+          if(br!==track.kuwoCurrentBr||!track.audioUrl){
+            d=await fetchKuwoByBr(track,br);
+            if(!d?.url)continue;
+            if(d.format&&!kuwoCanPlayFormat(d.format)){
+              console.warn(`[Kuwo] 浏览器不支持 ${d.format}，降级`);
+              continue;
+            }
+            applyKuwoDetail(track,d,br);
+          }
+          const url=cyNormalizeMediaUrl(track.audioUrl,'audio');
+          if(!url)continue;
+          dom.audio.pause();
+          dom.audio.removeAttribute('src');
+          dom.audio.load();
+          dom.audio.src=url;
+          // play() 能最快暴露大部分格式、混合内容和链接失效问题；失败立即降级。
+          await dom.audio.play();
+          track.audioUrl=url;
+          state.isPlaying=true;
+          setPlayButtonState(true);
+          console.log(`[Kuwo] 已使用 br=${br} 播放`,track.qualityLabel||'');
+          return true;
+        }catch(e){
+          console.warn(`[Kuwo] br=${br} 播放失败，自动降级`,e);
+        }
+      }
+      return false;
+    }
+
     async function fetchJooxDetails(track){
       const n=track.jooxIndex || track.displayIndex || 1;
       const url=`https://apicx.asia/api/joox_music?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(n)}&token=${encodeURIComponent(JOOX_TOKEN)}&br=${encodeURIComponent(JOOX_BR)}`;
@@ -2714,10 +2810,16 @@
         if(!track.audioUrl){showToast(t('toastPlayError'));return;}
         track.audioUrl=cyNormalizeMediaUrl(track.audioUrl,'audio');
         if(!track.audioUrl){showToast(t('toastPlayError'));return;}
-        dom.audio.src=track.audioUrl;
-        await dom.audio.play();
-        state.isPlaying=true;
-        setPlayButtonState(true);
+        if(track.source==='kuwo'){
+          const played=await playKuwoWithFallback(track,requestToken);
+          if(!played){showToast(t('toastPlayError'));return;}
+          applyUI();
+        }else{
+          dom.audio.src=track.audioUrl;
+          await dom.audio.play();
+          state.isPlaying=true;
+          setPlayButtonState(true);
+        }
       }catch(e){
         if(requestToken!==state.playRequestToken)return;
         console.error(e);
