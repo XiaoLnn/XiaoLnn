@@ -1362,50 +1362,49 @@
     // 酷我搜索
 
     // 酷我搜索
-    async function searchKuwo(kw, limit){
-      const url=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(kw)}&limit=${encodeURIComponent(limit)}`;
-      let added=0;
-      try{
-        const res=await fetch(url);
-        const json=await res.json();
-        if(json.code!==200 || !Array.isArray(json.data)) return 0;
+   async function searchKuwo(kw, limit){
+  const url=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(kw)}&limit=${encodeURIComponent(limit)}`;
+  let added=0;
+  try{
+    const res=await fetch(url);
+    const json=await res.json();
+    if(json.code!==200 || !Array.isArray(json.data)) return 0;
 
-        json.data.forEach((it, idx)=>{
-          const uid=`kuwo-${it.rid}`;
-          if(state.trackMap.has(uid))return;
+    json.data.forEach((it, idx)=>{
+      const uid=`kuwo-${it.rid}`;
+      if(state.trackMap.has(uid))return;
 
-          const track={
-            uid,
-            source:'kuwo',
-            displayIndex:idx+1,
-            keyword:kw,
-            songid:it.rid,
+      const track={
+        uid,
+        source:'kuwo',
+        displayIndex:idx+1,   // 保留序号，供歌词接口使用
+        keyword:kw,
+        songid:it.rid,
 
-            title:it.song||'',
-            artist:it.singer||'',
-            album:it.album||'',
+        title:it.song||'',
+        artist:it.singer||'',
+        album:it.album||'',
 
-            cover:it.picture||null,
-            audioUrl:null,
-            lrc:null,
-            lrcUrl:null,
-            detailsLoaded:false,
-            quality:null,
-            qualityLabel:null
-          };
+        cover:it.picture||null,
+        audioUrl:null,
+        lrc:null,
+        lrcUrl:null,
+        detailsLoaded:false,
+        quality:null,
+        qualityLabel:null
+      };
 
-          state.trackMap.set(uid, track);
-          state.searchResults.push(track);
-          added++;
-        });
+      state.trackMap.set(uid, track);
+      state.searchResults.push(track);
+      added++;
+    });
 
-        return added;
-      }catch(e){
-        console.error('kuwo search failed',e);
-        return 0;
-      }
-    }
-
+    return added;
+  }catch(e){
+    console.error('kuwo search failed',e);
+    return 0;
+  }
+}
     const JOOX_TOKEN = 'f84ao9lMF_q7husBWRfgUw';
     const JOOX_BR = 4;
 
@@ -1611,29 +1610,48 @@
     }
 
     async function fetchKuwoDetails(track){
-      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
+  // 1. 获取播放链接
+  const api = `https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
+  const res = await fetch(api);
+  const j = await res.json();
+  if (!j || j.code !== 200 || !j.data) throw new Error('kuwo detail failed');
+  const d = j.data;
 
-      const res=await fetch(api);
-      const j=await res.json();
+  // 更新歌曲元数据
+  Object.assign(track, {
+    title: d.song || track.title,
+    artist: d.singer || track.artist,
+    album: d.album || track.album,
+    cover: d.picture || track.cover,
+    audioUrl: d.url || track.audioUrl,
+    detailsLoaded: true,
+  });
 
-      if(!j || j.code!==200 || !j.data) throw new Error('kuwo detail failed');
+  if (track.audioUrl) {
+    const q = inferQualityFromUrl(track.audioUrl);
+    track.quality = q.tag;
+    track.qualityLabel = q.label;
+  }
 
-      const d=j.data;
-      Object.assign(track,{
-        title:d.song || track.title,
-        artist:d.singer || track.artist,
-        album:d.album || track.album,
-        cover:d.picture || track.cover,
-        audioUrl:d.url || track.audioUrl,
-        detailsLoaded:true
-      });
+  // 2. 【新增】调用 Kggc 接口获取歌词
+  try {
+    // 使用歌曲名 + 歌手作为查询词
+    const msg = `${track.title} ${track.artist}`.trim();
+    // n 取搜索时的序号（displayIndex）
+    const lyricUrl = `https://oiapi.net/api/Kggc?msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(track.displayIndex)}&format=lrc&type=json`;
+    const lyricRes = await fetch(lyricUrl);
+    const lyricJson = await lyricRes.json();
 
-      if (track.audioUrl) {
-        const q = inferQualityFromUrl(track.audioUrl);
-        track.quality = q.tag;
-        track.qualityLabel = q.label;
-      }
+    if (lyricJson.code === 200 && lyricJson.data && lyricJson.data.content) {
+      track.lrc = lyricJson.data.content;   // 存储 LRC 歌词文本
+    } else {
+      console.warn('酷我歌词获取失败，状态码：', lyricJson.code);
     }
+  } catch (e) {
+    console.warn('酷我歌词接口请求异常：', e);
+    // 不影响播放，保持 track.lrc 为 null
+  }
+}
 
     async function fetchJooxDetails(track){
       const n=track.jooxIndex || track.displayIndex || 1;
