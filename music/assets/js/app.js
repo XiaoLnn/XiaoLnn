@@ -324,6 +324,7 @@
     const METING_ENDPOINT = 'https://api.qijieya.cn/meting/';
     const QQ_PLAYLIST_ENDPOINT = 'https://xiaolnn.pages.dev/api/qq-playlist';
     const QQ_HOT_ENDPOINT = 'https://cyapi.top/API/music_hot.php';
+    const KUWO_LYRIC_ENDPOINT = 'https://oiapi.net/api/Kggc';
 
     let openCCConverters=null;
     let openCCLoadPromise=null;
@@ -1368,7 +1369,7 @@
       try{
         const res=await fetch(url);
         const json=await res.json();
-        if(!Array.isArray(json.data)) return 0;
+        if(json.code!==200 || !Array.isArray(json.data)) return 0;
 
         json.data.forEach((it, idx)=>{
           const uid=`kuwo-${it.rid}`;
@@ -1610,14 +1611,49 @@
       await Promise.all([worker(),worker(),worker()]);
     }
 
+
+    async function fetchKuwoLyrics(track){
+      try{
+        const url = new URL(KUWO_LYRIC_ENDPOINT);
+        url.searchParams.set(
+          'msg',
+          `${track.title || ''} ${track.artist || ''}`.trim()
+        );
+        url.searchParams.set('n', track.displayIndex || 1);
+
+        const res = await fetch(url,{
+          headers:{Accept:'application/json,text/plain,*/*'}
+        });
+
+        const json = await res.json();
+        let lyric = '';
+
+        if(typeof json?.data === 'string'){
+          lyric = json.data;
+        }else if(json?.data?.content){
+          lyric = json.data.content;
+        }else if(Array.isArray(json?.data)){
+          lyric = json.data[0]?.content || '';
+        }else if(json?.content){
+          lyric = json.content;
+        }
+
+        if(lyric){
+          track.lrc = lyric;
+          track.lrcUrl = '';
+        }
+      }catch(error){
+        console.warn('Kuwo lyric load failed:', error);
+      }
+    }
+
     async function fetchKuwoDetails(track){
-      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
+      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=3`;
 
       const res=await fetch(api);
       const j=await res.json();
-        
-        if(!j || !j.data)
-    throw new Error('kuwo detail failed');
+
+      if(!j || j.code!==200 || !j.data) throw new Error('kuwo detail failed');
 
       const d=j.data;
       Object.assign(track,{
@@ -1634,6 +1670,8 @@
         track.quality = q.tag;
         track.qualityLabel = q.label;
       }
+
+      await fetchKuwoLyrics(track);
     }
 
     async function fetchJooxDetails(track){
