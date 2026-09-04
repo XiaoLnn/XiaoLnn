@@ -1763,6 +1763,9 @@
     let kuwoAudioWaitCancel=null;
     let kuwoPlaybackSession=0;
     let kuwoRequestController=null;
+    // 某些浏览器（尤其 Firefox）会对酷我跨域 FLAC 触发 OpaqueResponseBlocking，
+    // 一旦实际确认无损媒体被浏览器拒绝，本次页面会话后续切歌直接使用最高可播放音质。
+    let kuwoLosslessTransportBlocked=false;
 
     function abortKuwoRequests(){
       if(kuwoRequestController){
@@ -1834,13 +1837,15 @@
       const controller=beginKuwoRequestController();
       const isCurrent=()=>sessionId===kuwoPlaybackSession&&requestToken===state.playRequestToken&&state.currentTrack?.uid===track.uid&&!controller.signal.aborted;
 
-      // 始终严格从最高音质 br=1 开始。最高音质若拿到的 CDN 签名偶发失效，
-      // 会重新请求一次全新的 br=1 直链，再考虑向下兼容。
-      const order=[1,2,3,4,5,6,7];
+      // br=1 仍然优先尝试无损。若浏览器已经明确拒绝酷我跨域 FLAC，
+      // 后续切歌直接从已验证可播放的 320K MP3（br=4）开始，避免每首歌先卡一次。
+      // 其余档位仅作为继续降级的兜底。
+      const order=kuwoLosslessTransportBlocked?[4,3,2,5,6,7]:[1,4,3,2,5,6,7];
       let lastError=null;
 
       for(const br of order){
-        const maxAttempts=br===1?2:1;
+        // ORB/媒体格式拒绝不是刷新签名能解决的问题，因此每个音质只取一次新链接。
+        const maxAttempts=1;
         for(let attempt=0;attempt<maxAttempts;attempt++){
           if(!isCurrent())return false;
           try{
@@ -1893,6 +1898,12 @@
               }catch(mediaErr){
                 if(mediaErr?.name==='AbortError'||!isCurrent())return false;
                 lastError=mediaErr;
+                const isLosslessUrl=/\.(?:flac|ape|alac|wav)(?:[?#]|$)/i.test(String(url||''));
+                const isUnsupportedMedia=Number(dom.audio?.error?.code)===4||/media error\s*4/i.test(String(mediaErr?.message||''));
+                if(br===1&&isLosslessUrl&&isUnsupportedMedia){
+                  kuwoLosslessTransportBlocked=true;
+                  console.warn('[Kuwo] 当前浏览器已阻止酷我无损 FLAC（常见于 OpaqueResponseBlocking），本会话后续将直接使用最高可播放音质 320K。');
+                }
                 console.warn(`[Kuwo] br=${br} 第${attempt+1}次媒体候选失败`,url,mediaErr);
               }
             }
