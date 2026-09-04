@@ -1387,6 +1387,7 @@
         source: 'kuwo',
         displayIndex: idx + 1,
         kuwoIndex: idx + 1,
+        kuwoSearchLimit: Number(limit) || 10,
         keyword: kw,
         songid: rid,
         title: it.song || '',
@@ -1651,16 +1652,58 @@
     }
 
     async function fetchKuwoByBr(track,br,signal=null,refresh=false){
-      // 酷我 n 必须使用“酷我搜索结果自己的序号”，不能使用聚合列表序号。
-      const n=track.kuwoIndex||track.displayIndex||1;
+      // OIAPI 的 n 是“当前搜索结果中的序号”。如果 n 大于默认 limit=10，
+      // 但详情请求没有同步携带足够大的 limit，接口会退回搜索列表而不是单曲详情。
+      // 因此详情请求必须复用搜索时的 limit，并至少保证 limit >= n。
+      const n=Math.max(1,Number(track.kuwoIndex||track.displayIndex||1));
+      const searchLimit=Math.max(10,Number(track.kuwoSearchLimit)||0,n);
       const refreshArg=refresh?`&_=${Date.now()}`:'';
-      const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(n)}&br=${encodeURIComponent(br)}${refreshArg}`;
-      console.log(`[Kuwo br=${br} 请求]`,api);
-      const res=await fetch(api,{cache:'no-store',signal:signal||undefined});
-      if(!res.ok)throw new Error(`Kuwo HTTP ${res.status}`);
-      const j=await res.json();
-      console.log(`[Kuwo br=${br} 响应]`,j);
-      if(!j||j.code!==1||!j.data)throw new Error(`Kuwo br=${br} 获取失败`);
+
+      const requestDetail=async(msg,index,limit)=>{
+        const api=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(index)}&limit=${encodeURIComponent(limit)}&br=${encodeURIComponent(br)}${refreshArg}`;
+        console.log(`[Kuwo br=${br} 请求]`,api);
+        const res=await fetch(api,{cache:'no-store',signal:signal||undefined});
+        if(!res.ok)throw new Error(`Kuwo HTTP ${res.status}`);
+        const j=await res.json();
+        console.log(`[Kuwo br=${br} 响应]`,j);
+        return j;
+      };
+
+      let j=await requestDetail(track.keyword,n,searchLimit);
+      if(j?.code===1 && j.data && !Array.isArray(j.data) && j.data.url){
+        // 防止搜索列表变化后 n 指向别的歌曲，能校验 rid 时优先校验。
+        const wantedRid=String(track.songid||'').trim();
+        const gotRid=String(j.data.rid||'').trim();
+        if(!wantedRid||!gotRid||wantedRid===gotRid)return j.data;
+        console.warn('[Kuwo] n 对应歌曲已变化，改用歌曲名重新定位', {wantedRid,gotRid,title:track.title});
+      }
+
+      // 兜底：搜索结果发生变化、接口仍返回数组或 n 已错位时，
+      // 使用歌曲名重新搜索，并按 rid / 歌名+歌手定位，再取该条最高音质。
+      const lookupMsg=track.title||track.keyword;
+      const lookupLimit=30;
+      const searchApi=`https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(lookupMsg)}&limit=${lookupLimit}${refreshArg}`;
+      console.log('[Kuwo 精确定位请求]',searchApi);
+      const searchRes=await fetch(searchApi,{cache:'no-store',signal:signal||undefined});
+      if(!searchRes.ok)throw new Error(`Kuwo lookup HTTP ${searchRes.status}`);
+      const searchJson=await searchRes.json();
+      if(searchJson?.code!==1||!Array.isArray(searchJson.data)||!searchJson.data.length){
+        throw new Error(`Kuwo br=${br} 未找到歌曲`);
+      }
+      const norm=v=>String(v||'').trim().toLowerCase();
+      const wantedRid=String(track.songid||'').trim();
+      let idx=searchJson.data.findIndex(it=>wantedRid&&String(it?.rid||'').trim()===wantedRid);
+      if(idx<0)idx=searchJson.data.findIndex(it=>norm(it?.song)===norm(track.title)&&norm(it?.singer).includes(norm(track.artist)));
+      if(idx<0)idx=searchJson.data.findIndex(it=>norm(it?.song)===norm(track.title));
+      if(idx<0)throw new Error(`Kuwo br=${br} 无法定位歌曲 ${track.title||''}`);
+
+      const exactN=idx+1;
+      track.kuwoIndex=exactN;
+      track.kuwoSearchLimit=lookupLimit;
+      j=await requestDetail(lookupMsg,exactN,lookupLimit);
+      if(!j||j.code!==1||!j.data||Array.isArray(j.data)||!j.data.url){
+        throw new Error(`Kuwo br=${br} 获取详情失败`);
+      }
       return j.data;
     }
 
