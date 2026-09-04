@@ -1382,7 +1382,20 @@
           if(!rid)return;
 
           const uid=`kuwo-${rid}`;
-          if(state.trackMap.has(uid))return;
+          // 已在收藏/歌单中的歌曲也要出现在搜索列表，不能直接跳过
+          if(state.trackMap.has(uid)){
+            const existing=state.trackMap.get(uid);
+            existing.displayIndex=idx+1;
+            existing.keyword=kw;
+            if(!existing.title && it.song) existing.title=it.song;
+            if(!existing.artist && it.singer) existing.artist=it.singer;
+            if(!existing.cover && it.picture) existing.cover=it.picture;
+            if(!state.searchResults.some(t=>t.uid===uid)){
+              state.searchResults.push(existing);
+              added++;
+            }
+            return;
+          }
 
           const track={
             uid,
