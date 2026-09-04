@@ -1368,7 +1368,9 @@
   try {
     const res = await fetch(url);
     const json = await res.json();
-    // 实际返回 code = 1 表示成功
+    console.log('[Kuwo 搜索原始响应]', json);   // 查看返回
+
+    // 注意：成功时为 code === 1
     if (json.code !== 1 || !Array.isArray(json.data)) {
       console.warn('[Kuwo] 搜索失败或数据格式异常', json);
       return 0;
@@ -1383,7 +1385,7 @@
       const track = {
         uid,
         source: 'kuwo',
-        displayIndex: idx + 1,   // 与歌词接口的 n 参数对应
+        displayIndex: idx + 1,
         keyword: kw,
         songid: rid,
         title: it.song || '',
@@ -1615,39 +1617,43 @@
     }
 
     async function fetchKuwoDetails(track) {
-  // 1. 获取播放链接（使用 n 参数指定序号）
+  // 获取播放链接（详情接口也使用 n 参数）
   const api = `https://oiapi.net/api/Kuwo?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(track.displayIndex)}&br=1`;
+  console.log('[Kuwo 详情请求]', api);
   const res = await fetch(api);
   const j = await res.json();
-  // 注意：详情接口同样返回 code=1 表示成功
+  console.log('[Kuwo 详情响应]', j);
+
+  // 同样使用 code === 1 判断成功
   if (!j || j.code !== 1 || !j.data) {
     throw new Error('酷我详情获取失败');
   }
   const d = j.data;
 
-  // 更新歌曲元数据（部分字段可能比搜索时更准确）
   Object.assign(track, {
     title: d.song || track.title,
     artist: d.singer || track.artist,
     album: d.album || track.album,
     cover: d.picture || track.cover,
-    audioUrl: d.url || track.audioUrl,   // 详情接口应返回 url 字段
+    audioUrl: d.url || track.audioUrl,   // 若 d.url 为空，可能需要根据 types 构造
     detailsLoaded: true,
   });
 
-  // 音质标记
   if (track.audioUrl) {
     const q = inferQualityFromUrl(track.audioUrl);
     track.quality = q.tag;
     track.qualityLabel = q.label;
   }
 
-  // 2. 获取歌词（使用 Kggc 接口）
+  // 获取歌词
   try {
     const msg = `${track.title} ${track.artist}`.trim();
     const lyricUrl = `https://oiapi.net/api/Kggc?msg=${encodeURIComponent(msg)}&n=${encodeURIComponent(track.displayIndex)}&format=lrc&type=json`;
+    console.log('[Kuwo 歌词请求]', lyricUrl);
     const lyricRes = await fetch(lyricUrl);
     const lyricJson = await lyricRes.json();
+    console.log('[Kuwo 歌词响应]', lyricJson);
+
     if (lyricJson.code === 1 && lyricJson.data && lyricJson.data.content) {
       track.lrc = lyricJson.data.content;
       console.log('[Kuwo] 歌词获取成功');
@@ -1658,7 +1664,6 @@
     console.warn('[Kuwo] 歌词接口异常', e);
   }
 }
-
     async function fetchJooxDetails(track){
       const n=track.jooxIndex || track.displayIndex || 1;
       const url=`https://apicx.asia/api/joox_music?msg=${encodeURIComponent(track.keyword)}&n=${encodeURIComponent(n)}&token=${encodeURIComponent(JOOX_TOKEN)}&br=${encodeURIComponent(JOOX_BR)}`;
