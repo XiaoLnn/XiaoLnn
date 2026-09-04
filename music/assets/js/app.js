@@ -1368,7 +1368,7 @@
       try{
         const res=await fetch(url);
         const json=await res.json();
-        if(json.code!==200 || !Array.isArray(json.data)) return 0;
+        if(!Array.isArray(json.data)) return 0;
 
         json.data.forEach((it, idx)=>{
           const uid=`kuwo-${it.rid}`;
@@ -1615,8 +1615,9 @@
 
       const res=await fetch(api);
       const j=await res.json();
-
-      if(!j || j.code!==200 || !j.data) throw new Error('kuwo detail failed');
+        
+        if(!j || !j.data)
+    throw new Error('kuwo detail failed');
 
       const d=j.data;
       Object.assign(track,{
