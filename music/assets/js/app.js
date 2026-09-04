@@ -1764,20 +1764,56 @@
       return out;
     }
 
-    function waitKuwoAudioReady(audio,timeout=6500){
+    // 酷我使用同一个 <audio> 元素播放。切歌时必须取消上一首残留的媒体监听，
+    // 否则新歌的 canplay/error 会唤醒上一首的 Promise，造成切歌后误降级/误报播放失败。
+    let kuwoAudioWaitCancel=null;
+    let kuwoPlaybackSession=0;
+
+    function cancelKuwoAudioWait(){
+      if(typeof kuwoAudioWaitCancel==='function'){
+        try{kuwoAudioWaitCancel();}catch(_){}
+      }
+      kuwoAudioWaitCancel=null;
+    }
+
+    function beginKuwoPlaybackSession(){
+      cancelKuwoAudioWait();
+      kuwoPlaybackSession+=1;
+      return kuwoPlaybackSession;
+    }
+
+    function waitKuwoAudioReady(audio,sessionId,requestToken,timeout=6500){
       return new Promise((resolve,reject)=>{
         let done=false;
-        const finish=(ok,err)=>{
-          if(done)return;done=true;
+        const isCurrent=()=>sessionId===kuwoPlaybackSession&&requestToken===state.playRequestToken;
+        const cleanup=()=>{
           clearTimeout(timer);
           audio.removeEventListener('canplay',onReady);
           audio.removeEventListener('loadedmetadata',onReady);
           audio.removeEventListener('error',onError);
+          if(kuwoAudioWaitCancel===cancel)kuwoAudioWaitCancel=null;
+        };
+        const finish=(ok,err)=>{
+          if(done)return;
+          done=true;
+          cleanup();
           ok?resolve():reject(err||new Error('Kuwo audio load failed'));
         };
-        const onReady=()=>finish(true);
-        const onError=()=>finish(false,new Error(`Kuwo media error ${audio.error?.code||''}`));
-        const timer=setTimeout(()=>finish(false,new Error('Kuwo media load timeout')),timeout);
+        const cancel=()=>finish(false,Object.assign(new Error('Kuwo playback cancelled'),{name:'AbortError'}));
+        const onReady=()=>{
+          if(!isCurrent())return cancel();
+          finish(true);
+        };
+        const onError=()=>{
+          if(!isCurrent())return cancel();
+          finish(false,new Error(`Kuwo media error ${audio.error?.code||''}`));
+        };
+        const timer=setTimeout(()=>{
+          if(!isCurrent())return cancel();
+          finish(false,new Error('Kuwo media load timeout'));
+        },timeout);
+        cancelKuwoAudioWait();
+        kuwoAudioWaitCancel=cancel;
         audio.addEventListener('canplay',onReady,{once:true});
         audio.addEventListener('loadedmetadata',onReady,{once:true});
         audio.addEventListener('error',onError,{once:true});
@@ -1786,6 +1822,8 @@
     }
 
     async function playKuwoWithFallback(track,requestToken){
+      const sessionId=beginKuwoPlaybackSession();
+      const isCurrent=()=>sessionId===kuwoPlaybackSession&&requestToken===state.playRequestToken&&state.currentTrack?.uid===track.uid;
       const tried=new Set();
       let order=Array.isArray(track.kuwoQualityOrder)&&track.kuwoQualityOrder.length
         ? [...track.kuwoQualityOrder]
@@ -1797,7 +1835,7 @@
       for(const br of order){
         if(tried.has(br))continue;
         tried.add(br);
-        if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return false;
+        if(!isCurrent())return false;
         try{
           let d=null;
           if(br!==track.kuwoCurrentBr||!track.audioUrl){
@@ -1811,14 +1849,19 @@
           // 接口返回的 format 仅用于排序参考，不在这里硬拦截；浏览器实际加载结果更可靠。
           const candidates=kuwoAudioCandidates(d?.url||track.audioUrl);
           for(const url of candidates){
-            if(requestToken!==state.playRequestToken||state.currentTrack?.uid!==track.uid)return false;
+            if(!isCurrent())return false;
             try{
               dom.audio.pause();
               dom.audio.removeAttribute('src');
               dom.audio.src=url;
-              await waitKuwoAudioReady(dom.audio);
+              await waitKuwoAudioReady(dom.audio,sessionId,requestToken);
+              if(!isCurrent())return false;
               try{
                 await dom.audio.play();
+                if(!isCurrent()){
+                  dom.audio.pause();
+                  return false;
+                }
               }catch(playErr){
                 // NotAllowedError 是浏览器自动播放策略，不代表该音质坏了，不能继续把所有音质都降级掉。
                 if(playErr?.name==='NotAllowedError'){
@@ -1837,15 +1880,18 @@
               console.log(`[Kuwo] 已使用 br=${br} 播放`,track.qualityLabel||'',url);
               return true;
             }catch(mediaErr){
+              if(mediaErr?.name==='AbortError'||!isCurrent())return false;
               lastError=mediaErr;
               console.warn(`[Kuwo] br=${br} 媒体候选失败`,url,mediaErr);
             }
           }
         }catch(e){
+          if(e?.name==='AbortError'||!isCurrent())return false;
           lastError=e;
           console.warn(`[Kuwo] br=${br} 获取/播放失败，自动降级`,e);
         }
       }
+      if(!isCurrent())return false;
       console.error('[Kuwo] 所有音质均播放失败',lastError);
       return false;
     }
@@ -2796,6 +2842,12 @@
       cancelPendingAIReview();
       if(document.body.classList.contains('ai-review-open'))setAIReviewOpen(false,{focus:false});
       const requestToken=++state.playRequestToken;
+      // 立即作废上一首酷我的异步媒体监听/降级流程，避免切歌竞态。
+      cancelKuwoAudioWait();
+      kuwoPlaybackSession+=1;
+      try{
+        dom.audio.pause();
+      }catch(_){}
       state.currentTrack=track;
       state.playContext=context||state.playContext;
       renderQueue();
