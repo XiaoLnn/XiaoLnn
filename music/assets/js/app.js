@@ -1,6 +1,6 @@
 console.info('[Kuwo Fix] n-limit-v2 loaded');
 (function(){
-    const translations = Object.freeze({
+    const translations = {
       zh: {
         appTitle:"Nie Music · Cover Fusion",
         authorLabel:"封面色彩驱动的沉浸式播放器",
@@ -265,7 +265,7 @@ console.info('[Kuwo Fix] n-limit-v2 loaded');
         modalConfirm:"Confirm",
         modalCancel:"Cancel"
       }
-    });
+    };
 
     const state = {
       language:'zh',
@@ -4557,9 +4557,7 @@ console.info('[Kuwo Fix] n-limit-v2 loaded');
       updateAIReviewUI();
       setPlaymodeUI();
       dom.audio.volume=parseFloat(dom.volumeSlider.value);
-     requestAnimationFrame(()=>{
-  applyThemePalette(themeHashPalette('Nie Music'),null);
-});
+      applyThemePalette(themeHashPalette('Nie Music'),null);
       const loadInitialHotComment=()=>loadHotComment().catch(error=>console.warn('initial hot comment failed',error));
       if('requestIdleCallback' in window){
         requestIdleCallback(loadInitialHotComment,{timeout:1600});
