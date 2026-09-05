@@ -1969,18 +1969,3 @@ body.ai-review-open .ai-review-sheet{opacity:1;transform:translate(0,0) scale(1)
 @media (hover:none){.ai-review-close-btn:focus{opacity:1;pointer-events:auto;transform:scale(1)}}
 @media (max-width:860px){.ai-review-sheet{top:max(66px,calc(env(safe-area-inset-top) + 56px));left:12px;right:12px;bottom:auto;width:auto;max-height:176px;padding:6px;border-radius:21px}.ai-review-content,.ai-review-content.has-review{min-height:54px;max-height:150px;padding:11px 14px}.ai-review-copy{font-size:12px;line-height:1.52}}
 @media (max-width:390px){.ai-review-content,.ai-review-content.has-review{margin:0;max-height:142px}.ai-review-close-btn{top:-7px;right:-7px}}
-@media(max-width:860px){
-
-  .panel{
-    backdrop-filter:blur(12px) saturate(1.1);
-  }
-
-  .mobile-nav{
-    backdrop-filter:blur(12px) saturate(1.1);
-  }
-
-  header{
-    backdrop-filter:blur(12px);
-  }
-
-}
